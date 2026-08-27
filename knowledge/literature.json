@@ -1,0 +1,92 @@
+[
+  {
+    "id": "bpr-2009",
+    "title": "BPR: Bayesian Personalized Ranking from Implicit Feedback",
+    "year": 2009,
+    "url": "https://arxiv.org/abs/1205.2618",
+    "tags": ["bpr", "pairwise", "collaborative_filtering", "ranking"],
+    "claim": "Pairwise learning directly optimizes a user's preference for observed positives over sampled alternatives.",
+    "cautions": ["Negative sampling policy materially changes the learned objective."]
+  },
+  {
+    "id": "lambdamart-2010",
+    "title": "From RankNet to LambdaRank to LambdaMART",
+    "year": 2010,
+    "url": "https://www.microsoft.com/en-us/research/publication/from-ranknet-to-lambdarank-to-lambdamart-an-overview/",
+    "tags": ["lambdamart", "ranking", "ndcg", "tree_ranker"],
+    "claim": "Lambda-weighted ranking gradients emphasize swaps that most affect ranking metrics such as NDCG.",
+    "cautions": ["Query or user groups must be constructed exactly and kept intact."]
+  },
+  {
+    "id": "din-2018",
+    "title": "Deep Interest Network for Click-Through Rate Prediction",
+    "year": 2018,
+    "url": "https://arxiv.org/abs/1706.06978",
+    "tags": ["din", "sequence", "attention", "target_aware"],
+    "claim": "Target-aware attention can activate the parts of a user's behavior history most relevant to the candidate item.",
+    "cautions": ["History construction must be causal to prevent future leakage."]
+  },
+  {
+    "id": "dien-2019",
+    "title": "Deep Interest Evolution Network for Click-Through Rate Prediction",
+    "year": 2019,
+    "url": "https://arxiv.org/abs/1809.03672",
+    "tags": ["dien", "sequence", "interest_drift", "attention"],
+    "claim": "Interest representations can evolve over a behavior sequence and condition on the target item.",
+    "cautions": ["Sequence preprocessing and recurrent training raise implementation cost."]
+  },
+  {
+    "id": "sasrec-2018",
+    "title": "Self-Attentive Sequential Recommendation",
+    "year": 2018,
+    "url": "https://arxiv.org/abs/1808.09781",
+    "tags": ["sasrec", "sequence", "self_attention", "next_item"],
+    "claim": "Causal self-attention provides an efficient sequential recommendation inductive bias.",
+    "cautions": ["Next-item retrieval objectives are not identical to within-impression long-view ranking."]
+  },
+  {
+    "id": "mmoe-2018",
+    "title": "Modeling Task Relationships in Multi-task Learning with Multi-gate Mixture-of-Experts",
+    "year": 2018,
+    "url": "https://research.google/pubs/modeling-task-relationships-in-multi-task-learning-with-multi-gate-mixture-of-experts/",
+    "tags": ["mmoe", "multitask", "auxiliary_feedback", "negative_transfer"],
+    "claim": "Task-specific gates over shared experts can model related outcomes while reducing harmful parameter sharing.",
+    "cautions": ["Auxiliary labels can cause negative transfer and must be ablated."]
+  },
+  {
+    "id": "aide-2025",
+    "title": "AIDE: AI-Driven Exploration in the Space of Code",
+    "year": 2025,
+    "url": "https://arxiv.org/abs/2502.13138",
+    "tags": ["agent", "tree_search", "code", "experimentation"],
+    "claim": "ML engineering can be organized as tree search over code solutions with explicit improvement and debugging branches.",
+    "cautions": ["The evaluator and data boundaries must remain outside model-authored code."]
+  },
+  {
+    "id": "mlevolve-2026",
+    "title": "MLEvolve: Progressive Learning for Autonomous Machine Learning Engineering",
+    "year": 2026,
+    "url": "https://arxiv.org/abs/2606.06473",
+    "tags": ["agent", "memory", "cross_branch", "progressive_search"],
+    "claim": "Retrospective memory and cross-branch fusion can retain useful discoveries across an iterative ML search.",
+    "cautions": ["Experiment history is not formal gradient-based meta-learning."]
+  },
+  {
+    "id": "mlebench-2024",
+    "title": "MLE-bench: Evaluating Machine Learning Agents on Machine Learning Engineering",
+    "year": 2024,
+    "url": "https://arxiv.org/abs/2410.07095",
+    "tags": ["agent", "benchmark", "kaggle", "evaluation"],
+    "claim": "End-to-end ML agents can be evaluated through executable competition tasks and held-out performance.",
+    "cautions": ["Leaderboard score alone does not capture robustness or intervention count."]
+  },
+  {
+    "id": "meta-coldstart-2023",
+    "title": "Is Meta-Learning the Right Approach for the Cold-Start Problem in Recommender Systems?",
+    "year": 2023,
+    "url": "https://arxiv.org/abs/2308.08354",
+    "tags": ["meta_learning", "cold_start", "recommender"],
+    "claim": "Well-tuned conventional deep models can match or outperform several meta-learning cold-start approaches.",
+    "cautions": ["Do not introduce task-level meta-learning without evidence of a real adaptation bottleneck."]
+  }
+]
