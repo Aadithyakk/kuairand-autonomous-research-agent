@@ -1,6 +1,6 @@
 # KuaiRand Autonomous Research Agent
 
-A local-first autonomous ML research loop for the TikTok TechJam recommender-systems challenge, with a human research cockpit for live metrics, experiment decisions, evidence, failures, and steering.
+A local-first autonomous ML research loop for the TikTok TechJam recommender-systems challenge, with a human research cockpit for metrics, generated experiments, evidence, failures, memory, and steering.
 
 The system treats KuaiRand-Pure as a controlled benchmark for an agent that can repeatedly:
 
@@ -17,11 +17,12 @@ The system treats KuaiRand-Pure as a controlled benchmark for an agent that can 
 
 - Verified Notebook 01 baseline reproduction.
 - Kaggle-ready model lab containing FM, leakage-safe history features, LightGBM, LambdaRank, CatBoost, BPR, DIN-lite, diagnostics, and rank blending.
-- Cost-aware adaptive research policy; there is no fixed model sequence.
+- A generic planner → code generator → safety gate → external evaluator loop. The planner creates hypotheses instead of selecting from a fixed model sequence.
 - Searchable literature and organizer-lesson cards.
-- Optional OpenAI-compatible local LLM planner with deterministic fallback.
+- An OpenAI-compatible research model for proposing, implementing, and reviewing experiments.
+- A deterministic validation model used only to test the orchestration—not as the competition policy.
 - Persistent experiment state, convergence rules, failure recovery, and intervention accounting.
-- Command-worker bridge that executes agent-selected LambdaRank, BPR, or DIN branches through the Kaggle notebook.
+- A legacy command-worker bridge for the existing LambdaRank, BPR, and DIN notebook implementations. These are reusable tools, not the autonomous agent's menu.
 - Local JSON API for live state and control.
 - Responsive human dashboard with overview, experiments, audit events, literature, run controls, and steering.
 
@@ -33,20 +34,40 @@ dataset + baseline + immutable evaluator
           diagnose current state
                   |
      local evidence + past experiments
-          + optional LLM planner
+             + research LLM
                   |
-      cost/risk/evidence search policy
+       propose several new hypotheses
                   |
-        isolated experiment worker
+ generic cost/risk acquisition function
                   |
-       metrics + slices + artifacts
+      generate code → static safety gate
+                  |
+       isolated experiment process
+                  |
+       external metrics + artifacts
                   |
        retrospective experiment memory
                   |
           dashboard + human steering
 ```
 
-The LLM advises and explains. Deterministic code enforces the action catalog, data boundary, compute budget, evaluator, and stopping rules.
+The model owns research choices and experiment implementations. Deterministic controller code owns only the safety boundary, data contract, budget, evaluator, audit trail, champion promotion, and stopping rules. This is the key separation: the controller does not know that an experiment must be LambdaRank, BPR, DIN, or any other predefined family.
+
+## What has actually been validated
+
+There are two separate validations, because combining them would overstate the result:
+
+1. **Autonomous mechanism validation** uses a small controlled ranking benchmark. The agent must create a hypothesis, generate code, survive a deliberately unsafe first implementation being rejected, use the failure as memory, recover with a valid implementation, obtain externally computed metrics, and promote a better champion with zero human interventions.
+2. **KuaiRand readiness validation** checks the real archive schema, official split/label/metric contract, and the five-seed baseline artifact. It does not claim that a generated challenger has already beaten the official FM on KuaiRand.
+
+Run both:
+
+```bash
+python3 -m research_agent.cli validate-agent
+python3 -m research_agent.cli validate-kuairand
+```
+
+The machine-readable reports are written under `runtime/` (which is intentionally not committed).
 
 ## Quick start
 
@@ -71,15 +92,15 @@ npm run dev
 
 Open `http://localhost:3000`. The dashboard connects to the agent at `http://127.0.0.1:8765` by default.
 
-## Running the autonomous loop
+## Existing notebook worker
 
-The default configuration uses deterministic simulation so the complete orchestration, recovery, convergence, API, and dashboard can be tested without the 1.1M-row dataset:
+The original dashboard controller can still be exercised in deterministic simulation mode:
 
 ```bash
 python3 -m research_agent.cli run --reset
 ```
 
-Simulation metrics are clearly labelled and are never competition results.
+Simulation metrics are clearly labelled and are never competition results. This path and `knowledge/actions.json` are retained for dashboard demos and as a library of executable prior approaches; they are not evidence of open-ended autonomy.
 
 For real notebook execution, copy `configs/default.json`, set `executor_mode` to `command`, and ensure the KuaiRand-Pure dataset is discoverable by `outputs/kuairand_autonomous_research_lab.ipynb`. The command worker currently supports these dynamically selected branches:
 
@@ -87,9 +108,9 @@ For real notebook execution, copy `configs/default.json`, set `executor_mode` to
 - BPR with actually exposed negatives;
 - causal DIN-lite sequence modelling.
 
-Other catalog entries remain research candidates until a worker adapter is registered. In command mode, the policy automatically excludes actions without an executable adapter.
+Other catalog entries remain notebook research candidates until a worker adapter is registered.
 
-## Optional local LLM
+## Research model
 
 Run an OpenAI-compatible endpoint such as vLLM or llama.cpp, then change the LLM section in the configuration:
 
@@ -101,7 +122,7 @@ Run an OpenAI-compatible endpoint such as vLLM or llama.cpp, then change the LLM
 }
 ```
 
-The system continues with a deterministic policy if the model endpoint is unavailable or returns invalid JSON.
+`OpenAICompatibleResearchModel` uses this endpoint for three distinct roles: research planning, complete experiment-program generation, and evidence-based reflection. Invalid planner/code responses fail closed. `ScriptedValidationModel` is only a test double proving that the controller is not secretly choosing the model family.
 
 ## API
 
@@ -126,13 +147,16 @@ Every human intervention and controller decision is written to the audit log.
 
 ```bash
 python3 -m unittest discover -s tests -v
+python3 -m research_agent.cli validate-agent
+python3 -m research_agent.cli validate-kuairand
 cd dashboard && npm run build
 ```
 
 ## Data and leakage policy
 
 - Development uses the official training and validation dates only.
-- The hidden test set is never accessed during research.
+- Generated experiments receive only an explicit public workspace; evaluator labels remain outside it.
+- The KuaiRand research cutoff is 2022-04-28. Later rows are never scored during development.
 - Training-row history features must be causal.
 - Validation outcomes never enter feature construction.
 - Same-row post-exposure feedback is not used as an inference feature.
@@ -142,4 +166,6 @@ The starter kit and KuaiRand dataset are not redistributed in this repository. O
 
 ## Current status
 
-This repository is an executable research-agent foundation and live cockpit. Baseline reproduction and orchestration are verified. Real model execution is wired for the three branches above; live web retrieval, additional multi-task/watch-time workers, and remote Kaggle job synchronization are the next implementation milestones.
+The generic autonomous outer loop is implemented and passes its controlled end-to-end validation, including safety rejection, recovery, external evaluation, memory, and champion promotion. The real KuaiRand archive and reproduced baseline pass readiness checks. The official FM validation mean remains **0.601572** primary (GAUC **0.667400**, nDCG@5 **0.535744**).
+
+What is not yet claimed: no LLM-generated challenger has been run end-to-end against the full KuaiRand validation set, and the dashboard API still uses the legacy controller. Connecting the generic controller to the sanitized KuaiRand worker/Kaggle compute and running a budgeted research campaign are the next milestones.

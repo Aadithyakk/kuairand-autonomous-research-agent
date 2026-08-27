@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 type Metrics = { GAUC: number; 'nDCG@5': number; primary: number };
 type Experiment = {
-  experiment_id: string; action_id?: string; id?: string; title: string; family: string; status: string;
+  experiment_id: string; action_id?: string; id?: string; title: string; family?: string; change_kind?: string; status: string;
   hypothesis?: string; reason?: string; metrics?: Metrics; delta_vs_champion?: number | null; improved?: boolean;
   estimated_minutes?: number; elapsed_seconds?: number; error?: string; evidence?: LiteratureCard[];
 };
@@ -185,7 +185,7 @@ export default function Home() {
             <div className="panel-heading"><div><p className="eyebrow">Evidence ledger</p><h2>Every attempt, including failures</h2></div><span className="small-stat">{displayedExperiments.length} recorded</span></div>
             <div className="experiment-table">
               <div className="table-head"><span>ID</span><span>Experiment</span><span>Family</span><span>Primary</span><span>Δ champion</span><span>Status</span></div>
-              {displayedExperiments.map(item => <div className="table-row" key={item.experiment_id}><span className="mono">{item.experiment_id.replace('iteration-', '#')}</span><span><strong>{item.title}</strong><small>{item.error ?? item.hypothesis ?? 'Organizer-provided reference pipeline'}</small></span><span>{item.family.replaceAll('_', ' ')}</span><span className="mono">{formatScore(item.metrics?.primary)}</span><span className={`mono ${item.delta_vs_champion && item.delta_vs_champion > 0 ? 'positive' : ''}`}>{item.delta_vs_champion == null ? '—' : `${item.delta_vs_champion > 0 ? '+' : ''}${item.delta_vs_champion.toFixed(4)}`}</span><span><StatusPill status={item.status} /></span></div>)}
+              {displayedExperiments.map(item => <div className="table-row" key={item.experiment_id}><span className="mono">{item.experiment_id.replace('iteration-', '#')}</span><span><strong>{item.title}</strong><small>{item.error ?? item.hypothesis ?? 'Organizer-provided reference pipeline'}</small></span><span>{(item.family ?? item.change_kind ?? 'generated experiment').replaceAll('_', ' ')}</span><span className="mono">{formatScore(item.metrics?.primary)}</span><span className={`mono ${item.delta_vs_champion && item.delta_vs_champion > 0 ? 'positive' : ''}`}>{item.delta_vs_champion == null ? '—' : `${item.delta_vs_champion > 0 ? '+' : ''}${item.delta_vs_champion.toFixed(4)}`}</span><span><StatusPill status={item.status} /></span></div>)}
             </div>
           </div>
           <aside className="panel event-panel"><p className="eyebrow">Live audit trail</p><h2>Agent events</h2><div className="event-list">{[...state.events].reverse().slice(0, 18).map(event => <div className="event-item" key={event.id}><span className={`event-icon event-${event.kind}`} /> <div><strong>{event.message}</strong><small>{new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · {event.kind}</small></div></div>)}</div></aside>
