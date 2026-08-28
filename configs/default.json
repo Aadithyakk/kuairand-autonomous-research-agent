@@ -30,7 +30,8 @@
     "kernel_root": "runtime/kaggle-campaign",
     "memory": "runtime/openai-pilot/memory.json",
     "candidate_attempts_per_iteration": 3,
-    "max_implementation_failures": 12
+    "max_implementation_failures": 12,
+    "controller_heartbeat_seconds": 2
   },
   "compute_profiles": [
     {
@@ -62,7 +63,17 @@
     "api_key_env": "OPENAI_API_KEY",
     "reasoning_effort": "medium",
     "max_output_tokens": 8000,
-    "timeout_seconds": 240
+    "timeout_seconds": 90,
+    "hard_timeout_seconds": 180,
+    "phase_timeouts_seconds": {
+      "planning": 150,
+      "implementing": 180,
+      "reviewing": 120,
+      "repairing": 180,
+      "reflecting": 90
+    },
+    "heartbeat_seconds": 15,
+    "max_attempts": 2
   },
   "paths": {
     "state": "runtime/state.json",

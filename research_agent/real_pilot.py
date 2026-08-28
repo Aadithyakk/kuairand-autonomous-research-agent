@@ -151,6 +151,7 @@ def repair_program(
     response = client.complete_json(
         REPAIR_PROMPT,
         json.dumps({"proposal": proposal, "benchmark_contract": context, "current_program": source, "issues": issues}),
+        phase="repairing",
     )
     if not response or not isinstance(response.get("code"), str):
         raise RuntimeError(f"Coding repair failed: {client.last_error or 'invalid repair contract'}")
@@ -177,6 +178,7 @@ def review_program(
             review = client.complete_json(
                 REVIEW_PROMPT,
                 json.dumps({"proposal": proposal, "benchmark_contract": context, "program": current}),
+                phase="reviewing",
             )
             if not review or not isinstance(review.get("issues"), list):
                 raise RuntimeError(f"Research code review failed: {client.last_error or 'invalid review contract'}")
@@ -202,6 +204,7 @@ def generate(
     literature_path: Path,
     memory_path: Path | None = None,
     progress: Callable[[str, str], None] | None = None,
+    should_stop: Callable[[], bool] | None = None,
 ) -> dict[str, Any]:
     output.mkdir(parents=True, exist_ok=True)
     config = read_json(config_path)
@@ -212,7 +215,7 @@ def generate(
         "recommender ranking causal history hybrid factorization machine residual multi behavior sequence ensemble",
         limit=8,
     )
-    client = LLMClient(config["llm"])
+    client = LLMClient(config["llm"], progress=progress, cancelled=should_stop)
     model = OpenAICompatibleResearchModel(client)
     bundle = model.propose(context, evidence, memory, [])
     if progress:
@@ -266,11 +269,23 @@ def generate(
             if progress:
                 progress("backtracking", f"Candidate {attempt_index} required unavailable inputs; selecting another hypothesis.")
             continue
-        raw_source = model.implement(selected, context, memory)
+        try:
+            raw_source = model.implement(selected, context, memory)
+        except RuntimeError as exc:
+            attempts.append({"candidate_id": selected["id"], "status": "implementation_failed", "stage": "implementing", "issues": [str(exc)]})
+            if progress:
+                progress("backtracking", f"Candidate {attempt_index} implementation failed or timed out; selecting another hypothesis.")
+            continue
         (attempt_dir / "candidate.raw.py").write_text(raw_source, encoding="utf-8")
         if progress:
             progress("implemented", f"The coding agent implemented candidate {attempt_index}.")
-        source, reviews = review_program(client, selected, context, raw_source, attempt_dir, progress=progress)
+        try:
+            source, reviews = review_program(client, selected, context, raw_source, attempt_dir, progress=progress)
+        except RuntimeError as exc:
+            attempts.append({"candidate_id": selected["id"], "status": "implementation_failed", "stage": "reviewing", "issues": [str(exc)]})
+            if progress:
+                progress("backtracking", f"Candidate {attempt_index} review or repair failed; selecting another hypothesis.")
+            continue
         safety = CodeSafetyGate({"gc", "lightgbm", "numpy", "pandas", "sklearn", "time", "trusted_components"}).inspect(source)
         approved = bool(reviews and reviews[-1]["approved"] and safety["passed"])
         attempts.append({

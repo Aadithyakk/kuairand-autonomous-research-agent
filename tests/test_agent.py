@@ -1,5 +1,6 @@
 import json
 import tempfile
+import threading
 import time
 import unittest
 import zipfile
@@ -74,6 +75,54 @@ class AgentTests(unittest.TestCase):
         self.assertFalse(requires_gpu("factorization_machine_lambda_gradient_boosting", "auto"))
         self.assertTrue(requires_gpu("din_sequence", "auto"))
         self.assertTrue(requires_gpu("tree", "t4"))
+
+    def test_llm_supervisor_abandons_a_hung_call(self):
+        updates = []
+        client = LLMClient({
+            "mode": "openai_compatible", "base_url": "http://unused", "model": "test",
+            "hard_timeout_seconds": 0.05, "heartbeat_seconds": 0.01, "max_attempts": 2,
+        }, progress=lambda phase, message: updates.append((phase, message)))
+
+        def hung(_system, _user):
+            time.sleep(0.25)
+            return {"too": "late"}
+
+        client._complete_compatible = hung
+        started = time.monotonic()
+        self.assertIsNone(client.complete_json("system", "user", phase="implementing"))
+        self.assertLess(time.monotonic() - started, 0.18)
+        self.assertIn("hard deadline exceeded", client.last_error)
+        self.assertTrue(any(phase == "implementing" for phase, _ in updates))
+
+    def test_llm_supervisor_retries_only_a_bounded_failure(self):
+        client = LLMClient({
+            "mode": "openai_compatible", "base_url": "http://unused", "model": "test",
+            "hard_timeout_seconds": 1, "heartbeat_seconds": 0.01, "max_attempts": 2,
+        })
+        calls = []
+
+        def flaky(_system, _user):
+            calls.append(1)
+            return None if len(calls) == 1 else {"recovered": True}
+
+        client._complete_compatible = flaky
+        self.assertEqual(client.complete_json("system", "user", phase="planning"), {"recovered": True})
+        self.assertEqual(len(calls), 2)
+
+    def test_controller_heartbeat_updates_elapsed_independently(self):
+        self.config["campaign"] = {"controller_heartbeat_seconds": 0.05}
+        controller = ResearchController(self.root, self.config)
+        controller.initialize()
+        controller._run_started_monotonic = time.monotonic() - 3
+        controller._stop.clear()
+        heartbeat = threading.Thread(target=controller._heartbeat_loop, daemon=True)
+        heartbeat.start()
+        time.sleep(0.08)
+        controller._stop.set()
+        heartbeat.join(timeout=1)
+        state = controller.store.load()
+        self.assertGreaterEqual(state["run"]["elapsed_seconds"], 3)
+        self.assertIn("controller_heartbeat_at", state["run"])
 
     def test_end_to_end_simulated_loop(self):
         controller = ResearchController(self.root, self.config)

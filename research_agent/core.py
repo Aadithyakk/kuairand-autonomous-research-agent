@@ -6,6 +6,7 @@ import json
 import math
 import os
 import platform
+import queue
 import random
 import re
 import shlex
@@ -154,21 +155,73 @@ class LiteratureIndex:
 class LLMClient:
     """JSON research client for OpenAI Responses or a compatible local endpoint."""
 
-    def __init__(self, config: dict[str, Any]):
+    def __init__(
+        self,
+        config: dict[str, Any],
+        progress: Callable[[str, str], None] | None = None,
+        cancelled: Callable[[], bool] | None = None,
+    ):
         self.config = config
         self.last_error: str | None = None
+        self.progress = progress
+        self.cancelled = cancelled or (lambda: False)
 
     @property
     def enabled(self) -> bool:
         return self.config.get("mode") in {"openai_compatible", "openai_responses"}
 
-    def complete_json(self, system: str, user: str) -> dict[str, Any] | None:
+    def complete_json(self, system: str, user: str, phase: str = "llm") -> dict[str, Any] | None:
         if not self.enabled:
             return None
         self.last_error = None
-        if self.config.get("mode") == "openai_responses":
-            return self._complete_responses(system, user)
-        return self._complete_compatible(system, user)
+        phase_limits = self.config.get("phase_timeouts_seconds", {})
+        hard_timeout = max(0.01, float(phase_limits.get(phase, self.config.get("hard_timeout_seconds", 180))))
+        heartbeat_seconds = max(0.01, float(self.config.get("heartbeat_seconds", 15)))
+        max_attempts = max(1, int(self.config.get("max_attempts", 2)))
+        for attempt in range(1, max_attempts + 1):
+            outcome: queue.Queue[tuple[str, Any]] = queue.Queue(maxsize=1)
+
+            def request_job() -> None:
+                try:
+                    if self.config.get("mode") == "openai_responses":
+                        value = self._complete_responses(system, user)
+                    else:
+                        value = self._complete_compatible(system, user)
+                    outcome.put_nowait(("result", value))
+                except BaseException as exc:  # keep the supervisor alive even if a client library misbehaves
+                    outcome.put_nowait(("error", exc))
+
+            worker = threading.Thread(target=request_job, name=f"llm-{phase}-{attempt}", daemon=True)
+            worker.start()
+            deadline = time.monotonic() + hard_timeout
+            while True:
+                if self.cancelled():
+                    self.last_error = f"{phase}: cancelled by controller"
+                    return None
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    self.last_error = f"{phase}: hard deadline exceeded after {hard_timeout:.0f}s"
+                    if self.progress:
+                        self.progress("backtracking", f"{phase.title()} exceeded its hard deadline; abandoning this attempt.")
+                    return None
+                try:
+                    kind, value = outcome.get(timeout=min(heartbeat_seconds, remaining))
+                    if kind == "error":
+                        self.last_error = f"{phase}: {type(value).__name__}: {value}"
+                        result = None
+                    else:
+                        result = value
+                    break
+                except queue.Empty:
+                    if self.progress:
+                        self.progress(phase, f"{phase.title()} is active · supervised attempt {attempt}/{max_attempts}.")
+            if isinstance(result, dict):
+                return result
+            if attempt < max_attempts:
+                if self.progress:
+                    self.progress("retrying", f"{phase.title()} call failed; starting bounded retry {attempt + 1}/{max_attempts}.")
+                continue
+        return None
 
     def _complete_compatible(self, system: str, user: str) -> dict[str, Any] | None:
         base = self.config["base_url"].rstrip("/")
@@ -407,6 +460,8 @@ class ResearchController:
         self.policy = ResearchPolicy(self.actions, self.literature, self.llm, config.get("random_seed", 2026))
         self.executor = ExperimentExecutor(config["executor_mode"], root / paths["workspace"], config.get("random_seed", 2026))
         self._thread: threading.Thread | None = None
+        self._heartbeat_thread: threading.Thread | None = None
+        self._run_started_monotonic: float | None = None
         self._stop = threading.Event()
 
     def compute_profiles(self) -> list[dict[str, Any]]:
@@ -482,8 +537,11 @@ class ResearchController:
         self.store.mutate(configure)
         self.store.event("control", "Run configuration accepted.", budget_minutes=budget_minutes, compute_profile_id=requested)
         self._stop.clear()
+        self._run_started_monotonic = time.monotonic()
         self._thread = threading.Thread(target=self._loop, name="research-controller", daemon=True)
+        self._heartbeat_thread = threading.Thread(target=self._heartbeat_loop, name="research-heartbeat", daemon=True)
         self._thread.start()
+        self._heartbeat_thread.start()
         return self.store.load()
 
     def pause(self) -> dict[str, Any]:
@@ -500,7 +558,29 @@ class ResearchController:
         self.store.event("control", "Run stopped by a human operator.")
         if self._thread and self._thread.is_alive() and self._thread is not threading.current_thread():
             self._thread.join(timeout=2.0)
+        if self._heartbeat_thread and self._heartbeat_thread.is_alive() and self._heartbeat_thread is not threading.current_thread():
+            self._heartbeat_thread.join(timeout=1.0)
         return self.store.mutate(lambda current: current["run"].update(status="stopped"))
+
+    def _heartbeat_loop(self) -> None:
+        """Publish elapsed time independently from planning, code generation, and remote execution."""
+
+        interval = max(0.05, float(self.config.get("campaign", {}).get("controller_heartbeat_seconds", 2.0)))
+        while not self._stop.wait(interval):
+            state = self.store.load()
+            status = state.get("run", {}).get("status")
+            if status in {"stopped", "completed", "converged", "budget_exhausted", "error"}:
+                return
+            started = self._run_started_monotonic
+            if started is None:
+                continue
+            elapsed = int(time.monotonic() - started)
+
+            def pulse(current: dict[str, Any]) -> None:
+                current["run"]["elapsed_seconds"] = elapsed
+                current["run"]["controller_heartbeat_at"] = utc_now()
+
+            self.store.mutate(pulse)
 
     def steer(self, message: str) -> dict[str, Any]:
         clean = " ".join(message.strip().split())[:1000]
@@ -517,7 +597,7 @@ class ResearchController:
         return state
 
     def _loop(self) -> None:
-        started = time.monotonic()
+        started = self._run_started_monotonic or time.monotonic()
 
         def mark_running(state: dict[str, Any]) -> None:
             state["run"]["status"] = "running"

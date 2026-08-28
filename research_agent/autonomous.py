@@ -53,6 +53,7 @@ class OpenAICompatibleResearchModel(ResearchModel):
         response = self.client.complete_json(
             """You are an autonomous ML research planner. Diagnose the supplied ranking benchmark and create 3-5 bounded experiments. The organizer FM is the immutable anchor lineage: do not restart the research from zero or propose unrelated novelty merely for family coverage. Condition every idea on the baseline recipe, prior measured experiments, literature, runtime, and available artifacts. Normally devote at least two candidates to conservative improvements or ablations around the strongest reproducible lineage and at most one candidate to higher-risk exploration. Do not repeat a lineage that lost more than 0.01 primary unless the proposal identifies a concrete mechanism that repairs the measured failure. Prefer bounded, vectorizable changes; avoid Python row loops, repeated full-frame sorts, and elaborate causal accumulators. A trusted training-only temporal tournament screens candidates before the external evaluator, which alone owns official metrics and champion promotion. Require an additional internal holdout only when tuning hyperparameters, thresholds, or blend weights. Every candidate must contain id, title, hypothesis, change_kind, model_family, required_inputs, compute_preference, research_basis, expected_gain, risk, estimated_minutes, acceptance_rule, and abort_condition. required_inputs must name only available artifacts. If an idea needs an unavailable checkpoint, prediction vector, feature, label, or library, do not propose it. expected_gain is 0 to 0.03; risk is 0 to 1; estimated_minutes is 0.1 to 10. Use only training labels and validation features. Return JSON with diagnostic, research_query, and candidates.""",
             json.dumps({"benchmark": context, "evidence": evidence, "memory": memory[-8:], "human_steering": steering[-4:]}),
+            phase="planning",
         )
         if not response:
             raise RuntimeError("Research planner did not return valid JSON")
@@ -62,6 +63,7 @@ class OpenAICompatibleResearchModel(ResearchModel):
         response = self.client.complete_json(
             """Write one complete Python experiment program for the supplied hypothesis and benchmark program contract. Return JSON with only a code field. Define main() and call it under if __name__ == '__main__'. The program only needs to train and write predictions; the trusted external evaluator calculates official metrics and compares with the champion. Do not reproduce the official FM or implement the official evaluator. Prefer the supplied trusted_components helpers where relevant, plus vectorized pandas/numpy/LightGBM operations; never loop over dataset rows. If the proposal tunes hyperparameters, thresholds, or blend weights, use a strictly training-only chronological holdout; otherwise do not add an unnecessary internal evaluator. Obey the supplied input paths, output schema, allowed libraries, and label boundary exactly. Never use network, subprocess, dynamic execution, absolute paths, parent paths, validation labels, test data, or evaluator files. Scores must be finite. The validation input intentionally has no labels.""",
             json.dumps({"proposal": proposal, "benchmark_contract": context, "relevant_memory": memory[-5:]}),
+            phase="implementing",
         )
         if not response or not isinstance(response.get("code"), str):
             raise RuntimeError("Research coder did not return a code string")
@@ -71,6 +73,7 @@ class OpenAICompatibleResearchModel(ResearchModel):
         response = self.client.complete_json(
             """Act as a rigorous ML research reviewer. Interpret the experiment outcome without inventing metrics. Return JSON with conclusion, causal_claim_strength (none/weak/moderate/strong), reusable_lesson, next_research_question, and whether_to_retry. A failed safety or execution check is evidence about implementation, not model quality.""",
             json.dumps({"proposal": proposal, "result": result, "prior_memory": memory[-5:]}),
+            phase="reflecting",
         )
         return response or {
             "conclusion": "No valid reflection was returned.",

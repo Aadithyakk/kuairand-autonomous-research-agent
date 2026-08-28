@@ -70,6 +70,7 @@ class AutonomousKaggleCampaign:
             self.root / "knowledge/literature.json",
             self.memory_path,
             progress=lambda phase, message: stage(phase, message, None),
+            should_stop=should_stop,
         )
         proposal = read_json(generation_dir / "proposal.json")
         proposal.update({"experiment_id": run_name, "status": "reviewed", "started_at": utc_now()})
