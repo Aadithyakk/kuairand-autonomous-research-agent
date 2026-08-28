@@ -120,13 +120,18 @@ def deterministic_findings(source: str, proposal: dict[str, Any]) -> list[str]:
     gate = CodeSafetyGate({"gc", "lightgbm", "numpy", "pandas", "sklearn", "time", "trusted_components"}).inspect(source)
     findings = list(gate["findings"])
     lowered = source.lower()
-    if "predictions.npy" not in lowered:
+    # save_predictions owns the canonical output path. Requiring the literal
+    # filename made valid helper-based programs enter needless repair loops.
+    if "predictions.npy" not in lowered and "save_predictions" not in lowered:
         findings.append("Program must write predictions.npy")
     if "isfinite" not in lowered and "save_predictions" not in lowered:
         findings.append("Program must explicitly reject non-finite predictions")
     hypothesis = " ".join(str(proposal.get(key, "")) for key in ("title", "hypothesis", "model_family")).lower()
     if ("factorization machine" in hypothesis or re.search(r"\bfm\b", hypothesis)) and not any(
-        token in lowered for token in ("factorization", "class numpyfm", "class fm", "embedding", "fit_predict_fm", "trustedfm")
+        token in lowered for token in (
+            "factorization", "class numpyfm", "class fm", "embedding",
+            "fit_predict_fm", "paired_fm_predictions", "trustedfm",
+        )
     ):
         findings.append("Hypothesis requires an FM implementation, but the program does not contain one")
     findings.extend(trusted_api_findings(source))
@@ -202,7 +207,12 @@ def feasibility_findings(proposal: dict[str, Any], context: dict[str, Any]) -> l
     missing = sorted(str(item) for item in required if str(item) not in available)
     findings = [f"Unavailable required input: {item}" for item in missing]
     text = " ".join(str(proposal.get(key, "")) for key in ("title", "hypothesis", "change_kind")).lower()
-    if any(term in text for term in ("fm score", "fm residual", "residual over fm", "fm checkpoint")):
+    capabilities = " ".join(map(str, proposal.get("required_capabilities", []))).lower()
+    can_train_fm = any(
+        token in capabilities
+        for token in ("fit_predict_fm", "paired_fm_predictions", "trustedfm", "encode_fm")
+    )
+    if any(term in text for term in ("fm score", "fm residual", "residual over fm", "fm checkpoint")) and not can_train_fm:
         findings.append("FM residual/blend requires a score or checkpoint artifact that is not currently available")
     return findings
 

@@ -82,6 +82,17 @@ def main():
         self.assertTrue(any("Syntax" in item or "syntax" in item for item in findings))
         self.assertTrue(any("predictions.npy" in item for item in findings))
 
+    def test_deterministic_preflight_accepts_trusted_paired_fm_output(self):
+        source = """from trusted_components import paired_fm_predictions, save_predictions
+def main():
+    _, scores = paired_fm_predictions(train, validation, control, treatment)
+    save_predictions(scores, validation)
+if __name__ == '__main__':
+    main()
+"""
+        proposal = {"title": "Paired FM feature ablation", "hypothesis": "FM feature improves ranking", "model_family": "factorization_machine"}
+        self.assertEqual(deterministic_findings(source, proposal), [])
+
     def test_feasibility_gate_rejects_unavailable_fm_score_artifact(self):
         context = kuairand_context([])
         proposal = {
@@ -91,6 +102,17 @@ def main():
         findings = feasibility_findings(proposal, context)
         self.assertTrue(any("Unavailable required input" in item for item in findings))
         self.assertTrue(any("FM residual" in item for item in findings))
+
+    def test_feasibility_gate_allows_residual_that_trains_its_own_fm(self):
+        context = kuairand_context([])
+        proposal = {
+            "title": "FM residual reranker",
+            "hypothesis": "Train an FM backbone and learn a bounded residual",
+            "change_kind": "hybrid",
+            "required_inputs": ["data/train.parquet", "data/validation.parquet"],
+            "required_capabilities": ["trusted_components.fit_predict_fm", "lightgbm.LGBMRanker"],
+        }
+        self.assertEqual(feasibility_findings(proposal, context), [])
 
     def test_requirements_separate_files_from_trusted_capabilities(self):
         context = kuairand_context([])
