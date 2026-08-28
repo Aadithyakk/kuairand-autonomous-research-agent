@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import copy
 import json
 import re
@@ -64,7 +65,10 @@ def kuairand_context(memory: list[dict[str, Any]]) -> dict[str, Any]:
                 "trusted_components.load_frames(train_columns, validation_columns)",
                 "trusted_components.chronological_split(frame, holdout_dates=2)",
                 "trusted_components.save_predictions(scores, validation)",
-                "trusted_components.TrustedFM and trusted_components.encode_fm",
+                "trusted_components.fit_predict_fm(train, validation, columns, label='long_view', factors=16, learning_rate=0.001, l2=1e-6, epochs=2, batch_size=8192, seed=2026)",
+                "trusted_components.paired_fm_predictions(train, validation, control_columns, treatment_columns, **settings)",
+                "trusted_components.TrustedFM(dimension, factors=16, learning_rate=0.001, l2=1e-6, seed=0).fit(matrix, labels, epochs=2, batch_size=8192, seed=2026).predict(matrix)",
+                "trusted_components.encode_fm(train, validation, columns)",
                 "trusted external GAUC/nDCG evaluator and smoke-test runner",
             ],
         },
@@ -122,10 +126,72 @@ def deterministic_findings(source: str, proposal: dict[str, Any]) -> list[str]:
         findings.append("Program must explicitly reject non-finite predictions")
     hypothesis = " ".join(str(proposal.get(key, "")) for key in ("title", "hypothesis", "model_family")).lower()
     if ("factorization machine" in hypothesis or re.search(r"\bfm\b", hypothesis)) and not any(
-        token in lowered for token in ("factorization", "class numpyfm", "class fm", "embedding")
+        token in lowered for token in ("factorization", "class numpyfm", "class fm", "embedding", "fit_predict_fm", "trustedfm")
     ):
         findings.append("Hypothesis requires an FM implementation, but the program does not contain one")
+    findings.extend(trusted_api_findings(source))
     return sorted(set(findings))
+
+
+def trusted_api_findings(source: str) -> list[str]:
+    """Validate model-authored calls against the concrete trusted component API."""
+
+    allowed_exports = {
+        "TrustedFM", "load_frames", "chronological_split", "save_predictions", "sigmoid",
+        "encode_fm", "fit_predict_fm", "paired_fm_predictions",
+    }
+    trusted_fm_keywords = {"dimension", "factors", "learning_rate", "l2", "seed"}
+    findings: list[str] = []
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return findings
+    module_aliases = {"trusted_components"}
+    imported_names: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name == "trusted_components":
+                    module_aliases.add(alias.asname or alias.name)
+        elif isinstance(node, ast.ImportFrom) and node.module == "trusted_components":
+            for alias in node.names:
+                imported_names[alias.asname or alias.name] = alias.name
+                if alias.name not in allowed_exports:
+                    findings.append(f"Unknown trusted_components export: {alias.name}")
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        export = None
+        if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in module_aliases:
+            export = node.func.attr
+        elif isinstance(node.func, ast.Name) and node.func.id in imported_names:
+            export = imported_names[node.func.id]
+        if export and export not in allowed_exports:
+            findings.append(f"Unknown trusted_components export: {export}")
+        if export == "TrustedFM":
+            invalid = sorted(keyword.arg for keyword in node.keywords if keyword.arg and keyword.arg not in trusted_fm_keywords)
+            if invalid:
+                findings.append(f"Unsupported TrustedFM constructor arguments: {', '.join(invalid)}")
+    return sorted(set(findings))
+
+
+def normalize_requirements(proposal: dict[str, Any], context: dict[str, Any]) -> None:
+    """Keep file dependencies separate from callable trusted capabilities."""
+
+    available = set(context["program_contract"]["available_inputs"])
+    raw = proposal.get("required_inputs", [])
+    if not isinstance(raw, list):
+        return
+    files, capabilities = [], list(proposal.get("required_capabilities", []))
+    for item in map(str, raw):
+        if item in available or item.startswith("data/"):
+            files.append(item)
+        elif item.startswith("trusted_components"):
+            capabilities.append(item)
+        else:
+            files.append(item)
+    proposal["required_inputs"] = list(dict.fromkeys(files))
+    proposal["required_capabilities"] = list(dict.fromkeys(map(str, capabilities)))
 
 
 def feasibility_findings(proposal: dict[str, Any], context: dict[str, Any]) -> list[str]:
@@ -139,6 +205,35 @@ def feasibility_findings(proposal: dict[str, Any], context: dict[str, Any]) -> l
     if any(term in text for term in ("fm score", "fm residual", "residual over fm", "fm checkpoint")):
         findings.append("FM residual/blend requires a score or checkpoint artifact that is not currently available")
     return findings
+
+
+def repair_runtime_candidate(
+    config_path: Path,
+    memory_path: Path | None,
+    proposal: dict[str, Any],
+    source: str,
+    runtime_issues: list[str],
+    output: Path,
+    progress: Callable[[str, str], None] | None = None,
+    should_stop: Callable[[], bool] | None = None,
+) -> dict[str, Any]:
+    """Repair the same hypothesis from a trusted runtime trace, then re-review it."""
+
+    config = read_json(config_path)
+    memory = read_json(memory_path) if memory_path and memory_path.exists() else []
+    context = kuairand_context(memory)
+    client = LLMClient(config["llm"], progress=progress, cancelled=should_stop)
+    output.mkdir(parents=True, exist_ok=True)
+    repaired = repair_program(client, proposal, context, source, runtime_issues)
+    (output / "candidate.runtime-raw.py").write_text(repaired, encoding="utf-8")
+    reviewed, reviews = review_program(
+        client, proposal, context, repaired, output, max_rounds=2, stage="runtime", progress=progress
+    )
+    safety = CodeSafetyGate({"gc", "lightgbm", "numpy", "pandas", "sklearn", "time", "trusted_components"}).inspect(reviewed)
+    deterministic = deterministic_findings(reviewed, proposal)
+    approved = bool(reviews and reviews[-1]["approved"] and safety["passed"] and not deterministic)
+    (output / "candidate.runtime-final.py").write_text(reviewed, encoding="utf-8")
+    return {"approved": approved, "source": reviewed, "reviews": reviews, "safety": safety, "findings": deterministic}
 
 
 def repair_program(
@@ -223,6 +318,7 @@ def generate(
     candidates = GenericResearchAgent._validate_candidates(bundle.get("candidates"))
     for candidate in candidates:
         candidate.setdefault("required_inputs", ["data/train.parquet", "data/validation.parquet"])
+        normalize_requirements(candidate, context)
         candidate.setdefault("compute_preference", "auto")
         if not candidate.get("model_family"):
             text = " ".join(str(candidate.get(key, "")) for key in ("title", "hypothesis", "change_kind")).lower()

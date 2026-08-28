@@ -3,11 +3,20 @@ import tempfile
 import unittest
 from pathlib import Path
 
+try:
+    import numpy as np
+    import pandas as pd
+    from outputs.trusted_components import fit_predict_fm, paired_fm_predictions
+except ModuleNotFoundError:  # lightweight controller environments need not install the Kaggle data stack
+    np = pd = fit_predict_fm = paired_fm_predictions = None
 from research_agent.autonomous import GenericResearchAgent, ScriptedValidationModel
 from research_agent.benchmark import ToyRankingBenchmark, evaluate_ranking
 from research_agent.core import LiteratureIndex
 from research_agent.safety import CodeSafetyGate
-from research_agent.real_pilot import deterministic_findings, feasibility_findings, kuairand_context
+from research_agent.real_pilot import (
+    deterministic_findings, feasibility_findings, kuairand_context,
+    normalize_requirements, trusted_api_findings,
+)
 
 
 class AutonomousAgentTests(unittest.TestCase):
@@ -82,6 +91,46 @@ def main():
         findings = feasibility_findings(proposal, context)
         self.assertTrue(any("Unavailable required input" in item for item in findings))
         self.assertTrue(any("FM residual" in item for item in findings))
+
+    def test_requirements_separate_files_from_trusted_capabilities(self):
+        context = kuairand_context([])
+        proposal = {
+            "required_inputs": [
+                "data/train.parquet", "data/validation.parquet",
+                "trusted_components.fit_predict_fm(train, validation, columns)",
+            ]
+        }
+        normalize_requirements(proposal, context)
+        self.assertEqual(proposal["required_inputs"], ["data/train.parquet", "data/validation.parquet"])
+        self.assertEqual(len(proposal["required_capabilities"]), 1)
+        self.assertEqual(feasibility_findings(proposal, context), [])
+
+    def test_trusted_api_gate_rejects_unknown_exports_and_constructor_keywords(self):
+        source = """import trusted_components as tc
+def main():
+    tc.made_up_helper()
+    tc.TrustedFM(dimension=10, n_factors=8)
+"""
+        findings = trusted_api_findings(source)
+        self.assertTrue(any("Unknown trusted_components export" in item for item in findings))
+        self.assertTrue(any("Unsupported TrustedFM constructor" in item for item in findings))
+
+    @unittest.skipIf(fit_predict_fm is None, "Kaggle numerical stack is not installed locally")
+    def test_high_level_fm_primitives_fit_and_return_aligned_scores(self):
+        train = pd.DataFrame({
+            "user_id": ["u1", "u1", "u2", "u2"] * 16,
+            "video_id": ["v1", "v2", "v1", "v3"] * 16,
+            "hour": [1, 2, 1, 3] * 16,
+            "long_view": [1, 0, 0, 1] * 16,
+        })
+        validation = pd.DataFrame({"row_id": np.arange(4), "user_id": ["u1", "u2", "u1", "u2"], "video_id": ["v2", "v3", "v1", "v1"], "hour": [2, 3, 1, 1]})
+        scores = fit_predict_fm(train, validation, ["user_id", "video_id"], epochs=1, batch_size=128)
+        control, treatment = paired_fm_predictions(
+            train, validation, ["user_id", "video_id"], ["user_id", "video_id", "hour"], epochs=1, batch_size=128
+        )
+        self.assertEqual(len(scores), len(validation))
+        self.assertTrue(np.isfinite(scores).all())
+        self.assertEqual(len(control), len(treatment))
 
     def test_agent_generates_recovers_evaluates_and_promotes(self):
         benchmark = ToyRankingBenchmark(self.root / "benchmark")

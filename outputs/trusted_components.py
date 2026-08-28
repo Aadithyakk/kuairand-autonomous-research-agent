@@ -77,6 +77,25 @@ class TrustedFM:
             parameter -= self.learning_rate * (first / (1 - 0.9 ** self.step_number)) / (np.sqrt(second / (1 - 0.999 ** self.step_number)) + 1e-8)
         self.bias -= self.learning_rate * gradient.sum()
 
+    def fit(self, matrix, labels, epochs: int = 2, batch_size: int = 8192, seed: int = 2026):
+        """Fit encoded FM rows with a stable, sklearn-like contract."""
+
+        matrix = np.asarray(matrix, dtype=np.int32)
+        labels = np.asarray(labels, dtype=np.float32).reshape(-1)
+        if len(matrix) != len(labels) or len(labels) == 0:
+            raise ValueError("FM training rows and labels must be non-empty and aligned")
+        epochs = int(epochs)
+        batch_size = int(batch_size)
+        if not 1 <= epochs <= 40 or not 128 <= batch_size <= 200_000:
+            raise ValueError("FM epochs or batch_size exceeds the trusted bounds")
+        rng = np.random.default_rng(int(seed))
+        for _ in range(epochs):
+            order = rng.permutation(len(labels))
+            for start in range(0, len(order), batch_size):
+                batch = order[start:start + batch_size]
+                self.step(matrix[batch], labels[batch])
+        return self
+
     def predict(self, matrix, batch_size: int = 200_000):
         return np.concatenate([self.logits(matrix[start:start + batch_size])[0] for start in range(0, len(matrix), batch_size)])
 
@@ -100,3 +119,51 @@ def encode_fm(train: pd.DataFrame, validation: pd.DataFrame, columns: list[str])
         return matrix
 
     return transform(train_values), transform(validation_values), offset
+
+
+def fit_predict_fm(
+    train: pd.DataFrame,
+    validation: pd.DataFrame,
+    columns: list[str],
+    label: str = "long_view",
+    factors: int = 16,
+    learning_rate: float = 0.001,
+    l2: float = 1e-6,
+    epochs: int = 2,
+    batch_size: int = 8192,
+    seed: int = 2026,
+):
+    """Encode, fit, and score a bounded FM without exposing optimizer internals."""
+
+    if label not in train or label in validation:
+        raise ValueError("fit_predict_fm label boundary violation")
+    train_matrix, validation_matrix, dimension = encode_fm(train, validation, columns)
+    model = TrustedFM(
+        dimension=dimension,
+        factors=int(factors),
+        learning_rate=float(learning_rate),
+        l2=float(l2),
+        seed=int(seed),
+    )
+    model.fit(
+        train_matrix,
+        train[label].to_numpy(dtype=np.float32),
+        epochs=int(epochs),
+        batch_size=int(batch_size),
+        seed=int(seed),
+    )
+    return model.predict(validation_matrix)
+
+
+def paired_fm_predictions(
+    train: pd.DataFrame,
+    validation: pd.DataFrame,
+    control_columns: list[str],
+    treatment_columns: list[str],
+    **settings,
+):
+    """Return matched-seed control/treatment predictions for a feature ablation."""
+
+    control = fit_predict_fm(train, validation, control_columns, **settings)
+    treatment = fit_predict_fm(train, validation, treatment_columns, **settings)
+    return control, treatment

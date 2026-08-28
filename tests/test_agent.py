@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from research_agent.core import LLMClient, LiteratureIndex, ResearchController
-from research_agent.campaign import requires_gpu
+from research_agent.campaign import is_repairable_runtime_result, requires_gpu
 from research_agent.fidelity import MultiFidelityPolicy
 from research_agent.kaggle_packager import package
 
@@ -75,6 +75,13 @@ class AgentTests(unittest.TestCase):
         self.assertFalse(requires_gpu("factorization_machine_lambda_gradient_boosting", "auto"))
         self.assertTrue(requires_gpu("din_sequence", "auto"))
         self.assertTrue(requires_gpu("tree", "t4"))
+
+    def test_only_runtime_implementation_failures_receive_same_candidate_repair(self):
+        failure = {"failure_type": "implementation_failed", "stage": "smoke"}
+        self.assertTrue(is_repairable_runtime_result(failure, 0, 2))
+        self.assertFalse(is_repairable_runtime_result(failure, 2, 2))
+        self.assertFalse(is_repairable_runtime_result(failure, 0, 2, stopped=True))
+        self.assertFalse(is_repairable_runtime_result({"failure_type": "model_quality", "stage": "quality_screen"}, 0, 2))
 
     def test_llm_supervisor_abandons_a_hung_call(self):
         updates = []

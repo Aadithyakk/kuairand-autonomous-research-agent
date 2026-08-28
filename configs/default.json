@@ -31,6 +31,7 @@
     "memory": "runtime/openai-pilot/memory.json",
     "candidate_attempts_per_iteration": 3,
     "max_implementation_failures": 12,
+    "runtime_repairs_per_candidate": 2,
     "controller_heartbeat_seconds": 2
   },
   "compute_profiles": [

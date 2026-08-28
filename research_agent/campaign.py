@@ -10,7 +10,7 @@ from typing import Any, Callable
 
 from .core import read_json, utc_now, write_json_atomic
 from .kaggle_packager import package
-from .real_pilot import generate, reflect
+from .real_pilot import generate, reflect, repair_runtime_candidate
 
 
 StageCallback = Callable[[str, str, dict[str, Any] | None], None]
@@ -22,6 +22,15 @@ def requires_gpu(model_family: str, compute_preference: str) -> bool:
     family_tokens = set(model_family.lower().replace("-", "_").split("_"))
     return preference in {"gpu", "t4", "cuda"} or bool(
         family_tokens.intersection({"sequence", "sequential", "neural", "transformer", "din", "dien", "sasrec"})
+    )
+
+
+def is_repairable_runtime_result(result: dict[str, Any], attempt: int, maximum: int, stopped: bool = False) -> bool:
+    return bool(
+        not stopped
+        and attempt < maximum
+        and result.get("failure_type") == "implementation_failed"
+        and result.get("stage") in {"smoke", "execution", "output", "safety"}
     )
 
 
@@ -90,12 +99,6 @@ class AutonomousKaggleCampaign:
         stage("reviewed", "The proposal passed deterministic, methodology, leakage and code review.", {"proposal": proposal})
 
         worker_path = kernel_dir / "kuairand_candidate_worker.py"
-        package(
-            self.root / "outputs/kuairand_candidate_worker.py",
-            generation_dir / "candidate.py",
-            generation_dir / "proposal.json",
-            worker_path,
-        )
         # Kaggle derives the public slug from the title, even when metadata.id
         # requests another value. Keep both exactly aligned so status polling
         # and output retrieval address the kernel Kaggle actually creates.
@@ -120,49 +123,124 @@ class AutonomousKaggleCampaign:
             "kernel_sources": [],
         }
         write_json_atomic(kernel_dir / "kernel-metadata.json", metadata)
-        stage("dispatching", f"Submitting the reviewed experiment to Kaggle on {selected_compute}.", {"kernel_ref": kernel_ref, "compute_profile_id": selected_compute})
-        self._kaggle(["kernels", "push", "-p", str(kernel_dir)])
+        output_dir = kernel_dir / "output"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        runtime_repairs: list[dict[str, Any]] = []
+        max_runtime_repairs = int(self.config.get("campaign", {}).get("runtime_repairs_per_candidate", 2))
+        result_path: Path | None = None
+        result: dict[str, Any] = {}
+        for runtime_attempt in range(max_runtime_repairs + 1):
+            package(
+                self.root / "outputs/kuairand_candidate_worker.py",
+                generation_dir / "candidate.py",
+                generation_dir / "proposal.json",
+                worker_path,
+            )
+            result, result_path = self._dispatch_and_collect(
+                kernel_dir, output_dir, kernel_ref, selected_compute, stage, should_stop, runtime_attempt
+            )
+            result["kernel_ref"] = kernel_ref
+            result["kernel_url"] = f"https://www.kaggle.com/code/{kernel_ref}"
+            repairable = is_repairable_runtime_result(result, runtime_attempt, max_runtime_repairs, should_stop())
+            if not repairable:
+                break
+            trace = [str(result.get("error", "Runtime implementation failure"))]
+            if result.get("stderr_tail"):
+                trace.append(str(result["stderr_tail"]))
+            smoke = result.get("smoke", {})
+            if isinstance(smoke, dict) and smoke.get("stderr_tail"):
+                trace.append(str(smoke["stderr_tail"]))
+            stage(
+                "runtime_repair",
+                f"Trusted smoke failed; repairing the same hypothesis ({runtime_attempt + 1}/{max_runtime_repairs}).",
+                {"proposal": proposal, "kernel_ref": kernel_ref},
+            )
+            repair_dir = generation_dir / f"runtime-repair-{runtime_attempt + 1:02d}"
+            try:
+                repaired = repair_runtime_candidate(
+                    self.root / "configs/default.json",
+                    self.memory_path,
+                    proposal,
+                    (generation_dir / "candidate.py").read_text(encoding="utf-8"),
+                    trace,
+                    repair_dir,
+                    progress=lambda phase, message: stage(phase, message, {"proposal": proposal}),
+                    should_stop=should_stop,
+                )
+            except RuntimeError as exc:
+                runtime_repairs.append({"attempt": runtime_attempt + 1, "approved": False, "error": str(exc)})
+                result["error"] = f"Runtime repair failed: {exc}"
+                break
+            runtime_repairs.append({
+                "attempt": runtime_attempt + 1,
+                "approved": repaired["approved"],
+                "findings": repaired["findings"],
+                "reviews": repaired["reviews"],
+            })
+            if not repaired["approved"]:
+                result["error"] = "Runtime repair did not pass deterministic and methodological re-review"
+                break
+            (generation_dir / "candidate.py").write_text(repaired["source"], encoding="utf-8")
+            stage("repaired", "The same candidate passed runtime repair and will be resubmitted.", {"proposal": proposal})
+        result["runtime_repairs"] = runtime_repairs
+        if result_path and result_path.exists():
+            stage("reflecting", "Recording the final result and updating experiment memory.", {"kernel_ref": kernel_ref})
+            reflect(result_path, generation_dir / "proposal.json", self.root / "configs/default.json", self.memory_path)
+        return proposal, result
 
+    def _dispatch_and_collect(
+        self,
+        kernel_dir: Path,
+        output_dir: Path,
+        kernel_ref: str,
+        selected_compute: str,
+        stage: StageCallback,
+        should_stop: StopCallback,
+        runtime_attempt: int,
+    ) -> tuple[dict[str, Any], Path | None]:
+        prior_result = output_dir / "candidate_result.json"
+        if prior_result.exists():
+            prior_result.replace(output_dir / f"candidate_result.before-runtime-repair-{runtime_attempt:02d}.json")
+        stage(
+            "dispatching",
+            f"Submitting the reviewed experiment to Kaggle on {selected_compute}.",
+            {"kernel_ref": kernel_ref, "compute_profile_id": selected_compute},
+        )
+        self._kaggle(["kernels", "push", "-p", str(kernel_dir)])
         stage("running", "Kaggle is training and evaluating the candidate.", {"kernel_ref": kernel_ref})
         while True:
             if should_stop():
-                return proposal, {
+                return {
                     "status": "stopped", "stage": "remote_execution", "metrics": {},
+                    "counts_as_experiment": False,
                     "error": "Operator requested stop; the remote Kaggle run may finish independently.",
-                    "kernel_ref": kernel_ref,
-                }
+                }, None
             status = self._kaggle(["kernels", "status", kernel_ref], check=False)
             normalized = status.upper()
             if "COMPLETE" in normalized:
                 break
             if any(word in normalized for word in ("ERROR", "FAILED", "CANCEL", "DENIED", "CANNOT ACCESS")):
-                return proposal, {
+                return {
                     "status": "failed", "stage": "remote_execution", "metrics": {},
-                    "error": status.strip()[-1200:], "kernel_ref": kernel_ref,
-                }
+                    "counts_as_experiment": False, "failure_type": "infrastructure_failed",
+                    "error": status.strip()[-1200:],
+                }, None
             stage("running", "Kaggle is still training; the controller will check again automatically.", {"kernel_ref": kernel_ref})
             time.sleep(self.poll_seconds)
-
-        output_dir = kernel_dir / "output"
-        output_dir.mkdir(parents=True, exist_ok=True)
         stage("downloading", "Collecting the trusted evaluator result.", {"kernel_ref": kernel_ref})
         self._kaggle(["kernels", "output", kernel_ref, "-p", str(output_dir), "--force"])
         result_path = output_dir / "candidate_result.json"
         if not result_path.exists():
-            return proposal, {
-                "status": "failed", "stage": "result", "metrics": {},
-                "error": "Kaggle completed without candidate_result.json", "kernel_ref": kernel_ref,
-            }
+            return {
+                "status": "failed", "stage": "result", "metrics": {}, "counts_as_experiment": False,
+                "failure_type": "infrastructure_failed", "error": "Kaggle completed without candidate_result.json",
+            }, None
         trusted = read_json(result_path)
         result = trusted.get("result", trusted)
-        result.setdefault("counts_as_experiment", result.get("status") == "completed")
+        result.setdefault("counts_as_experiment", result.get("status") in {"completed", "screen_rejected"})
         if result.get("status") != "completed":
             result.setdefault("failure_type", "implementation_failed")
-        result["kernel_ref"] = kernel_ref
-        result["kernel_url"] = f"https://www.kaggle.com/code/{kernel_ref}"
-        stage("reflecting", "Recording the result and updating experiment memory.", {"kernel_ref": kernel_ref})
-        reflect(result_path, generation_dir / "proposal.json", self.root / "configs/default.json", self.memory_path)
-        return proposal, result
+        return result, result_path
 
     def _kaggle(self, arguments: list[str], check: bool = True) -> str:
         env = os.environ.copy()
