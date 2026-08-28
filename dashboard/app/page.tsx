@@ -10,8 +10,9 @@ type Experiment = {
 };
 type LiteratureCard = { id: string; title: string; year: number; url: string; tags: string[]; claim: string; cautions: string[] };
 type EventItem = { id: string; timestamp: string; kind: string; message: string; metrics?: Metrics; improved?: boolean };
+type ComputeProfile = { id: string; label: string; provider: string; accelerator: string; available: boolean; detected: boolean; recommended?: boolean; reason?: string };
 type AgentState = {
-  run: { id: string; status: string; benchmark: string; label: string; budget_seconds: number; elapsed_seconds: number; max_experiments: number; manual_interventions: number; executor_mode: string; llm_mode: string };
+  run: { id: string; status: string; benchmark: string; label: string; budget_seconds: number; elapsed_seconds: number; max_experiments: number; manual_interventions: number; executor_mode: string; llm_mode: string; compute_profile_id?: string; compute?: ComputeProfile };
   baseline: { metrics: Metrics; status: string };
   best: { experiment_id: string; title: string; metrics: Metrics };
   current_experiment: Experiment | null;
@@ -24,13 +25,26 @@ type AgentState = {
 };
 
 const baseline: Metrics = { GAUC: 0.667400, 'nDCG@5': 0.535744, primary: 0.601572 };
+const demoCompute: ComputeProfile[] = [
+  { id: 'local-cpu', label: 'Local CPU', provider: 'local', accelerator: 'Auto-detected host CPU', available: true, detected: true, reason: 'Best for feature work and tree models.' },
+  { id: 'kaggle-cpu', label: 'Kaggle CPU', provider: 'kaggle', accelerator: 'Remote CPU worker', available: false, detected: false, recommended: true, reason: 'Available when the Kaggle dispatcher is connected.' },
+  { id: 'kaggle-t4', label: 'Kaggle T4', provider: 'kaggle', accelerator: 'NVIDIA Tesla T4 · 16 GB', available: false, detected: false, recommended: true, reason: 'Available when the Kaggle dispatcher is connected.' },
+];
 const demoState: AgentState = {
-  run: { id: 'preview', status: 'ready', benchmark: 'KuaiRand-Pure', label: 'long_view', budget_seconds: 10800, elapsed_seconds: 0, max_experiments: 10, manual_interventions: 0, executor_mode: 'simulation', llm_mode: 'fallback' },
+  run: { id: 'preview', status: 'ready', benchmark: 'KuaiRand-Pure', label: 'long_view', budget_seconds: 10800, elapsed_seconds: 0, max_experiments: 10, manual_interventions: 0, executor_mode: 'sanitized Kaggle worker', llm_mode: 'GPT-5.6 Luna · Terra escalation' },
   baseline: { metrics: baseline, status: 'passed' },
   best: { experiment_id: 'iteration-000', title: 'Official FM baseline', metrics: baseline },
-  current_experiment: null,
-  candidate_queue: [], experiments: [], steering: [], literature_hits: [],
-  events: [{ id: 'baseline', timestamp: new Date().toISOString(), kind: 'baseline', message: 'Official FM baseline reproduced across five seeds.' }],
+  current_experiment: null, candidate_queue: [], steering: [], literature_hits: [],
+  experiments: [{
+    experiment_id: 'iteration-001', id: 'exp_hierarchical_coldstart', title: 'Hierarchical empirical-Bayes affinity scorer',
+    change_kind: 'generated · reviewed · real KuaiRand', status: 'completed',
+    hypothesis: 'Smoothed user–candidate affinity could improve sparse ranking without validation-label tuning.',
+    metrics: { GAUC: 0.640372, 'nDCG@5': 0.523208, primary: 0.581790 }, delta_vs_champion: -0.019782, improved: false, elapsed_seconds: 15.65,
+  }],
+  events: [
+    { id: 'baseline', timestamp: new Date(Date.now() - 60_000).toISOString(), kind: 'baseline', message: 'Official FM baseline reproduced across five seeds.' },
+    { id: 'pilot', timestamp: new Date().toISOString(), kind: 'result', message: 'Luna challenger completed and was rejected; FM champion retained.' },
+  ],
 };
 
 const nav = [
@@ -89,6 +103,9 @@ export default function Home() {
   const [draftUrl, setDraftUrl] = useState('http://127.0.0.1:8765');
   const [message, setMessage] = useState('');
   const [notice, setNotice] = useState('');
+  const [budgetMinutes, setBudgetMinutes] = useState(180);
+  const [computeProfiles, setComputeProfiles] = useState<ComputeProfile[]>(demoCompute);
+  const [computeProfileId, setComputeProfileId] = useState('local-cpu');
 
   useEffect(() => {
     const saved = window.localStorage.getItem('kuairand-agent-api');
@@ -104,6 +121,22 @@ export default function Home() {
   }, [apiUrl]);
 
   useEffect(() => { refresh(); const timer = window.setInterval(refresh, 1400); return () => window.clearInterval(timer); }, [refresh]);
+
+  useEffect(() => {
+    async function detectCompute() {
+      try {
+        const response = await fetch(`${apiUrl}/api/compute`, { cache: 'no-store' });
+        if (!response.ok) return;
+        const body = await response.json() as { profiles: ComputeProfile[] };
+        setComputeProfiles(body.profiles);
+        const current = state.run.compute_profile_id;
+        const recommended = body.profiles.find(profile => profile.available && profile.recommended) ?? body.profiles.find(profile => profile.available);
+        if (current && body.profiles.some(profile => profile.id === current && profile.available)) setComputeProfileId(current);
+        else if (recommended) setComputeProfileId(recommended.id);
+      } catch { /* Preview cards remain available while the controller is offline. */ }
+    }
+    detectCompute();
+  }, [apiUrl, connected, state.run.compute_profile_id]);
 
   async function post(path: string, payload?: object) {
     try {
@@ -122,6 +155,10 @@ export default function Home() {
   function saveApi(event: FormEvent) {
     event.preventDefault(); const clean = draftUrl.trim().replace(/\/$/, '');
     window.localStorage.setItem('kuairand-agent-api', clean); setApiUrl(clean); setNotice('Connection address saved');
+  }
+
+  async function startRun() {
+    await post('/api/run/start', { budget_minutes: budgetMinutes, compute_profile_id: computeProfileId });
   }
 
   const remaining = Math.max(0, state.run.budget_seconds - state.run.elapsed_seconds);
@@ -197,7 +234,8 @@ export default function Home() {
         </section>}
 
         {tab === 'controls' && <section className="control-layout">
-          <div className="panel control-card"><p className="eyebrow">Run controls</p><h2>Autonomy with explicit human authority</h2><p>Start, pause, resume, or stop the loop. Every action is added to the audit trail.</p><div className="button-cluster"><button className="primary-button" onClick={() => post('/api/run/start')} disabled={!connected || state.run.status === 'running'}>Start run</button><button onClick={() => post(state.run.status === 'paused' ? '/api/run/resume' : '/api/run/pause')} disabled={!connected || !['running', 'paused'].includes(state.run.status)}>{state.run.status === 'paused' ? 'Resume' : 'Pause'}</button><button className="danger-button" onClick={() => post('/api/run/stop')} disabled={!connected}>Stop</button></div><dl><div><dt>Executor</dt><dd>{state.run.executor_mode}</dd></div><div><dt>LLM planner</dt><dd>{state.run.llm_mode}</dd></div><div><dt>Manual interventions</dt><dd>{state.run.manual_interventions}</dd></div><div><dt>Label contract</dt><dd>{state.run.label}</dd></div></dl></div>
+          <div className="panel control-card"><p className="eyebrow">Run controls</p><h2>Autonomy with explicit human authority</h2><p>Set the hard time ceiling and execution card before launching. Both choices are written to the audit trail.</p><label className="budget-label" htmlFor="budget-minutes"><span>Research time limit</span><strong>{formatDuration(budgetMinutes * 60)}</strong></label><input className="budget-range" id="budget-minutes" type="range" min="5" max="720" step="5" value={budgetMinutes} onChange={event => setBudgetMinutes(Number(event.target.value))} disabled={state.run.status === 'running'} /><div className="budget-presets">{[30, 60, 180, 360].map(minutes => <button key={minutes} className={budgetMinutes === minutes ? 'selected' : ''} onClick={() => setBudgetMinutes(minutes)} disabled={state.run.status === 'running'}>{minutes < 60 ? `${minutes}m` : `${minutes / 60}h`}</button>)}</div><div className="button-cluster"><button className="primary-button" onClick={startRun} disabled={!connected || state.run.status === 'running'}>Start run</button><button onClick={() => post(state.run.status === 'paused' ? '/api/run/resume' : '/api/run/pause')} disabled={!connected || !['running', 'paused'].includes(state.run.status)}>{state.run.status === 'paused' ? 'Resume' : 'Pause'}</button><button className="danger-button" onClick={() => post('/api/run/stop')} disabled={!connected}>Stop</button></div><dl><div><dt>Executor</dt><dd>{state.run.executor_mode}</dd></div><div><dt>Selected compute</dt><dd>{state.run.compute?.label ?? computeProfiles.find(profile => profile.id === computeProfileId)?.label ?? 'Auto'}</dd></div><div><dt>LLM planner</dt><dd>{state.run.llm_mode}</dd></div><div><dt>Manual interventions</dt><dd>{state.run.manual_interventions}</dd></div></dl></div>
+          <div className="panel compute-card"><div className="panel-heading"><div><p className="eyebrow">Compute detection</p><h2>Choose the execution card</h2></div><span className="auto-badge">Auto-detected</span></div><p>The controller exposes only compatible cards. Unavailable hardware remains visible with the reason it cannot be selected.</p><div className="compute-grid">{computeProfiles.map(profile => <button type="button" key={profile.id} className={`compute-option ${computeProfileId === profile.id ? 'selected' : ''}`} disabled={!profile.available || state.run.status === 'running'} onClick={() => setComputeProfileId(profile.id)}><span className="compute-radio" /><span><strong>{profile.label}{profile.recommended && <em>Recommended</em>}</strong><small>{profile.accelerator}</small><small className={profile.available ? 'available' : 'unavailable'}>{profile.available ? 'Ready' : profile.reason ?? 'Unavailable'}</small></span></button>)}</div></div>
           <SteeringPanel message={message} setMessage={setMessage} onSubmit={steer} disabled={!connected} expanded />
           <form className="panel connection-card" onSubmit={saveApi}><p className="eyebrow">Connection</p><h2>Local agent address</h2><p>The dashboard remains useful as a read-only preview when the controller is offline.</p><label htmlFor="api-url">Agent API URL</label><div><input id="api-url" value={draftUrl} onChange={event => setDraftUrl(event.target.value)} /><button>Connect</button></div><span className={connected ? 'positive' : ''}>{connected ? `Connected · updated ${state.updated_at ? new Date(state.updated_at).toLocaleTimeString() : 'now'}` : 'Offline · showing preview state'}</span></form>
         </section>}

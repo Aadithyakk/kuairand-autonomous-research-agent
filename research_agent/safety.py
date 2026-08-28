@@ -29,6 +29,10 @@ class CodeSafetyGate:
         "http://", "https://", "../", "~", "/users/", "/etc/", "/var/",
     }
 
+    def __init__(self, extra_allowed_import_roots: set[str] | None = None):
+        self.allowed_import_roots = set(type(self).allowed_import_roots)
+        self.allowed_import_roots.update(extra_allowed_import_roots or set())
+
     def inspect(self, source: str) -> dict[str, Any]:
         findings: list[str] = []
         if not source.strip():
@@ -56,8 +60,12 @@ class CodeSafetyGate:
             elif isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Name) and node.func.id in self.forbidden_calls:
                     findings.append(f"Dynamic or interactive call is forbidden: {node.func.id}")
-                if isinstance(node.func, ast.Attribute) and node.func.attr in {"unlink", "rmdir", "rename", "replace"}:
+                if isinstance(node.func, ast.Attribute) and node.func.attr in {"unlink", "rmdir"}:
                     findings.append(f"Destructive filesystem call is forbidden: {node.func.attr}")
+                if isinstance(node.func, ast.Attribute) and node.func.attr in {"absolute", "cwd", "glob", "iterdir", "resolve", "rglob"}:
+                    findings.append(f"Filesystem discovery call is forbidden: {node.func.attr}")
+            elif isinstance(node, ast.Attribute) and node.attr == "parent":
+                findings.append("Parent-directory traversal is forbidden")
             elif isinstance(node, ast.Name) and node.id in self.forbidden_names:
                 findings.append(f"Forbidden capability referenced: {node.id}")
             elif isinstance(node, ast.Constant) and isinstance(node.value, str):

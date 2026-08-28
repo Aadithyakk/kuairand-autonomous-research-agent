@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 import copy
+import importlib.util
 import json
 import math
 import os
+import platform
 import random
 import re
 import shlex
+import shutil
 import subprocess
+import sys
 import threading
 import time
 import urllib.request
+import urllib.error
 import uuid
 import zipfile
 from datetime import datetime, timezone
@@ -35,6 +40,51 @@ def write_json_atomic(path: Path, value: Any) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(value, indent=2, ensure_ascii=False), encoding="utf-8")
     os.replace(temporary, path)
+
+
+def detect_compute_profiles(config: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return selectable compute without persisting credentials or running probes."""
+
+    cpu_count = os.cpu_count() or 1
+    machine = platform.machine() or "unknown"
+    profiles = [{
+        "id": "local-cpu",
+        "label": "Local CPU",
+        "provider": "local",
+        "accelerator": f"{cpu_count} logical cores · {machine}",
+        "available": True,
+        "detected": True,
+        "recommended": config.get("executor_mode") != "kaggle",
+        "reason": "Available for baselines, feature generation, and tree models.",
+    }]
+    if shutil.which("nvidia-smi") is not None:
+        profiles.append({
+            "id": "local-cuda", "label": "Local NVIDIA GPU", "provider": "local",
+            "accelerator": "CUDA GPU", "available": True, "detected": True,
+            "recommended": True, "reason": "Detected through the NVIDIA runtime.",
+        })
+    elif sys.platform == "darwin" and machine == "arm64":
+        torch_available = importlib.util.find_spec("torch") is not None
+        profiles.append({
+            "id": "local-metal", "label": "Apple Silicon GPU", "provider": "local",
+            "accelerator": "Metal / MPS", "available": torch_available, "detected": True,
+            "recommended": False,
+            "reason": "MPS-capable runtime detected." if torch_available else "Install an MPS-enabled PyTorch environment to use this card.",
+        })
+
+    has_kaggle_token = bool(os.getenv("KAGGLE_API_TOKEN"))
+    for configured in config.get("compute_profiles", []):
+        profile = copy.deepcopy(configured)
+        profile.setdefault("provider", "kaggle")
+        profile.setdefault("detected", has_kaggle_token)
+        profile["available"] = bool(profile.get("enabled", True) and has_kaggle_token and config.get("executor_mode") == "kaggle")
+        profile["recommended"] = bool(profile["available"] and profile.get("recommended", False))
+        if not has_kaggle_token:
+            profile["reason"] = "Kaggle token is not present in the agent process."
+        elif config.get("executor_mode") != "kaggle":
+            profile["reason"] = "Kaggle is authenticated, but this server is not using the Kaggle dispatcher."
+        profiles.append(profile)
+    return profiles
 
 
 class StateStore:
@@ -100,18 +150,25 @@ class LiteratureIndex:
 
 
 class LLMClient:
-    """OpenAI-compatible local LLM client with a deterministic offline fallback."""
+    """JSON research client for OpenAI Responses or a compatible local endpoint."""
 
     def __init__(self, config: dict[str, Any]):
         self.config = config
+        self.last_error: str | None = None
 
     @property
     def enabled(self) -> bool:
-        return self.config.get("mode") == "openai_compatible"
+        return self.config.get("mode") in {"openai_compatible", "openai_responses"}
 
     def complete_json(self, system: str, user: str) -> dict[str, Any] | None:
         if not self.enabled:
             return None
+        self.last_error = None
+        if self.config.get("mode") == "openai_responses":
+            return self._complete_responses(system, user)
+        return self._complete_compatible(system, user)
+
+    def _complete_compatible(self, system: str, user: str) -> dict[str, Any] | None:
         base = self.config["base_url"].rstrip("/")
         key = os.getenv(self.config.get("api_key_env", "RESEARCH_AGENT_API_KEY"), "local")
         body = {
@@ -132,8 +189,56 @@ class LLMClient:
             content = result["choices"][0]["message"]["content"].strip()
             content = re.sub(r"^```(?:json)?\s*|\s*```$", "", content)
             return json.loads(content)
-        except Exception:
+        except Exception as exc:
+            self.last_error = f"{type(exc).__name__}: {exc}"
             return None
+
+    def _complete_responses(self, system: str, user: str) -> dict[str, Any] | None:
+        key_env = self.config.get("api_key_env", "OPENAI_API_KEY")
+        key = os.getenv(key_env)
+        if not key:
+            self.last_error = f"Missing API key environment variable: {key_env}"
+            return None
+        base = self.config.get("base_url", "https://api.openai.com/v1").rstrip("/")
+        models = [self.config["model"]]
+        fallback = self.config.get("fallback_model")
+        if fallback and fallback not in models:
+            models.append(fallback)
+        for model in models:
+            body = {
+                "model": model,
+                "instructions": system,
+                "input": "Return JSON for this payload:\n" + user,
+                "reasoning": {"effort": self.config.get("reasoning_effort", "medium")},
+                "max_output_tokens": int(self.config.get("max_output_tokens", 8000)),
+                "text": {"format": {"type": "json_object"}, "verbosity": "low"},
+                "store": False,
+            }
+            request = urllib.request.Request(
+                f"{base}/responses",
+                data=json.dumps(body).encode("utf-8"),
+                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=self.config.get("timeout_seconds", 240)) as response:
+                    result = json.loads(response.read().decode("utf-8"))
+                content = "".join(
+                    part.get("text", "")
+                    for item in result.get("output", [])
+                    for part in item.get("content", [])
+                    if part.get("type") == "output_text"
+                ).strip()
+                parsed = json.loads(content)
+                if not isinstance(parsed, dict):
+                    raise ValueError("Responses API output was not a JSON object")
+                return parsed
+            except urllib.error.HTTPError as exc:
+                detail = exc.read().decode("utf-8", errors="replace")[-1200:]
+                self.last_error = f"{model}: HTTP {exc.code}: {detail}"
+            except Exception as exc:
+                self.last_error = f"{model}: {type(exc).__name__}: {exc}"
+        return None
 
 
 class ResearchPolicy:
@@ -301,6 +406,9 @@ class ResearchController:
         self._thread: threading.Thread | None = None
         self._stop = threading.Event()
 
+    def compute_profiles(self) -> list[dict[str, Any]]:
+        return detect_compute_profiles(self.config)
+
     def initialize(self, force: bool = False) -> dict[str, Any]:
         existing = self.store.load()
         if existing and not force:
@@ -327,6 +435,7 @@ class ResearchController:
                 "manual_interventions": 0,
                 "executor_mode": self.config["executor_mode"],
                 "llm_mode": self.config["llm"]["mode"],
+                "compute_profile_id": "local-cpu",
             },
             "baseline": {"metrics": baseline_metrics, "artifact": str(artifact_path), "status": artifact.get("status", "unknown")},
             "best": {"experiment_id": "iteration-000", "title": "Official FM baseline", "metrics": baseline_metrics},
@@ -344,10 +453,28 @@ class ResearchController:
         self.store.event("system", "Research agent is ready.", mode=self.config["executor_mode"])
         return self.store.load()
 
-    def start(self) -> dict[str, Any]:
+    def start(self, options: dict[str, Any] | None = None) -> dict[str, Any]:
         state = self.initialize()
         if self._thread and self._thread.is_alive():
             return state
+        options = options or {}
+        budget_minutes = float(options.get("budget_minutes", state["run"]["budget_seconds"] / 60))
+        if not 1 <= budget_minutes <= 720:
+            raise ValueError("Time budget must be between 1 minute and 12 hours")
+        requested = str(options.get("compute_profile_id", state["run"].get("compute_profile_id", "local-cpu")))
+        selected_profile = next((profile for profile in self.compute_profiles() if profile["id"] == requested), None)
+        if selected_profile is None:
+            raise ValueError(f"Unknown compute profile: {requested}")
+        if not selected_profile["available"]:
+            raise ValueError(selected_profile.get("reason") or f"Compute profile is unavailable: {requested}")
+
+        def configure(current: dict[str, Any]) -> None:
+            current["run"]["budget_seconds"] = int(budget_minutes * 60)
+            current["run"]["compute_profile_id"] = requested
+            current["run"]["compute"] = selected_profile
+
+        self.store.mutate(configure)
+        self.store.event("control", "Run configuration accepted.", budget_minutes=budget_minutes, compute_profile_id=requested)
         self._stop.clear()
         self._thread = threading.Thread(target=self._loop, name="research-controller", daemon=True)
         self._thread.start()
@@ -364,9 +491,10 @@ class ResearchController:
 
     def stop(self) -> dict[str, Any]:
         self._stop.set()
-        state = self.store.mutate(lambda current: current["run"].update(status="stopped"))
         self.store.event("control", "Run stopped by a human operator.")
-        return state
+        if self._thread and self._thread.is_alive() and self._thread is not threading.current_thread():
+            self._thread.join(timeout=2.0)
+        return self.store.mutate(lambda current: current["run"].update(status="stopped"))
 
     def steer(self, message: str) -> dict[str, Any]:
         clean = " ".join(message.strip().split())[:1000]
@@ -403,7 +531,8 @@ class ResearchController:
                 elapsed = int(time.monotonic() - started)
                 state["run"]["elapsed_seconds"] = elapsed
                 self.store.save(state)
-                if elapsed >= self.config["budget_seconds"]:
+                budget_seconds = int(state["run"]["budget_seconds"])
+                if elapsed >= budget_seconds:
                     self._finish("budget_exhausted", "Compute budget exhausted; champion retained.")
                     return
                 if len(state["experiments"]) >= self.config["max_experiments"]:
@@ -436,7 +565,8 @@ class ResearchController:
                 self.store.mutate(set_current)
                 self.store.event("decision", f"Selected {selected['title']}.", experiment_id=experiment_id, reason=selected["reason"])
                 best_metrics = self.store.load()["best"]["metrics"]
-                timeout_seconds = min(int(selected["estimated_minutes"] * 90), max(30, self.config["budget_seconds"] - elapsed))
+                selected["compute_profile_id"] = state["run"].get("compute_profile_id", "local-cpu")
+                timeout_seconds = min(int(selected["estimated_minutes"] * 90), max(30, budget_seconds - elapsed))
                 result = self.executor.run(selected, best_metrics, timeout_seconds)
                 self._record_result(selected, result)
         except Exception as exc:
@@ -477,5 +607,7 @@ class ResearchController:
         return all((item.get("delta_vs_champion") or 0) <= self.config["convergence_epsilon"] for item in completed[-patience:])
 
     def _finish(self, status: str, message: str) -> None:
-        self.store.mutate(lambda state: state["run"].update(status=status, completed_at=utc_now()))
         self.store.event("complete", message, status=status)
+        # Publish the terminal status last so observers know no further audit
+        # writes from this loop remain pending.
+        self.store.mutate(lambda state: state["run"].update(status=status, completed_at=utc_now()))

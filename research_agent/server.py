@@ -54,6 +54,8 @@ class AgentAPI:
                     self._json(api.controller.literature.cards)
                 elif path == "/api/actions":
                     self._json(api.controller.actions)
+                elif path == "/api/compute":
+                    self._json({"profiles": api.controller.compute_profiles()})
                 else:
                     self._json({"error": "Not found"}, HTTPStatus.NOT_FOUND)
 
@@ -62,7 +64,7 @@ class AgentAPI:
                 try:
                     body = self._body()
                     if path == "/api/run/start":
-                        self._json(api.controller.start())
+                        self._json(api.controller.start(body))
                     elif path == "/api/run/pause":
                         self._json(api.controller.pause())
                     elif path == "/api/run/resume":

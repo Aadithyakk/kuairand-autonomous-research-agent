@@ -38,7 +38,7 @@ class ResearchModel(ABC):
 
 
 class OpenAICompatibleResearchModel(ResearchModel):
-    """Production research model backed by a local OpenAI-compatible endpoint."""
+    """Production research model backed by OpenAI Responses or a compatible endpoint."""
 
     def __init__(self, client: LLMClient):
         self.client = client
@@ -51,7 +51,7 @@ class OpenAICompatibleResearchModel(ResearchModel):
         steering: list[dict[str, Any]],
     ) -> dict[str, Any]:
         response = self.client.complete_json(
-            """You are an autonomous ML research planner. Diagnose the supplied ranking benchmark and create 2-4 genuinely distinct experiments. Do not select from a fixed model list. Each candidate must contain id, title, hypothesis, change_kind, research_basis, expected_gain (0..1), risk (0..1), estimated_minutes, acceptance_rule, and abort_condition. Use only training labels and validation features. Return JSON with diagnostic, research_query, and candidates.""",
+            """You are an autonomous ML research planner. Diagnose the supplied ranking benchmark and create 2-4 genuinely distinct experiments. Do not select from a fixed model list. Each candidate must contain id, title, hypothesis, change_kind, research_basis, expected_gain, risk, estimated_minutes, acceptance_rule, and abort_condition. expected_gain is a realistic absolute primary-metric delta from 0 to 0.03; risk is 0 to 1; estimated_minutes is 0.1 to 10. Use only training labels and validation features. Return JSON with diagnostic, research_query, and candidates.""",
             json.dumps({"benchmark": context, "evidence": evidence, "memory": memory[-8:], "human_steering": steering[-4:]}),
         )
         if not response:
@@ -372,9 +372,9 @@ class GenericResearchAgent:
             if not isinstance(raw, dict) or not required.issubset(raw):
                 raise ValueError(f"Candidate is missing required fields: {sorted(required - set(raw or {}))}")
             candidate = copy.deepcopy(raw)
-            candidate["expected_gain"] = max(0.0, min(1.0, float(candidate["expected_gain"])))
+            candidate["expected_gain"] = max(0.0, min(0.03, float(candidate["expected_gain"])))
             candidate["risk"] = max(0.0, min(1.0, float(candidate["risk"])))
-            candidate["estimated_minutes"] = max(0.1, float(candidate["estimated_minutes"]))
+            candidate["estimated_minutes"] = max(0.1, min(10.0, float(candidate["estimated_minutes"])))
             candidates.append(candidate)
         return candidates
 

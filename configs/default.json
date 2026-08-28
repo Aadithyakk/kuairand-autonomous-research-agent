@@ -9,13 +9,38 @@
   "convergence_patience": 3,
   "executor_mode": "simulation",
   "random_seed": 2026,
+  "compute_profiles": [
+    {
+      "id": "kaggle-cpu",
+      "label": "Kaggle CPU",
+      "accelerator": "Remote CPU worker",
+      "enabled": true,
+      "recommended": true
+    },
+    {
+      "id": "kaggle-t4",
+      "label": "Kaggle T4",
+      "accelerator": "NVIDIA Tesla T4 · 16 GB",
+      "enabled": true,
+      "recommended": false
+    },
+    {
+      "id": "kaggle-t4-highmem",
+      "label": "Kaggle T4 High Memory",
+      "accelerator": "NVIDIA Tesla T4 · high-memory host",
+      "enabled": true,
+      "recommended": false
+    }
+  ],
   "llm": {
-    "mode": "fallback",
-    "base_url": "http://127.0.0.1:8000/v1",
-    "model": "Qwen/Qwen2.5-Coder-7B-Instruct",
-    "api_key_env": "RESEARCH_AGENT_API_KEY",
-    "temperature": 0.35,
-    "timeout_seconds": 90
+    "mode": "openai_responses",
+    "base_url": "https://api.openai.com/v1",
+    "model": "gpt-5.6-luna",
+    "fallback_model": "gpt-5.6-terra",
+    "api_key_env": "OPENAI_API_KEY",
+    "reasoning_effort": "medium",
+    "max_output_tokens": 8000,
+    "timeout_seconds": 240
   },
   "paths": {
     "state": "runtime/state.json",

@@ -1,0 +1,31 @@
+{
+  "status": "completed",
+  "research_model": "gpt-5.6-luna",
+  "review_policy": "Repeated Luna review with deterministic safety gating; Terra escalation is enabled for future review failures.",
+  "proposal": {
+    "id": "exp_hierarchical_coldstart",
+    "title": "Hierarchical empirical-Bayes affinity scorer",
+    "expected_primary_gain": 0.0012
+  },
+  "data": {
+    "train_rows": 1141112,
+    "validation_rows": 124909,
+    "validation_labels_visible_to_generated_code": false
+  },
+  "official_fm": {
+    "GAUC": 0.6674002647399903,
+    "nDCG@5": 0.5357441067695617,
+    "primary": 0.601572185754776
+  },
+  "candidate": {
+    "GAUC": 0.6403719555317773,
+    "nDCG@5": 0.523208210094822,
+    "primary": 0.5817900828132996,
+    "delta_vs_official_fm": -0.01978210294147642,
+    "promoted": false,
+    "elapsed_seconds": 15.646946430206299
+  },
+  "manual_interventions": 0,
+  "credential_material_in_artifacts": false,
+  "conclusion": "The generated program executed correctly but decisively underperformed the official FM, so the champion was preserved."
+}
