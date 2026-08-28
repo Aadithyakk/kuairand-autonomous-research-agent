@@ -29,11 +29,14 @@ import pandas as pd
 CANDIDATE_SOURCE = "__CANDIDATE_SOURCE_REPR__"
 TRUSTED_COMPONENTS_SOURCE = "__TRUSTED_COMPONENTS_SOURCE_REPR__"
 PROPOSAL = json.loads("__PROPOSAL_REPR__")
-WORK = Path("/kaggle/working/openai-candidate")
+WORK = Path(os.getenv("KUAIRAND_WORK_ROOT", "/kaggle/working/openai-candidate"))
 PUBLIC = WORK / "public"
 EXPERIMENT = WORK / "experiment"
-REPORT = Path("/kaggle/working/candidate_result.json")
-EVENTS = Path("/kaggle/working/candidate_events.jsonl")
+REPORT = Path(os.getenv("KUAIRAND_REPORT_PATH", "/kaggle/working/candidate_result.json"))
+EVENTS = Path(os.getenv("KUAIRAND_EVENTS_PATH", "/kaggle/working/candidate_events.jsonl"))
+INPUT_ROOT = Path(os.getenv("KUAIRAND_INPUT_ROOT", "/kaggle/input"))
+ARTIFACT_ROOT = REPORT.parent
+ARTIFACT_ROOT.mkdir(parents=True, exist_ok=True)
 BASELINE = {"GAUC": 0.6674002647399903, "nDCG@5": 0.5357441067695617, "primary": 0.601572185754776}
 PROXY_MIN_DELTA = -0.003
 SCREEN_RUNGS = [
@@ -104,7 +107,7 @@ def inspect_source(source: str) -> list[str]:
 
 
 def locate_data() -> Path:
-    for candidate in Path("/kaggle/input").rglob("log_standard_4_08_to_4_21_pure.csv"):
+    for candidate in INPUT_ROOT.rglob("log_standard_4_08_to_4_21_pure.csv"):
         directory = candidate.parent
         if (directory / "log_standard_4_22_to_5_08_pure.csv").exists() and (directory / "video_features_basic_pure.csv").exists():
             return directory
@@ -377,8 +380,8 @@ def run_candidate(evaluator: pd.DataFrame) -> dict:
     completed, timeout_error, elapsed = execute_program(EXPERIMENT, 600)
     if timeout_error:
         return {"status": "failed", "stage": "execution", "failure_type": "implementation_failed", "counts_as_experiment": False, "error": timeout_error, "elapsed_seconds": elapsed, "smoke": smoke}
-    Path("/kaggle/working/candidate_stdout.log").write_text(completed.stdout, encoding="utf-8")
-    Path("/kaggle/working/candidate_stderr.log").write_text(completed.stderr, encoding="utf-8")
+    (ARTIFACT_ROOT / "candidate_stdout.log").write_text(completed.stdout, encoding="utf-8")
+    (ARTIFACT_ROOT / "candidate_stderr.log").write_text(completed.stderr, encoding="utf-8")
     if completed is None or completed.returncode:
         return {
             "status": "failed", "stage": "execution", "failure_type": "implementation_failed", "counts_as_experiment": False, "error": f"exit {completed.returncode if completed else 'unknown'}",
