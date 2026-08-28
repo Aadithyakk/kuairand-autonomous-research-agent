@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from research_agent.core import LLMClient, LiteratureIndex, ResearchController
+from research_agent.fidelity import MultiFidelityPolicy
 from research_agent.kaggle_packager import package
 
 
@@ -58,6 +59,16 @@ class AgentTests(unittest.TestCase):
         index = LiteratureIndex.from_path(self.root / "knowledge/literature.json")
         self.assertEqual(index.search("BPR pairwise ranking")[0]["id"], "ranking")
 
+    def test_multi_fidelity_policy_keeps_promotion_at_full_confirmation(self):
+        policy = MultiFidelityPolicy()
+        smoke = policy.initial_rung()
+        self.assertEqual(smoke["id"], "smoke")
+        self.assertFalse(smoke["can_promote_champion"])
+        confirm = policy.next_rung(policy.next_rung("smoke")["id"])
+        self.assertTrue(confirm["can_promote_champion"])
+        self.assertTrue(policy.should_promote({"status": "completed", "metrics": {"primary": 0.599}}, 0.6015))
+        self.assertFalse(policy.should_promote({"status": "failed", "metrics": {"primary": 0.7}}, 0.6015))
+
     def test_end_to_end_simulated_loop(self):
         controller = ResearchController(self.root, self.config)
         state = controller.initialize()
@@ -89,6 +100,18 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(state["run"]["compute_profile_id"], "local-cpu")
         self.assertTrue(state["run"]["compute"]["available"])
         controller.stop()
+
+    def test_implementation_failure_does_not_consume_scientific_iteration(self):
+        controller = ResearchController(self.root, self.config)
+        controller.initialize()
+        controller._record_implementation_attempt(
+            {"id": "candidate", "experiment_id": "iteration-001", "title": "Candidate", "hypothesis": "Test"},
+            {"status": "failed", "stage": "smoke", "failure_type": "implementation_failed", "error": "syntax"},
+        )
+        state = controller.store.load()
+        self.assertEqual(state["experiments"], [])
+        self.assertEqual(len(state["implementation_attempts"]), 1)
+        self.assertEqual(state["run"]["implementation_attempts"], 1)
 
     @patch.dict("os.environ", {"TEST_OPENAI_KEY": "transient"})
     @patch("urllib.request.urlopen")

@@ -7,6 +7,7 @@ from research_agent.autonomous import GenericResearchAgent, ScriptedValidationMo
 from research_agent.benchmark import ToyRankingBenchmark, evaluate_ranking
 from research_agent.core import LiteratureIndex
 from research_agent.safety import CodeSafetyGate
+from research_agent.real_pilot import deterministic_findings, feasibility_findings, kuairand_context
 
 
 class AutonomousAgentTests(unittest.TestCase):
@@ -56,6 +57,31 @@ def main():
         result = CodeSafetyGate().inspect(source)
         self.assertFalse(result["passed"])
         self.assertTrue(any("Absolute" in finding for finding in result["findings"]))
+
+    def test_safety_gate_allows_boolean_array_negation(self):
+        source = """import numpy as np
+def main():
+    mask = np.array([True, False])
+    inverse = ~mask
+    print(inverse)
+"""
+        result = CodeSafetyGate({"numpy"}).inspect(source)
+        self.assertTrue(result["passed"], result["findings"])
+
+    def test_deterministic_preflight_rejects_syntax_and_missing_output_contract(self):
+        findings = deterministic_findings("def main(:\n    pass", {"title": "Tree ranker", "hypothesis": "rank", "model_family": "tree"})
+        self.assertTrue(any("Syntax" in item or "syntax" in item for item in findings))
+        self.assertTrue(any("predictions.npy" in item for item in findings))
+
+    def test_feasibility_gate_rejects_unavailable_fm_score_artifact(self):
+        context = kuairand_context([])
+        proposal = {
+            "title": "FM residual reranker", "hypothesis": "Learn a residual over FM scores",
+            "change_kind": "hybrid", "required_inputs": ["data/baseline_fm_validation.npy"],
+        }
+        findings = feasibility_findings(proposal, context)
+        self.assertTrue(any("Unavailable required input" in item for item in findings))
+        self.assertTrue(any("FM residual" in item for item in findings))
 
     def test_agent_generates_recovers_evaluates_and_promotes(self):
         benchmark = ToyRankingBenchmark(self.root / "benchmark")

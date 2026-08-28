@@ -27,6 +27,7 @@ import pandas as pd
 
 
 CANDIDATE_SOURCE = "__CANDIDATE_SOURCE_REPR__"
+TRUSTED_COMPONENTS_SOURCE = "__TRUSTED_COMPONENTS_SOURCE_REPR__"
 PROPOSAL = json.loads("__PROPOSAL_REPR__")
 WORK = Path("/kaggle/working/openai-candidate")
 PUBLIC = WORK / "public"
@@ -57,7 +58,7 @@ def event(kind: str, message: str, **payload) -> None:
 
 
 def inspect_source(source: str) -> list[str]:
-    allowed = {"collections", "gc", "json", "lightgbm", "math", "numpy", "pandas", "pathlib", "sklearn"}
+    allowed = {"collections", "gc", "json", "lightgbm", "math", "numpy", "pandas", "pathlib", "sklearn", "time", "trusted_components"}
     forbidden_names = {"os", "socket", "subprocess", "requests", "urllib", "http", "shutil", "ctypes", "multiprocessing"}
     forbidden_calls = {"eval", "exec", "compile", "__import__", "input", "open"}
     findings = []
@@ -182,10 +183,59 @@ def evaluate(frame: pd.DataFrame, scores: np.ndarray, k: int = 5) -> dict[str, f
     return {"GAUC": gauc, "nDCG@5": ndcg, "primary": (gauc + ndcg) / 2.0}
 
 
+def execute_program(directory: Path, timeout: int) -> tuple[subprocess.CompletedProcess | None, str | None, float]:
+    (directory / "trusted_components.py").write_text(TRUSTED_COMPONENTS_SOURCE, encoding="utf-8")
+    started = time.time()
+    try:
+        completed = subprocess.run(
+            [sys.executable, "-P", "experiment.py"], cwd=directory, capture_output=True, text=True,
+            timeout=timeout, check=False,
+            env={"PATH": os.environ.get("PATH", ""), "PYTHONPATH": str(directory), "PYTHONNOUSERSITE": "1", "PYTHONDONTWRITEBYTECODE": "1"},
+        )
+        return completed, None, time.time() - started
+    except subprocess.TimeoutExpired:
+        return None, f"{timeout}-second timeout", time.time() - started
+
+
+def smoke_test() -> dict:
+    smoke = WORK / "smoke"
+    smoke_data = smoke / "data"
+    smoke_data.mkdir(parents=True, exist_ok=True)
+    train = pd.read_parquet(PUBLIC / "train.parquet")
+    validation = pd.read_parquet(PUBLIC / "validation.parquet")
+    train_parts = []
+    for _, group in train.groupby("date", sort=True):
+        train_parts.append(group.sample(n=min(5000, len(group)), random_state=2026))
+    train_small = pd.concat(train_parts, ignore_index=True)
+    validation_small = validation.sample(n=min(15000, len(validation)), random_state=2026).sort_values("row_id").reset_index(drop=True)
+    train_small.to_parquet(smoke_data / "train.parquet", index=False)
+    validation_small.to_parquet(smoke_data / "validation.parquet", index=False)
+    (smoke / "experiment.py").write_text(CANDIDATE_SOURCE, encoding="utf-8")
+    completed, timeout_error, elapsed = execute_program(smoke, 120)
+    if timeout_error:
+        return {"passed": False, "error": timeout_error, "elapsed_seconds": elapsed}
+    if completed is None or completed.returncode:
+        return {
+            "passed": False, "error": f"smoke exit {completed.returncode if completed else 'unknown'}",
+            "stderr_tail": completed.stderr[-2000:] if completed else "", "elapsed_seconds": elapsed,
+        }
+    output = smoke / "predictions.npy"
+    if not output.exists():
+        return {"passed": False, "error": "smoke predictions.npy missing", "elapsed_seconds": elapsed}
+    scores = np.load(output)
+    if len(scores) != len(validation_small) or not np.isfinite(scores).all():
+        return {"passed": False, "error": "smoke predictions are misaligned or non-finite", "elapsed_seconds": elapsed}
+    return {"passed": True, "rows": len(validation_small), "elapsed_seconds": elapsed}
+
+
 def run_candidate(evaluator: pd.DataFrame) -> dict:
     findings = inspect_source(CANDIDATE_SOURCE)
     if findings:
-        return {"status": "failed", "stage": "safety", "error": "; ".join(findings)}
+        return {"status": "failed", "stage": "safety", "failure_type": "implementation_failed", "counts_as_experiment": False, "error": "; ".join(findings)}
+    smoke = smoke_test()
+    event("smoke", "Candidate smoke test finished", smoke=smoke)
+    if not smoke["passed"]:
+        return {"status": "failed", "stage": "smoke", "failure_type": "implementation_failed", "counts_as_experiment": False, "metrics": {}, "error": smoke["error"], "smoke": smoke}
     EXPERIMENT.mkdir(parents=True, exist_ok=True)
     data = EXPERIMENT / "data"
     data.mkdir(exist_ok=True)
@@ -193,35 +243,25 @@ def run_candidate(evaluator: pd.DataFrame) -> dict:
         os.link(PUBLIC / name, data / name)
     program = EXPERIMENT / "experiment.py"
     program.write_text(CANDIDATE_SOURCE, encoding="utf-8")
-    started = time.time()
-    try:
-        completed = subprocess.run(
-            [sys.executable, "-I", "experiment.py"],
-            cwd=EXPERIMENT,
-            capture_output=True,
-            text=True,
-            timeout=600,
-            check=False,
-            env={"PATH": os.environ.get("PATH", ""), "PYTHONNOUSERSITE": "1", "PYTHONDONTWRITEBYTECODE": "1"},
-        )
-    except subprocess.TimeoutExpired:
-        return {"status": "failed", "stage": "execution", "error": "ten-minute timeout", "elapsed_seconds": time.time() - started}
+    completed, timeout_error, elapsed = execute_program(EXPERIMENT, 600)
+    if timeout_error:
+        return {"status": "failed", "stage": "execution", "failure_type": "implementation_failed", "counts_as_experiment": False, "error": timeout_error, "elapsed_seconds": elapsed, "smoke": smoke}
     Path("/kaggle/working/candidate_stdout.log").write_text(completed.stdout, encoding="utf-8")
     Path("/kaggle/working/candidate_stderr.log").write_text(completed.stderr, encoding="utf-8")
-    if completed.returncode:
+    if completed is None or completed.returncode:
         return {
-            "status": "failed", "stage": "execution", "error": f"exit {completed.returncode}",
-            "stderr_tail": completed.stderr[-2000:], "elapsed_seconds": time.time() - started,
+            "status": "failed", "stage": "execution", "failure_type": "implementation_failed", "counts_as_experiment": False, "error": f"exit {completed.returncode if completed else 'unknown'}",
+            "stderr_tail": completed.stderr[-2000:] if completed else "", "elapsed_seconds": elapsed, "smoke": smoke,
         }
     predictions = EXPERIMENT / "predictions.npy"
     if not predictions.exists():
-        return {"status": "failed", "stage": "output", "error": "predictions.npy missing"}
+        return {"status": "failed", "stage": "output", "failure_type": "implementation_failed", "counts_as_experiment": False, "error": "predictions.npy missing", "smoke": smoke}
     metrics = evaluate(evaluator, np.load(predictions).astype(np.float64))
     return {
         "status": "completed", "stage": "evaluation", "metrics": metrics,
         "delta_vs_official_fm": metrics["primary"] - BASELINE["primary"],
         "improved": metrics["primary"] > BASELINE["primary"],
-        "elapsed_seconds": time.time() - started,
+        "counts_as_experiment": True, "smoke": smoke, "elapsed_seconds": elapsed,
     }
 
 
@@ -231,7 +271,7 @@ def main() -> None:
     event("data", "Sanitized KuaiRand benchmark prepared", train_rows=1_141_112, validation_rows=len(evaluator))
     result = run_candidate(evaluator)
     report = {
-        "timestamp": now(), "model": "gpt-5.6-luna", "proposal": PROPOSAL,
+        "timestamp": now(), "model": "gpt-5.6-sol", "proposal": PROPOSAL,
         "official_fm": BASELINE, "source_sha256": hashlib.sha256(CANDIDATE_SOURCE.encode()).hexdigest(),
         "manual_interventions": 0, "result": result,
     }

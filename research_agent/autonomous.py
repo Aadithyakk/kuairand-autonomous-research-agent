@@ -51,7 +51,7 @@ class OpenAICompatibleResearchModel(ResearchModel):
         steering: list[dict[str, Any]],
     ) -> dict[str, Any]:
         response = self.client.complete_json(
-            """You are an autonomous ML research planner. Diagnose the supplied ranking benchmark and create 2-4 genuinely distinct experiments. Do not select from a fixed model list. Each candidate must contain id, title, hypothesis, change_kind, research_basis, expected_gain, risk, estimated_minutes, acceptance_rule, and abort_condition. expected_gain is a realistic absolute primary-metric delta from 0 to 0.03; risk is 0 to 1; estimated_minutes is 0.1 to 10. Use only training labels and validation features. Return JSON with diagnostic, research_query, and candidates.""",
+            """You are an autonomous ML research planner. Diagnose the supplied ranking benchmark and create 3-5 genuinely distinct experiments spanning different model families when justified. Do not select from a fixed model list. Prefer bounded, vectorizable changes that fit the runtime and memory limits; avoid Python row loops, repeated full-frame sorts, and elaborate causal accumulators. The trusted external evaluator owns official metrics and champion promotion, so candidates must not recreate the evaluator. Require a training-only chronological holdout only when tuning hyperparameters, thresholds, or blend weights. Every candidate must contain id, title, hypothesis, change_kind, model_family, required_inputs, compute_preference, research_basis, expected_gain, risk, estimated_minutes, acceptance_rule, and abort_condition. required_inputs must name only artifacts explicitly listed as available in the benchmark contract. If an idea needs an unavailable checkpoint, prediction vector, feature, label, or library, do not propose it. acceptance_rule must use external benchmark metrics. expected_gain is 0 to 0.03; risk is 0 to 1; estimated_minutes is 0.1 to 10. Use only training labels and validation features. Return JSON with diagnostic, research_query, and candidates.""",
             json.dumps({"benchmark": context, "evidence": evidence, "memory": memory[-8:], "human_steering": steering[-4:]}),
         )
         if not response:
@@ -60,7 +60,7 @@ class OpenAICompatibleResearchModel(ResearchModel):
 
     def implement(self, proposal: dict[str, Any], context: dict[str, Any], memory: list[dict[str, Any]]) -> str:
         response = self.client.complete_json(
-            """Write one complete Python experiment program for the supplied hypothesis and benchmark program contract. Return JSON with only a code field. Define main() and call it under if __name__ == '__main__'. Obey the supplied input paths, output schema, allowed libraries, and label boundary exactly. Never use network, subprocess, dynamic execution, absolute paths, parent paths, validation labels, test data, or evaluator files. Scores must be finite. The validation input intentionally has no labels.""",
+            """Write one complete Python experiment program for the supplied hypothesis and benchmark program contract. Return JSON with only a code field. Define main() and call it under if __name__ == '__main__'. The program only needs to train and write predictions; the trusted external evaluator calculates official metrics and compares with the champion. Do not reproduce the official FM or implement the official evaluator. Prefer the supplied trusted_components helpers where relevant, plus vectorized pandas/numpy/LightGBM operations; never loop over dataset rows. If the proposal tunes hyperparameters, thresholds, or blend weights, use a strictly training-only chronological holdout; otherwise do not add an unnecessary internal evaluator. Obey the supplied input paths, output schema, allowed libraries, and label boundary exactly. Never use network, subprocess, dynamic execution, absolute paths, parent paths, validation labels, test data, or evaluator files. Scores must be finite. The validation input intentionally has no labels.""",
             json.dumps({"proposal": proposal, "benchmark_contract": context, "relevant_memory": memory[-5:]}),
         )
         if not response or not isinstance(response.get("code"), str):
@@ -381,8 +381,11 @@ class GenericResearchAgent:
     @staticmethod
     def _select(candidates: list[dict[str, Any]]) -> dict[str, Any]:
         for candidate in candidates:
-            cost_penalty = min(1.0, candidate["estimated_minutes"] / 60.0)
-            candidate["policy_score"] = round(candidate["expected_gain"] - 0.35 * candidate["risk"] - 0.12 * cost_penalty, 6)
+            # Optimize anytime research value. Expected gains are small absolute
+            # metric deltas, so scale them before applying the bounded risk
+            # penalty; otherwise risk numerically dominates every useful idea.
+            gain_per_sqrt_minute = 100.0 * candidate["expected_gain"] / math.sqrt(candidate["estimated_minutes"])
+            candidate["policy_score"] = round(gain_per_sqrt_minute - 0.05 * candidate["risk"], 6)
         candidates.sort(key=lambda item: (-item["policy_score"], item["estimated_minutes"], item["id"]))
         return copy.deepcopy(candidates[0])
 

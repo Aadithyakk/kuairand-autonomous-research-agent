@@ -3,8 +3,9 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from .autonomous import GenericResearchAgent, OpenAICompatibleResearchModel
 from .core import LLMClient, LiteratureIndex, read_json, utc_now, write_json_atomic
@@ -12,7 +13,9 @@ from .safety import CodeSafetyGate
 
 
 BASELINE = {"GAUC": 0.6674002647399903, "nDCG@5": 0.5357441067695617, "primary": 0.601572185754776}
-REVIEW_PROMPT = """You are the independent methodological and code reviewer in an autonomous recommender-research agent. Audit the proposed Python program against the hypothesis and benchmark contract. Check temporal leakage in internal holdout features, exact official metric definitions, within-user ranking transforms, validation row order, unavailable columns, hypothesis-to-code fidelity, memory/runtime, and forbidden outcome access. Return JSON with approved (boolean), issues (array of concise strings), and revised_code (a complete corrected program string). Always provide revised_code; if approved, return the original program unchanged. Do not weaken the safety boundary or substitute a different hypothesis."""
+REVIEW_PROMPT = """You are the independent methodological reviewer in an autonomous recommender-research agent. Audit the proposed Python program against the hypothesis and benchmark contract. You diagnose only; you never rewrite code. The program's sole deliverable is one prediction per validation row and a trusted evaluator owns official metrics. If the proposal tunes hyperparameters, thresholds, gates, or ensemble weights, require a training-only chronological holdout. Verify projected columns separately against train_columns and validation_columns; row_id is validation-only and long_view is training-only. Check leakage, row order, unavailable inputs, hypothesis-to-code fidelity, finite scores, runtime, and outcome access. Return JSON with exactly approved (boolean) and issues (array of concise, actionable strings). Do not approve a different hypothesis."""
+
+REPAIR_PROMPT = """You are the coding agent repairing one autonomous ML experiment. Return JSON with only a code field containing a complete Python program. Preserve the proposal's hypothesis and model family exactly; do not substitute another model or weaken the acceptance/abort rules. Fix every supplied reviewer or deterministic issue. Obey the benchmark paths, schemas, label boundary, runtime, output contract, and allowed libraries. Prefer the supplied trusted_components helpers for frame loading, chronological splitting, FM encoding/training, and prediction validation when relevant. Use vectorized operations, define main(), call it, and write one finite score per validation row in unchanged row_id order. Never use validation outcomes, network, subprocess, dynamic execution, absolute paths, or parent paths."""
 
 
 def kuairand_context(memory: list[dict[str, Any]]) -> dict[str, Any]:
@@ -21,6 +24,12 @@ def kuairand_context(memory: list[dict[str, Any]]) -> dict[str, Any]:
         "task": "Rank exposed validation videos independently within each user.",
         "label": "long_view",
         "metrics": ["GAUC", "nDCG@5", "primary = arithmetic mean"],
+        "exact_metric_contract": {
+            "ranking_scope": "Rank independently within each user; preserve validation row_id for deterministic tie-breaking.",
+            "GAUC": "For each user with both classes, compute standard ROC AUC with 0.5 credit for score ties; aggregate user AUC weighted by that user's positive count.",
+            "nDCG@5": "Sort each user's rows by descending score then ascending row_id; compute binary DCG@5 / ideal DCG@5; users with no positives contribute 0 and remain in the mean.",
+            "primary": "Arithmetic mean of GAUC and nDCG@5.",
+        },
         "train": {"dates": "20220408-20220421", "rows": 1_141_112},
         "validation": {
             "dates": "20220422-20220428",
@@ -47,12 +56,20 @@ def kuairand_context(memory: list[dict[str, Any]]) -> dict[str, Any]:
             "validation_has_label": False,
             "output_path": "predictions.npy",
             "output_schema": "one finite float per validation row in unchanged row_id order",
-            "allowed_libraries": ["pandas", "numpy", "lightgbm", "sklearn", "math", "collections", "gc", "json", "pathlib"],
+            "allowed_libraries": ["pandas", "numpy", "lightgbm", "sklearn", "math", "collections", "gc", "json", "pathlib", "time", "trusted_components"],
             "runtime_limit_minutes": 10,
             "memory_limit_gb": 24,
+            "available_inputs": ["data/train.parquet", "data/validation.parquet"],
+            "trusted_components": [
+                "trusted_components.load_frames(train_columns, validation_columns)",
+                "trusted_components.chronological_split(frame, holdout_dates=2)",
+                "trusted_components.save_predictions(scores, validation)",
+                "trusted_components.TrustedFM and trusted_components.encode_fm",
+                "trusted external GAUC/nDCG evaluator and smoke-test runner",
+            ],
         },
         "schema": {
-            "row_id": "alignment key",
+            "row_id": "validation-only alignment key; absent from training",
             "user_id": "categorical",
             "video_id": "categorical",
             "author_id": "categorical",
@@ -72,14 +89,72 @@ def kuairand_context(memory: list[dict[str, Any]]) -> dict[str, Any]:
             "tag": "categorical/list-like metadata",
             "long_view": "binary training-only outcome",
         },
+        "train_columns": [
+            "user_id", "video_id", "author_id", "date", "hourmin", "time_ms", "duration_ms", "tab",
+            "video_type", "upload_dt", "upload_type", "visible_status", "video_duration", "server_width",
+            "server_height", "music_id", "music_type", "tag", "long_view"
+        ],
+        "validation_columns": [
+            "row_id", "user_id", "video_id", "author_id", "date", "hourmin", "time_ms", "duration_ms", "tab",
+            "video_type", "upload_dt", "upload_type", "visible_status", "video_duration", "server_width",
+            "server_height", "music_id", "music_type", "tag"
+        ],
         "hard_boundaries": [
             "No validation outcomes, post-exposure outcomes, test data, evaluator files, network, subprocess, dynamic execution, or absolute/parent paths.",
             "Same-row click/like/follow/comment/watch outcomes are unavailable at inference and forbidden as features.",
             "If tuning is necessary, create a temporal holdout from training only.",
+            "The temporal holdout is a directional candidate gate, not a requirement to reproduce the external five-seed official FM inside every candidate program.",
+            "Only the trusted external evaluator compares a completed candidate with the immutable official FM baseline and decides champion promotion.",
             "The experiment must define main(), call it, and preserve validation row order.",
+            "An implementation may train its own FM, but no precomputed FM score, checkpoint, or out-of-fold prediction artifact is currently available.",
         ],
         "memory": memory[-6:],
     }
+
+
+def deterministic_findings(source: str, proposal: dict[str, Any]) -> list[str]:
+    gate = CodeSafetyGate({"gc", "lightgbm", "numpy", "pandas", "sklearn", "time", "trusted_components"}).inspect(source)
+    findings = list(gate["findings"])
+    lowered = source.lower()
+    if "predictions.npy" not in lowered:
+        findings.append("Program must write predictions.npy")
+    if "isfinite" not in lowered and "save_predictions" not in lowered:
+        findings.append("Program must explicitly reject non-finite predictions")
+    hypothesis = " ".join(str(proposal.get(key, "")) for key in ("title", "hypothesis", "model_family")).lower()
+    if ("factorization machine" in hypothesis or re.search(r"\bfm\b", hypothesis)) and not any(
+        token in lowered for token in ("factorization", "class numpyfm", "class fm", "embedding")
+    ):
+        findings.append("Hypothesis requires an FM implementation, but the program does not contain one")
+    return sorted(set(findings))
+
+
+def feasibility_findings(proposal: dict[str, Any], context: dict[str, Any]) -> list[str]:
+    available = set(context["program_contract"]["available_inputs"])
+    required = proposal.get("required_inputs", [])
+    if not isinstance(required, list):
+        return ["required_inputs must be an array"]
+    missing = sorted(str(item) for item in required if str(item) not in available)
+    findings = [f"Unavailable required input: {item}" for item in missing]
+    text = " ".join(str(proposal.get(key, "")) for key in ("title", "hypothesis", "change_kind")).lower()
+    if any(term in text for term in ("fm score", "fm residual", "residual over fm", "fm checkpoint")):
+        findings.append("FM residual/blend requires a score or checkpoint artifact that is not currently available")
+    return findings
+
+
+def repair_program(
+    client: LLMClient,
+    proposal: dict[str, Any],
+    context: dict[str, Any],
+    source: str,
+    issues: list[str],
+) -> str:
+    response = client.complete_json(
+        REPAIR_PROMPT,
+        json.dumps({"proposal": proposal, "benchmark_contract": context, "current_program": source, "issues": issues}),
+    )
+    if not response or not isinstance(response.get("code"), str):
+        raise RuntimeError(f"Coding repair failed: {client.last_error or 'invalid repair contract'}")
+    return response["code"]
 
 
 def review_program(
@@ -88,28 +163,46 @@ def review_program(
     context: dict[str, Any],
     source: str,
     output: Path,
-    max_rounds: int = 3,
+    max_rounds: int = 2,
     stage: str = "luna",
+    progress: Callable[[str, str], None] | None = None,
 ) -> tuple[str, list[dict[str, Any]]]:
     reviews = []
     current = source
     for index in range(1, max_rounds + 1):
-        review = client.complete_json(
-            REVIEW_PROMPT,
-            json.dumps({"proposal": proposal, "benchmark_contract": context, "program": current}),
-        )
-        if not review or not isinstance(review.get("revised_code"), str):
-            raise RuntimeError(f"Research code review failed: {client.last_error or 'invalid review contract'}")
-        record = {"stage": stage, "round": index, "approved": bool(review.get("approved")), "issues": review.get("issues", [])}
+        issues = deterministic_findings(current, proposal)
+        source_kind = "deterministic"
+        approved = False
+        if not issues:
+            review = client.complete_json(
+                REVIEW_PROMPT,
+                json.dumps({"proposal": proposal, "benchmark_contract": context, "program": current}),
+            )
+            if not review or not isinstance(review.get("issues"), list):
+                raise RuntimeError(f"Research code review failed: {client.last_error or 'invalid review contract'}")
+            issues = [str(item) for item in review.get("issues", [])]
+            approved = bool(review.get("approved")) and not issues
+            source_kind = "methodology"
+        record = {"stage": stage, "round": index, "approved": approved, "source": source_kind, "issues": issues}
         reviews.append(record)
-        current = review["revised_code"]
         (output / f"candidate.{stage}-review-{index}.py").write_text(current, encoding="utf-8")
+        if progress:
+            verdict = "approved" if record["approved"] else "requested a repair"
+            progress("reviewing", f"{stage.title()} review round {index} {verdict}.")
         if record["approved"]:
             break
+        current = repair_program(client, proposal, context, current, issues)
+        (output / f"candidate.{stage}-repair-{index}.py").write_text(current, encoding="utf-8")
     return current, reviews
 
 
-def generate(output: Path, config_path: Path, literature_path: Path, memory_path: Path | None = None) -> dict[str, Any]:
+def generate(
+    output: Path,
+    config_path: Path,
+    literature_path: Path,
+    memory_path: Path | None = None,
+    progress: Callable[[str, str], None] | None = None,
+) -> dict[str, Any]:
     output.mkdir(parents=True, exist_ok=True)
     config = read_json(config_path)
     memory = read_json(memory_path) if memory_path and memory_path.exists() else []
@@ -122,20 +215,61 @@ def generate(output: Path, config_path: Path, literature_path: Path, memory_path
     client = LLMClient(config["llm"])
     model = OpenAICompatibleResearchModel(client)
     bundle = model.propose(context, evidence, memory, [])
+    if progress:
+        progress("proposed", "The research planner generated and ranked new hypotheses.")
     candidates = GenericResearchAgent._validate_candidates(bundle.get("candidates"))
-    selected = GenericResearchAgent._select(candidates)
-    raw_source = model.implement(selected, context, memory)
-    source, reviews = review_program(client, selected, context, raw_source, output)
-    review_client = client
-    if not reviews[-1]["approved"] and config["llm"].get("fallback_model"):
-        escalation_config = copy.deepcopy(config["llm"])
-        escalation_config["model"] = escalation_config.pop("fallback_model")
-        review_client = LLMClient(escalation_config)
-        source, escalated_reviews = review_program(
-            review_client, selected, context, source, output, max_rounds=2, stage="terra"
-        )
-        reviews.extend(escalated_reviews)
-    safety = CodeSafetyGate({"gc", "lightgbm", "numpy", "pandas", "sklearn"}).inspect(source)
+    for candidate in candidates:
+        candidate.setdefault("required_inputs", ["data/train.parquet", "data/validation.parquet"])
+        candidate.setdefault("compute_preference", "auto")
+        if not candidate.get("model_family"):
+            text = " ".join(str(candidate.get(key, "")) for key in ("title", "hypothesis", "change_kind")).lower()
+            if any(term in text for term in ("sequence", "din", "dien", "transformer")):
+                family = "sequence"
+            elif any(term in text for term in ("lightgbm", "lambda", "tree", "boost")):
+                family = "tree"
+            elif any(term in text for term in ("collaborative", "bpr", "matrix factor")):
+                family = "collaborative"
+            elif any(term in text for term in ("hybrid", "ensemble", "blend", "stack")):
+                family = "hybrid"
+            else:
+                family = "factorization"
+            candidate["model_family"] = family
+    GenericResearchAgent._select(candidates)  # assigns scores and sorts in-place
+    max_candidate_attempts = int(config.get("campaign", {}).get("candidate_attempts_per_iteration", 3))
+    attempts: list[dict[str, Any]] = []
+    selected = copy.deepcopy(candidates[0])
+    source = ""
+    raw_source = ""
+    reviews: list[dict[str, Any]] = []
+    safety = {"passed": False, "findings": ["No executable candidate was produced"]}
+    approved = False
+    for attempt_index, candidate in enumerate(candidates[:max_candidate_attempts], start=1):
+        selected = copy.deepcopy(candidate)
+        attempt_dir = output / f"attempt-{attempt_index:02d}-{selected['id']}"
+        attempt_dir.mkdir(parents=True, exist_ok=True)
+        feasibility = feasibility_findings(selected, context)
+        if feasibility:
+            attempts.append({"candidate_id": selected["id"], "status": "infeasible_proposal", "issues": feasibility})
+            if progress:
+                progress("backtracking", f"Candidate {attempt_index} required unavailable inputs; selecting another hypothesis.")
+            continue
+        raw_source = model.implement(selected, context, memory)
+        (attempt_dir / "candidate.raw.py").write_text(raw_source, encoding="utf-8")
+        if progress:
+            progress("implemented", f"The coding agent implemented candidate {attempt_index}.")
+        source, reviews = review_program(client, selected, context, raw_source, attempt_dir, progress=progress)
+        safety = CodeSafetyGate({"gc", "lightgbm", "numpy", "pandas", "sklearn", "time", "trusted_components"}).inspect(source)
+        approved = bool(reviews and reviews[-1]["approved"] and safety["passed"])
+        attempts.append({
+            "candidate_id": selected["id"],
+            "status": "approved" if approved else "implementation_failed",
+            "issues": safety["findings"] if not safety["passed"] else reviews[-1]["issues"],
+            "review_rounds": reviews,
+        })
+        if approved:
+            break
+        if progress:
+            progress("backtracking", f"Candidate {attempt_index} could not pass preflight; selecting another hypothesis.")
     (output / "candidate.raw.py").write_text(raw_source, encoding="utf-8")
     (output / "candidate.py").write_text(source, encoding="utf-8")
     write_json_atomic(output / "proposal.json", selected)
@@ -148,17 +282,17 @@ def generate(output: Path, config_path: Path, literature_path: Path, memory_path
         "research_query": bundle.get("research_query"),
         "candidates": candidates,
         "selected": selected,
+        "implementation_attempts": attempts,
         "evidence_ids": [item["id"] for item in evidence],
         "code_review": {
             "approved": bool(reviews and reviews[-1]["approved"]),
             "rounds": reviews,
         },
-        "approved_for_execution": bool(reviews and reviews[-1]["approved"] and safety["passed"]),
+        "approved_for_execution": approved,
         "safety": safety,
-        "client_error": review_client.last_error or client.last_error,
+        "client_error": client.last_error,
         "artifacts": [
             "proposal.json", "candidate.raw.py",
-            *[f"candidate.{item['stage']}-review-{item['round']}.py" for item in reviews],
             "candidate.py", "safety.json",
         ],
     }

@@ -7,8 +7,31 @@
   "budget_seconds": 10800,
   "convergence_epsilon": 0.002,
   "convergence_patience": 3,
-  "executor_mode": "simulation",
+  "convergence_min_valid_experiments": 8,
+  "convergence_required_families": ["factorization", "tree", "collaborative", "sequence", "hybrid"],
+  "search": {
+    "enabled": true,
+    "strategy": "multi_fidelity_successive_halving",
+    "reduction_factor": 3,
+    "min_proxy_gain": -0.003,
+    "rungs": [
+      {"id": "smoke", "label": "Smoke screen", "train_fraction": 0.08, "validation_fraction": 0.20, "seeds": 1, "max_seconds": 90},
+      {"id": "screen", "label": "Directional screen", "train_fraction": 0.35, "validation_fraction": 0.50, "seeds": 1, "max_seconds": 240},
+      {"id": "confirm", "label": "Full confirmation", "train_fraction": 1.0, "validation_fraction": 1.0, "seeds": 3, "max_seconds": 900}
+    ]
+  },
+  "executor_mode": "kaggle_autonomous",
   "random_seed": 2026,
+  "campaign": {
+    "kaggle_username": "aadithyakumar",
+    "dataset_source": "arashnic/an-unbiased-sequential-recommendation-dataset",
+    "kaggle_poll_seconds": 60,
+    "generation_root": "runtime/openai-campaign",
+    "kernel_root": "runtime/kaggle-campaign",
+    "memory": "runtime/openai-pilot/memory.json",
+    "candidate_attempts_per_iteration": 3,
+    "max_implementation_failures": 12
+  },
   "compute_profiles": [
     {
       "id": "kaggle-cpu",
@@ -35,8 +58,7 @@
   "llm": {
     "mode": "openai_responses",
     "base_url": "https://api.openai.com/v1",
-    "model": "gpt-5.6-luna",
-    "fallback_model": "gpt-5.6-terra",
+    "model": "gpt-5.6-sol",
     "api_key_env": "OPENAI_API_KEY",
     "reasoning_effort": "medium",
     "max_output_tokens": 8000,

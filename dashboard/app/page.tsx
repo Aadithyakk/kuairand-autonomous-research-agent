@@ -3,263 +3,96 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 type Metrics = { GAUC: number; 'nDCG@5': number; primary: number };
-type Experiment = {
-  experiment_id: string; action_id?: string; id?: string; title: string; family?: string; change_kind?: string; status: string;
-  hypothesis?: string; reason?: string; metrics?: Metrics; delta_vs_champion?: number | null; improved?: boolean;
-  estimated_minutes?: number; elapsed_seconds?: number; error?: string; evidence?: LiteratureCard[];
-};
+type Fidelity = { id: string; label: string; train_fraction: number; validation_fraction: number; seeds: number; max_seconds: number; can_promote_champion?: boolean };
+type Experiment = { experiment_id: string; action_id?: string; id?: string; title: string; family?: string; change_kind?: string; status: string; stage?: string; hypothesis?: string; reason?: string; metrics?: Metrics; delta_vs_champion?: number | null; improved?: boolean; estimated_minutes?: number; elapsed_seconds?: number; error?: string; evidence?: LiteratureCard[]; fidelity?: Fidelity };
 type LiteratureCard = { id: string; title: string; year: number; url: string; tags: string[]; claim: string; cautions: string[] };
 type EventItem = { id: string; timestamp: string; kind: string; message: string; metrics?: Metrics; improved?: boolean };
+type ImplementationAttempt = { attempt_id: string; timestamp: string; experiment_id?: string; title: string; failure_type: string; stage?: string; error?: string };
 type ComputeProfile = { id: string; label: string; provider: string; accelerator: string; available: boolean; detected: boolean; recommended?: boolean; reason?: string };
 type AgentState = {
-  run: { id: string; status: string; benchmark: string; label: string; budget_seconds: number; elapsed_seconds: number; max_experiments: number; manual_interventions: number; executor_mode: string; llm_mode: string; compute_profile_id?: string; compute?: ComputeProfile };
-  baseline: { metrics: Metrics; status: string };
-  best: { experiment_id: string; title: string; metrics: Metrics };
-  current_experiment: Experiment | null;
-  candidate_queue: Experiment[];
-  experiments: Experiment[];
-  events: EventItem[];
-  literature_hits: LiteratureCard[];
-  steering: { id: string; timestamp: string; message: string; status: string }[];
-  updated_at?: string;
+  run: { id: string; status: string; benchmark: string; label: string; budget_seconds: number; elapsed_seconds: number; max_experiments: number; manual_interventions: number; executor_mode: string; llm_mode: string; started_at?: string | null; compute_profile_id?: string; compute?: ComputeProfile; worker?: { stage: string; message: string; heartbeat_at: string; kernel_ref?: string }; search?: { name: string; promotion_rule: string; rungs: Fidelity[] } };
+  baseline: { metrics: Metrics; status: string }; best: { experiment_id: string; title: string; metrics: Metrics }; current_experiment: Experiment | null; candidate_queue: Experiment[]; experiments: Experiment[]; implementation_attempts?: ImplementationAttempt[]; events: EventItem[]; literature_hits: LiteratureCard[]; steering: { id: string; timestamp: string; message: string; status: string }[]; updated_at?: string;
 };
 
 const baseline: Metrics = { GAUC: 0.667400, 'nDCG@5': 0.535744, primary: 0.601572 };
+const defaultRungs: Fidelity[] = [
+  { id: 'smoke', label: 'Smoke', train_fraction: .08, validation_fraction: .20, seeds: 1, max_seconds: 90 },
+  { id: 'screen', label: 'Screen', train_fraction: .35, validation_fraction: .50, seeds: 1, max_seconds: 240 },
+  { id: 'confirm', label: 'Confirm', train_fraction: 1, validation_fraction: 1, seeds: 3, max_seconds: 900, can_promote_champion: true },
+];
 const demoCompute: ComputeProfile[] = [
-  { id: 'local-cpu', label: 'Local CPU', provider: 'local', accelerator: 'Auto-detected host CPU', available: true, detected: true, reason: 'Best for feature work and tree models.' },
-  { id: 'kaggle-cpu', label: 'Kaggle CPU', provider: 'kaggle', accelerator: 'Remote CPU worker', available: false, detected: false, recommended: true, reason: 'Available when the Kaggle dispatcher is connected.' },
-  { id: 'kaggle-t4', label: 'Kaggle T4', provider: 'kaggle', accelerator: 'NVIDIA Tesla T4 · 16 GB', available: false, detected: false, recommended: true, reason: 'Available when the Kaggle dispatcher is connected.' },
+  { id: 'local-cpu', label: 'Local CPU', provider: 'local', accelerator: 'Auto-detected host CPU', available: true, detected: true, reason: 'Feature work, checks and tree models' },
+  { id: 'kaggle-cpu', label: 'Kaggle CPU', provider: 'kaggle', accelerator: 'Remote CPU worker', available: false, detected: false, recommended: true, reason: 'Connect Kaggle to enable' },
+  { id: 'kaggle-t4', label: 'Kaggle T4', provider: 'kaggle', accelerator: 'NVIDIA Tesla T4 · 16 GB', available: false, detected: false, reason: 'Connect Kaggle to enable' },
 ];
 const demoState: AgentState = {
-  run: { id: 'preview', status: 'ready', benchmark: 'KuaiRand-Pure', label: 'long_view', budget_seconds: 10800, elapsed_seconds: 0, max_experiments: 10, manual_interventions: 0, executor_mode: 'sanitized Kaggle worker', llm_mode: 'GPT-5.6 Luna · Terra escalation' },
-  baseline: { metrics: baseline, status: 'passed' },
-  best: { experiment_id: 'iteration-000', title: 'Official FM baseline', metrics: baseline },
-  current_experiment: null, candidate_queue: [], steering: [], literature_hits: [],
-  experiments: [{
-    experiment_id: 'iteration-001', id: 'exp_hierarchical_coldstart', title: 'Hierarchical empirical-Bayes affinity scorer',
-    change_kind: 'generated · reviewed · real KuaiRand', status: 'completed',
-    hypothesis: 'Smoothed user–candidate affinity could improve sparse ranking without validation-label tuning.',
-    metrics: { GAUC: 0.640372, 'nDCG@5': 0.523208, primary: 0.581790 }, delta_vs_champion: -0.019782, improved: false, elapsed_seconds: 15.65,
-  }],
-  events: [
-    { id: 'baseline', timestamp: new Date(Date.now() - 60_000).toISOString(), kind: 'baseline', message: 'Official FM baseline reproduced across five seeds.' },
-    { id: 'pilot', timestamp: new Date().toISOString(), kind: 'result', message: 'Luna challenger completed and was rejected; FM champion retained.' },
-  ],
+  run: { id: 'preview', status: 'ready', benchmark: 'KuaiRand-Pure', label: 'long_view', budget_seconds: 10800, elapsed_seconds: 0, max_experiments: 10, manual_interventions: 0, executor_mode: 'sanitized Kaggle worker', llm_mode: 'GPT-5.6 Sol', search: { name: 'Multi-fidelity tree search', promotion_rule: 'Proxy runs screen; only full confirmation can replace the champion.', rungs: defaultRungs } },
+  baseline: { metrics: baseline, status: 'passed' }, best: { experiment_id: 'iteration-000', title: 'Official FM baseline', metrics: baseline }, current_experiment: null, candidate_queue: [], steering: [], literature_hits: [],
+  experiments: [{ experiment_id: 'iteration-001', id: 'empirical_bayes', title: 'Hierarchical empirical-Bayes affinity', change_kind: 'features + scoring', family: 'causal history', status: 'completed', hypothesis: 'Smoothed user–candidate affinity can improve sparse ranking without validation-label tuning.', metrics: { GAUC: .640372, 'nDCG@5': .523208, primary: .581790 }, delta_vs_champion: -.019782, improved: false, elapsed_seconds: 15.65, fidelity: defaultRungs[2] }],
+  events: [{ id: 'baseline', timestamp: new Date(Date.now() - 120000).toISOString(), kind: 'baseline', message: 'Official FM reproduced across five seeds.' }, { id: 'review', timestamp: new Date(Date.now() - 70000).toISOString(), kind: 'review', message: 'Generated program passed independent code and leakage review.' }, { id: 'pilot', timestamp: new Date().toISOString(), kind: 'result', message: 'Challenger rejected; official FM remains champion.' }],
 };
 
-const nav = [
-  { id: 'overview', symbol: '⌁', label: 'Overview' },
-  { id: 'experiments', symbol: '◫', label: 'Experiments' },
-  { id: 'literature', symbol: '≡', label: 'Literature' },
-  { id: 'controls', symbol: '⚙', label: 'Controls' },
-];
+const nav = [{ id: 'mission', code: '01', label: 'Mission control' }, { id: 'search', code: '02', label: 'Search lab' }, { id: 'evidence', code: '03', label: 'Evidence' }, { id: 'control', code: '04', label: 'Run control' }];
+function score(value?: number) { return typeof value === 'number' ? value.toFixed(6) : '—'; }
+function signed(value: number) { return `${value >= 0 ? '+' : ''}${value.toFixed(6)}`; }
+function duration(seconds: number) { const s = Math.max(0, Math.floor(seconds)); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); return h ? `${h}h ${m}m` : m ? `${m}m` : `${s}s`; }
+function clock(seconds: number) { const s = Math.max(0, Math.floor(seconds)); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const tail = s % 60; return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(tail).padStart(2, '0')}`; }
+function label(value: string) { return value.replaceAll('_', ' ').replace(/^./, character => character.toUpperCase()); }
+function Status({ value }: { value: string }) { return <span className={`status status-${value}`}><i />{label(value)}</span>; }
 
-function formatScore(value?: number) { return typeof value === 'number' ? value.toFixed(4) : '—'; }
-function formatDuration(seconds: number) {
-  const safe = Math.max(0, Math.floor(seconds));
-  const hours = Math.floor(safe / 3600); const minutes = Math.floor((safe % 3600) / 60); const secs = safe % 60;
-  return hours ? `${hours}h ${minutes}m` : minutes ? `${minutes}m ${secs}s` : `${secs}s`;
-}
-function humanStatus(status: string) { return status.replaceAll('_', ' ').replace(/^./, char => char.toUpperCase()); }
-
-function Trajectory({ state }: { state: AgentState }) {
-  const points = useMemo(() => [
-    { id: 'iteration-000', value: state.baseline.metrics.primary, improved: true },
-    ...state.experiments.filter(item => item.metrics).map(item => ({ id: item.experiment_id, value: item.metrics!.primary, improved: !!item.improved })),
-  ], [state]);
-  const values = points.map(point => point.value);
-  const low = Math.min(...values, state.baseline.metrics.primary - 0.008);
-  const high = Math.max(...values, state.baseline.metrics.primary + 0.018);
-  const positions = points.map((point, index) => ({
-    ...point,
-    x: points.length === 1 ? 7 : 7 + (index / Math.max(1, points.length - 1)) * 82,
-    y: 82 - ((point.value - low) / Math.max(.0001, high - low)) * 62,
-  }));
-  const baselineY = 82 - ((state.baseline.metrics.primary - low) / Math.max(.0001, high - low)) * 62;
-  return (
-    <div className="chart" aria-label="Primary score trajectory">
-      <div className="target-line" style={{ top: `${baselineY}%` }}><span>baseline {formatScore(state.baseline.metrics.primary)}</span></div>
-      {positions.slice(1).map((point, index) => {
-        const previous = positions[index]; const dx = point.x - previous.x; const dy = point.y - previous.y;
-        const length = Math.sqrt(dx * dx + dy * dy); const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-        return <div key={`line-${point.id}`} className="dynamic-line" style={{ left: `${previous.x}%`, top: `${previous.y}%`, width: `${length}%`, transform: `rotate(${angle}deg)` }} />;
-      })}
-      {positions.map((point, index) => <div key={point.id} className={`dynamic-point ${point.improved ? 'winner' : ''}`} style={{ left: `${point.x}%`, top: `${point.y}%` }}><span>{index === positions.length - 1 ? formatScore(point.value) : `#${index}`}</span></div>)}
-      {state.current_experiment && <div className="chart-running"><b /> evaluating #{String(state.experiments.length + 1).padStart(3, '0')}</div>}
-      <div className="axis-labels"><span>Baseline</span><span>Research iterations</span><span>Convergence</span></div>
-    </div>
-  );
+function ScorePlot({ state }: { state: AgentState }) {
+  const points = useMemo(() => [{ id: '000', value: state.baseline.metrics.primary, winner: true }, ...state.experiments.filter(item => item.metrics).map(item => ({ id: item.experiment_id.replace('iteration-', ''), value: item.metrics!.primary, winner: !!item.improved }))], [state]);
+  const low = Math.min(...points.map(point => point.value), state.baseline.metrics.primary - .025); const high = Math.max(...points.map(point => point.value), state.baseline.metrics.primary + .008);
+  const positioned = points.map((point, index) => ({ ...point, x: points.length === 1 ? 6 : 6 + index / (points.length - 1) * 88, y: 86 - (point.value - low) / Math.max(.0001, high - low) * 66 })); const targetY = 86 - (state.baseline.metrics.primary - low) / Math.max(.0001, high - low) * 66;
+  return <div className="score-plot" aria-label="Primary metric by experiment"><div className="plot-target" style={{ top: `${targetY}%` }}><span>official baseline</span></div>{positioned.slice(1).map((point, index) => { const previous = positioned[index]; const dx = point.x - previous.x; const dy = point.y - previous.y; return <div className="plot-line" key={`line-${point.id}`} style={{ left: `${previous.x}%`, top: `${previous.y}%`, width: `${Math.hypot(dx, dy)}%`, transform: `rotate(${Math.atan2(dy, dx) * 180 / Math.PI}deg)` }} />; })}{positioned.map((point, index) => <div className={`plot-point ${point.winner ? 'winner' : ''}`} key={point.id} style={{ left: `${point.x}%`, top: `${point.y}%` }}><span>#{point.id}<b>{score(point.value)}</b></span>{index === positioned.length - 1 && <em>latest</em>}</div>)}</div>;
 }
 
-function MetricCard({ label, value, note, hero = false }: { label: string; value: string; note: string; hero?: boolean }) {
-  return <article className={`metric-card ${hero ? 'hero-metric' : ''}`}><p>{label}</p><strong>{value}</strong><span>{note}</span></article>;
-}
+function MetricBox({ title, value, detail, accent = false }: { title: string; value: string; detail: string; accent?: boolean }) { return <article className={`metric-box ${accent ? 'metric-accent' : ''}`}><span>{title}</span><strong>{value}</strong><small>{detail}</small></article>; }
 
 export default function Home() {
-  const [tab, setTab] = useState('overview');
-  const [state, setState] = useState<AgentState>(demoState);
-  const [connected, setConnected] = useState(false);
-  const [apiUrl, setApiUrl] = useState('http://127.0.0.1:8765');
-  const [draftUrl, setDraftUrl] = useState('http://127.0.0.1:8765');
-  const [message, setMessage] = useState('');
-  const [notice, setNotice] = useState('');
-  const [budgetMinutes, setBudgetMinutes] = useState(180);
-  const [computeProfiles, setComputeProfiles] = useState<ComputeProfile[]>(demoCompute);
-  const [computeProfileId, setComputeProfileId] = useState('local-cpu');
-
+  const defaultApi = process.env.NEXT_PUBLIC_AGENT_API_URL ?? 'http://127.0.0.1:8765';
+  const [tab, setTab] = useState('mission'); const [state, setState] = useState<AgentState>(demoState); const [connected, setConnected] = useState(false); const [apiUrl, setApiUrl] = useState(defaultApi); const [draftUrl, setDraftUrl] = useState(defaultApi); const [message, setMessage] = useState(''); const [notice, setNotice] = useState(''); const [budgetMinutes, setBudgetMinutes] = useState(180); const [computeProfiles, setComputeProfiles] = useState<ComputeProfile[]>(demoCompute); const [computeProfileId, setComputeProfileId] = useState('local-cpu'); const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const saved = window.localStorage.getItem('kuairand-agent-api'); if (saved) { setApiUrl(saved); setDraftUrl(saved); } }, []);
+  useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer); }, []);
+  const refresh = useCallback(async () => { try { const response = await fetch(`${apiUrl}/api/state`, { cache: 'no-store' }); if (!response.ok) throw new Error(); setState(await response.json()); setConnected(true); } catch { setConnected(false); } }, [apiUrl]);
   useEffect(() => {
-    const saved = window.localStorage.getItem('kuairand-agent-api');
-    if (saved) { setApiUrl(saved); setDraftUrl(saved); }
-  }, []);
+    let cancelled = false; let timer: number;
+    const tick = async () => { await refresh(); if (!cancelled) timer = window.setTimeout(tick, document.hidden ? 30000 : state.run.status === 'running' ? 5000 : 15000); };
+    tick();
+    const onVisibility = () => { window.clearTimeout(timer); if (!cancelled) tick(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => { cancelled = true; window.clearTimeout(timer); document.removeEventListener('visibilitychange', onVisibility); };
+  }, [refresh, state.run.status]);
+  useEffect(() => { (async () => { try { const response = await fetch(`${apiUrl}/api/compute`, { cache: 'no-store' }); if (!response.ok) return; const body = await response.json() as { profiles: ComputeProfile[] }; setComputeProfiles(body.profiles); const preferred = body.profiles.find(item => item.available && item.recommended) ?? body.profiles.find(item => item.available); if (preferred) setComputeProfileId(preferred.id); } catch { /* static preview */ } })(); }, [apiUrl, connected]);
+  async function post(path: string, payload: object = {}) { try { const response = await fetch(`${apiUrl}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); const body = await response.json(); if (!response.ok) throw new Error(body.error ?? 'Request failed'); setState(body); setConnected(true); setNotice('Command accepted'); } catch (error) { setNotice(error instanceof Error ? error.message : 'Agent unavailable'); } window.setTimeout(() => setNotice(''), 2400); }
+  async function steer(event: FormEvent) { event.preventDefault(); if (!message.trim()) return; await post('/api/steer', { message }); setMessage(''); }
+  function saveApi(event: FormEvent) { event.preventDefault(); const clean = draftUrl.trim().replace(/\/$/, ''); window.localStorage.setItem('kuairand-agent-api', clean); setApiUrl(clean); setNotice('Agent address saved'); }
+  const wallElapsed = state.run.started_at && state.run.status === 'running' ? Math.max(0, (now - new Date(state.run.started_at).getTime()) / 1000) : 0; const elapsed = Math.max(state.run.elapsed_seconds, wallElapsed); const remaining = Math.max(0, state.run.budget_seconds - elapsed); const delta = state.best.metrics.primary - state.baseline.metrics.primary; const active = state.current_experiment; const iteration = Math.min(state.run.max_experiments, state.experiments.length + (active || (state.run.status === 'running' && state.run.worker) ? 1 : 0)); const attempts = [{ experiment_id: 'iteration-000', title: 'Official FM baseline', family: 'reference', status: 'completed', metrics: state.baseline.metrics, improved: true, fidelity: defaultRungs[2] }, ...state.experiments, ...(active ? [active] : [])]; const valid = state.experiments.filter(item => item.status === 'completed').length; const codingRetries = state.implementation_attempts?.length ?? 0; const failures = state.experiments.filter(item => ['failed', 'error'].includes(item.status)).length; const rungs = state.run.search?.rungs ?? defaultRungs;
 
-  const refresh = useCallback(async () => {
-    try {
-      const response = await fetch(`${apiUrl}/api/state`, { cache: 'no-store' });
-      if (!response.ok) throw new Error('Agent API unavailable');
-      setState(await response.json()); setConnected(true);
-    } catch { setConnected(false); }
-  }, [apiUrl]);
+  return <main className="app-shell"><aside className="sidebar"><button className="wordmark" onClick={() => setTab('mission')}><span>K</span><b>Research<br />Pilot</b></button><nav aria-label="Dashboard sections">{nav.map(item => <button key={item.id} onClick={() => setTab(item.id)} className={tab === item.id ? 'active' : ''}><span>{item.code}</span>{item.label}</button>)}</nav><div className="side-foot"><span className={connected ? 'live-dot' : 'preview-dot'} />{connected ? 'Agent live' : 'Preview mode'}<small>{state.run.id}</small></div></aside>
+    <section className="canvas"><header className="app-header"><div><p>{state.run.benchmark} / autonomous ML research</p><h1>{nav.find(item => item.id === tab)?.label}</h1></div><div className="header-meta"><div className="run-stat"><span>Time running</span><strong>{clock(elapsed)}</strong></div><div className="run-stat"><span>Iteration</span><strong>{iteration} / {state.run.max_experiments}</strong></div><span>{state.run.compute?.label ?? 'Compute not assigned'}</span><Status value={state.run.status} /></div></header>
+      {tab === 'mission' && <><section className="verdict-strip"><div className={`verdict-mark ${delta > 0 ? 'ahead' : ''}`}>{delta > 0 ? '↑' : '→'}</div><div><span>Competition verdict</span><h2>{delta > 0 ? 'Champion is above the official baseline' : 'Official baseline still holds'}</h2><p>{delta > 0 ? 'The best confirmed candidate is eligible for final designation.' : 'The agent is learning from rejected branches; no unsupported win is claimed.'}</p></div><div className="verdict-score"><span>Primary delta</span><strong>{signed(delta)}</strong><small>confirmation required</small></div><button onClick={() => setTab('control')}>{state.run.status === 'running' ? 'Manage run' : 'Configure next run'} <span>→</span></button></section>
+        <div className="metrics-grid"><MetricBox title="Confirmed champion" value={score(state.best.metrics.primary)} detail={state.best.title} accent /><MetricBox title="GAUC" value={score(state.best.metrics.GAUC)} detail={`${signed(state.best.metrics.GAUC - state.baseline.metrics.GAUC)} vs baseline`} /><MetricBox title="nDCG@5" value={score(state.best.metrics['nDCG@5'])} detail={`${signed(state.best.metrics['nDCG@5'] - state.baseline.metrics['nDCG@5'])} vs baseline`} /><MetricBox title="Code repairs" value={`${codingRetries}`} detail="do not consume scientific iterations" /><MetricBox title="Budget remaining" value={duration(remaining)} detail={`${valid}/${state.run.max_experiments} valid experiments`} /></div>
+        <section className="workbench-grid"><article className="card trajectory-card"><CardHead eyebrow="Score evidence" title="Can the agent keep improving?" action="Full validation only" /><ScorePlot state={state} /><div className="plot-summary"><span><i className="good" />{valid} evaluated</span><span><i className="bad" />{codingRetries} repaired</span><span><i />{Math.max(0, state.run.max_experiments - valid)} valid slots remaining</span></div></article><article className="card now-card"><CardHead eyebrow="Unattended worker" title={state.run.status === 'running' && state.run.worker ? 'Research in flight' : active ? 'Experiment in flight' : 'Agent ready to decide'} action={state.run.worker?.stage ? label(state.run.worker.stage) : active?.fidelity?.label ?? 'No active trial'} /><div className="agent-note"><span>{state.run.worker ? 'Live worker update' : 'Hypothesis'}</span><p>{state.run.worker?.message ?? active?.hypothesis ?? state.experiments.at(-1)?.hypothesis ?? 'Inspect the champion’s failure modes, retrieve relevant evidence, then open a diverse set of candidate branches.'}</p></div><dl className="decision-facts"><div><dt>Planner / coder / reviewer</dt><dd>GPT-5.6 Sol</dd></div><div><dt>Monitoring</dt><dd>{state.run.worker ? `API heartbeat · ${new Date(state.run.worker.heartbeat_at).toLocaleTimeString()}` : 'Starts with campaign'}</dd></div><div><dt>Promotion gate</dt><dd>External evaluator</dd></div></dl><button className="text-button" onClick={() => setTab('search')}>Open the search trace <span>→</span></button></article></section>
+        <section className="card campaign-card"><CardHead eyebrow="Autonomous loop" title="A budgeted research campaign—not a fixed model menu" action={state.run.search?.name ?? 'Multi-fidelity search'} /><div className="loop-flow">{[['01', 'Diagnose', 'Read metrics, residuals and failures'], ['02', 'Retrieve', 'Papers + experiment memory'], ['03', 'Branch', 'Data, feature, model and learning ideas'], ['04', 'Review', 'Correctness, leakage and runtime gate'], ['05', 'Race', 'Cheap screens → full confirmation'], ['06', 'Reflect', 'Promote, reject, remember and revise']].map((item, index) => <div className="loop-step" key={item[0]}><span>{item[0]}</span><strong>{item[1]}</strong><small>{item[2]}</small>{index < 5 && <b>→</b>}</div>)}</div></section>
+        <section className="bottom-grid"><article className="card ledger-card"><CardHead eyebrow="Latest evidence" title="Experiment ledger" action={`${attempts.length} records`} /><div className="compact-ledger">{attempts.slice(-4).reverse().map(item => <ExperimentLine experiment={item} key={item.experiment_id} />)}</div><button className="text-button" onClick={() => setTab('search')}>Review every branch <span>→</span></button></article><SteerCard message={message} setMessage={setMessage} onSubmit={steer} disabled={!connected} /></section></>}
 
-  useEffect(() => { refresh(); const timer = window.setInterval(refresh, 1400); return () => window.clearInterval(timer); }, [refresh]);
+      {tab === 'search' && <><section className="section-intro"><div><span>Search strategy</span><h2>Spend little on weak ideas. Spend deeply on evidence.</h2><p>The agent explores multiple code branches, reuses successful parents, and promotes only candidates that survive increasingly faithful tests.</p></div><div className="intro-stat"><span>Acquisition objective</span><strong>expected gain / √minute</strong><small>risk and novelty adjusted</small></div></section><section className="fidelity-grid">{rungs.map((rung, index) => <article className={`fidelity-card ${index === rungs.length - 1 ? 'confirm' : ''}`} key={rung.id}><div><span>Rung {index + 1}</span>{rung.can_promote_champion && <b>Promotion authority</b>}</div><h3>{rung.label}</h3><p>Fast evidence before more compute is committed.</p><dl><div><dt>Training data</dt><dd>{Math.round(rung.train_fraction * 100)}%</dd></div><div><dt>Validation users</dt><dd>{Math.round(rung.validation_fraction * 100)}%</dd></div><div><dt>Seeds</dt><dd>{rung.seeds}</dd></div><div><dt>Hard limit</dt><dd>{duration(rung.max_seconds)}</dd></div></dl></article>)}</section><section className="search-layout"><article className="card search-tree"><CardHead eyebrow="Branch history" title="Hypothesis tree" action="Parent → child provenance" /><div className="tree-root"><span>CHAMPION</span><strong>Official FM baseline</strong><small>{score(state.baseline.metrics.primary)}</small></div><div className="tree-branches">{state.experiments.length ? state.experiments.map((item, index) => <div className={`tree-node ${item.improved ? 'promoted' : ''}`} key={item.experiment_id}><span className="tree-link" /><div><span>BRANCH {String(index + 1).padStart(2, '0')}</span><strong>{item.title}</strong><small>{item.hypothesis}</small><footer><Status value={item.status} /><b>{item.metrics ? signed(item.metrics.primary - state.baseline.metrics.primary) : 'pending'}</b></footer></div></div>) : <div className="empty-branch">No branches have run yet.</div>}</div></article><article className="card full-ledger"><CardHead eyebrow="Evaluation record" title="All attempts" action="No failures hidden" /><div>{attempts.map(item => <ExperimentLine experiment={item} detailed key={item.experiment_id} />)}</div></article></section></>}
 
-  useEffect(() => {
-    async function detectCompute() {
-      try {
-        const response = await fetch(`${apiUrl}/api/compute`, { cache: 'no-store' });
-        if (!response.ok) return;
-        const body = await response.json() as { profiles: ComputeProfile[] };
-        setComputeProfiles(body.profiles);
-        const current = state.run.compute_profile_id;
-        const recommended = body.profiles.find(profile => profile.available && profile.recommended) ?? body.profiles.find(profile => profile.available);
-        if (current && body.profiles.some(profile => profile.id === current && profile.available)) setComputeProfileId(current);
-        else if (recommended) setComputeProfileId(recommended.id);
-      } catch { /* Preview cards remain available while the controller is offline. */ }
-    }
-    detectCompute();
-  }, [apiUrl, connected, state.run.compute_profile_id]);
+      {tab === 'evidence' && <><section className="section-intro"><div><span>Grounded research</span><h2>Every idea should have a reason—and a remembered outcome.</h2><p>Papers provide priors. Experiment results decide what survives. The agent records exactly which evidence influenced each branch.</p></div><div className="intro-stat"><span>Retrieval boundary</span><strong>Controller-side RAG</strong><small>generated training code remains offline</small></div></section><section className="evidence-layout"><div className="paper-grid">{(state.literature_hits.length ? state.literature_hits : demoLiterature).map(card => <a href={card.url} target="_blank" rel="noreferrer" className="paper-card" key={card.id}><div><span>{card.year}</span><span>{card.tags.slice(0, 2).join(' / ')}</span></div><h3>{card.title}</h3><p>{card.claim}</p><small>{card.cautions?.[0] ? `Caution: ${card.cautions[0]}` : 'Open paper'} <b>↗</b></small></a>)}</div><aside className="card memory-card"><CardHead eyebrow="Retrospective memory" title="What the agent has learned" action={`${state.experiments.length} outcomes`} /><div className="memory-list">{state.experiments.length ? state.experiments.map(item => <div key={item.experiment_id}><span>{item.improved ? 'KEEP' : 'LEARN'}</span><strong>{item.title}</strong><p>{item.error ?? (item.improved ? 'Confirmed improvement; use as a stronger parent.' : 'The hypothesis did not beat the confirmed champion at this fidelity.')}</p></div>) : <p className="empty-copy">Lessons appear here after the first completed experiment.</p>}</div></aside></section><section className="card audit-card"><CardHead eyebrow="Reproducibility" title="Audit trail" action={`${state.events.length} events`} /><div className="audit-timeline">{[...state.events].reverse().map(event => <div key={event.id}><span className={`audit-icon event-${event.kind}`} /><time>{new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</time><strong>{event.message}</strong><small>{event.kind}</small></div>)}</div></section></>}
 
-  async function post(path: string, payload?: object) {
-    try {
-      const response = await fetch(`${apiUrl}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload ?? {}) });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error ?? 'Request failed');
-      setState(body); setConnected(true); setNotice('Command accepted'); window.setTimeout(() => setNotice(''), 2200);
-    } catch (error) { setNotice(error instanceof Error ? error.message : 'Could not reach agent'); }
-  }
-
-  async function steer(event: FormEvent) {
-    event.preventDefault(); if (!message.trim()) return;
-    await post('/api/steer', { message }); setMessage('');
-  }
-
-  function saveApi(event: FormEvent) {
-    event.preventDefault(); const clean = draftUrl.trim().replace(/\/$/, '');
-    window.localStorage.setItem('kuairand-agent-api', clean); setApiUrl(clean); setNotice('Connection address saved');
-  }
-
-  async function startRun() {
-    await post('/api/run/start', { budget_minutes: budgetMinutes, compute_profile_id: computeProfileId });
-  }
-
-  const remaining = Math.max(0, state.run.budget_seconds - state.run.elapsed_seconds);
-  const latestDecision = [...state.events].reverse().find(event => event.kind === 'decision');
-  const active = state.current_experiment;
-  const displayedExperiments: Experiment[] = [
-    { experiment_id: 'iteration-000', title: 'Official FM baseline', family: 'factorization_machine', status: 'completed', metrics: state.baseline.metrics, improved: true },
-    ...state.experiments,
-    ...(active ? [active] : []),
-  ];
-
-  return (
-    <main className="shell">
-      <aside className="rail">
-        <button className="brand-mark" onClick={() => setTab('overview')} aria-label="KuaiRand Research Cockpit home">KR</button>
-        <nav aria-label="Primary navigation">{nav.map(item => <button key={item.id} className={`rail-button ${tab === item.id ? 'active' : ''}`} onClick={() => setTab(item.id)} aria-label={item.label} title={item.label}>{item.symbol}</button>)}</nav>
-        <div className="rail-spacer" /><div className={`status-dot ${connected ? 'online' : ''}`} title={connected ? 'Agent connected' : 'Preview mode'} />
-      </aside>
-
-      <section className="workspace">
-        <header className="topbar">
-          <div><p className="eyebrow">{state.run.benchmark} · autonomous research</p><h1>{nav.find(item => item.id === tab)?.label ?? 'Research cockpit'}</h1></div>
-          <div className="header-actions">
-            <span className={`connection ${connected ? 'connected' : ''}`}>{connected ? 'Live agent' : 'Preview data'}</span>
-            <span className={`run-state status-${state.run.status}`}><i /> {humanStatus(state.run.status)}</span>
-          </div>
-        </header>
-
-        {tab === 'overview' && <>
-          <div className="metric-grid">
-            <MetricCard label="Best primary" value={formatScore(state.best.metrics.primary)} note={state.best.title} hero />
-            <MetricCard label="GAUC" value={formatScore(state.best.metrics.GAUC)} note={`${(state.best.metrics.GAUC - state.baseline.metrics.GAUC >= 0 ? '+' : '')}${(state.best.metrics.GAUC - state.baseline.metrics.GAUC).toFixed(4)} vs baseline`} />
-            <MetricCard label="nDCG@5" value={formatScore(state.best.metrics['nDCG@5'])} note={`${(state.best.metrics['nDCG@5'] - state.baseline.metrics['nDCG@5'] >= 0 ? '+' : '')}${(state.best.metrics['nDCG@5'] - state.baseline.metrics['nDCG@5']).toFixed(4)} vs baseline`} />
-            <MetricCard label="Budget left" value={formatDuration(remaining)} note={`${Math.max(0, state.run.max_experiments - state.experiments.length)} experiment slots remain`} />
-          </div>
-
-          <div className="main-grid">
-            <section className="panel chart-panel">
-              <div className="panel-heading"><div><p className="eyebrow">Progress</p><h2>Validation trajectory</h2></div><span className="legend"><i /> Primary score</span></div>
-              <Trajectory state={state} />
-            </section>
-            <aside className="panel agent-panel">
-              <div className="panel-heading"><div><p className="eyebrow">Agent rationale</p><h2>{active ? 'Current experiment' : 'Next research move'}</h2></div><span className="brain">A</span></div>
-              <div className="thought"><p className="thought-label">{active ? 'CURRENT HYPOTHESIS' : 'LATEST DECISION'}</p><p>{active?.hypothesis ?? latestDecision?.message ?? 'Ready to inspect the baseline and select the first evidence-backed experiment.'}</p></div>
-              <div className="evidence"><span>Why this</span><p>{active?.reason ?? active?.evidence?.[0]?.claim ?? 'Selection balances expected gain, literature support, novelty, risk, and remaining compute.'}</p></div>
-              <button className="secondary-button" onClick={() => setTab('experiments')}>Inspect decision trace →</button>
-            </aside>
-          </div>
-
-          <section className="lower-grid">
-            <div className="panel experiments-panel">
-              <div className="panel-heading"><div><p className="eyebrow">Run history</p><h2>Experiments</h2></div><button className="quiet-button" onClick={() => setTab('experiments')}>View all</button></div>
-              <div className="experiment-list">{displayedExperiments.slice(-4).map(experiment => <ExperimentRow key={experiment.experiment_id} experiment={experiment} />)}</div>
-            </div>
-            <SteeringPanel message={message} setMessage={setMessage} onSubmit={steer} disabled={!connected} />
-          </section>
-        </>}
-
-        {tab === 'experiments' && <section className="content-grid">
-          <div className="panel wide-panel">
-            <div className="panel-heading"><div><p className="eyebrow">Evidence ledger</p><h2>Every attempt, including failures</h2></div><span className="small-stat">{displayedExperiments.length} recorded</span></div>
-            <div className="experiment-table">
-              <div className="table-head"><span>ID</span><span>Experiment</span><span>Family</span><span>Primary</span><span>Δ champion</span><span>Status</span></div>
-              {displayedExperiments.map(item => <div className="table-row" key={item.experiment_id}><span className="mono">{item.experiment_id.replace('iteration-', '#')}</span><span><strong>{item.title}</strong><small>{item.error ?? item.hypothesis ?? 'Organizer-provided reference pipeline'}</small></span><span>{(item.family ?? item.change_kind ?? 'generated experiment').replaceAll('_', ' ')}</span><span className="mono">{formatScore(item.metrics?.primary)}</span><span className={`mono ${item.delta_vs_champion && item.delta_vs_champion > 0 ? 'positive' : ''}`}>{item.delta_vs_champion == null ? '—' : `${item.delta_vs_champion > 0 ? '+' : ''}${item.delta_vs_champion.toFixed(4)}`}</span><span><StatusPill status={item.status} /></span></div>)}
-            </div>
-          </div>
-          <aside className="panel event-panel"><p className="eyebrow">Live audit trail</p><h2>Agent events</h2><div className="event-list">{[...state.events].reverse().slice(0, 18).map(event => <div className="event-item" key={event.id}><span className={`event-icon event-${event.kind}`} /> <div><strong>{event.message}</strong><small>{new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · {event.kind}</small></div></div>)}</div></aside>
-        </section>}
-
-        {tab === 'literature' && <section className="literature-layout">
-          <div className="literature-intro"><p className="eyebrow">Research memory</p><h2>Evidence the agent can retrieve</h2><p>These cards are priors, not a prescribed model order. The agent retrieves them according to the observed failure mode, then records exactly what influenced each experiment.</p></div>
-          <div className="literature-grid">{(state.literature_hits.length ? state.literature_hits : demoLiterature).map(card => <a className="literature-card" key={card.id} href={card.url} target="_blank" rel="noreferrer"><div><span>{card.year}</span><span>{card.tags.slice(0, 2).join(' · ')}</span></div><h3>{card.title}</h3><p>{card.claim}</p>{card.cautions?.[0] && <small>Watch: {card.cautions[0]}</small>}</a>)}</div>
-        </section>}
-
-        {tab === 'controls' && <section className="control-layout">
-          <div className="panel control-card"><p className="eyebrow">Run controls</p><h2>Autonomy with explicit human authority</h2><p>Set the hard time ceiling and execution card before launching. Both choices are written to the audit trail.</p><label className="budget-label" htmlFor="budget-minutes"><span>Research time limit</span><strong>{formatDuration(budgetMinutes * 60)}</strong></label><input className="budget-range" id="budget-minutes" type="range" min="5" max="720" step="5" value={budgetMinutes} onChange={event => setBudgetMinutes(Number(event.target.value))} disabled={state.run.status === 'running'} /><div className="budget-presets">{[30, 60, 180, 360].map(minutes => <button key={minutes} className={budgetMinutes === minutes ? 'selected' : ''} onClick={() => setBudgetMinutes(minutes)} disabled={state.run.status === 'running'}>{minutes < 60 ? `${minutes}m` : `${minutes / 60}h`}</button>)}</div><div className="button-cluster"><button className="primary-button" onClick={startRun} disabled={!connected || state.run.status === 'running'}>Start run</button><button onClick={() => post(state.run.status === 'paused' ? '/api/run/resume' : '/api/run/pause')} disabled={!connected || !['running', 'paused'].includes(state.run.status)}>{state.run.status === 'paused' ? 'Resume' : 'Pause'}</button><button className="danger-button" onClick={() => post('/api/run/stop')} disabled={!connected}>Stop</button></div><dl><div><dt>Executor</dt><dd>{state.run.executor_mode}</dd></div><div><dt>Selected compute</dt><dd>{state.run.compute?.label ?? computeProfiles.find(profile => profile.id === computeProfileId)?.label ?? 'Auto'}</dd></div><div><dt>LLM planner</dt><dd>{state.run.llm_mode}</dd></div><div><dt>Manual interventions</dt><dd>{state.run.manual_interventions}</dd></div></dl></div>
-          <div className="panel compute-card"><div className="panel-heading"><div><p className="eyebrow">Compute detection</p><h2>Choose the execution card</h2></div><span className="auto-badge">Auto-detected</span></div><p>The controller exposes only compatible cards. Unavailable hardware remains visible with the reason it cannot be selected.</p><div className="compute-grid">{computeProfiles.map(profile => <button type="button" key={profile.id} className={`compute-option ${computeProfileId === profile.id ? 'selected' : ''}`} disabled={!profile.available || state.run.status === 'running'} onClick={() => setComputeProfileId(profile.id)}><span className="compute-radio" /><span><strong>{profile.label}{profile.recommended && <em>Recommended</em>}</strong><small>{profile.accelerator}</small><small className={profile.available ? 'available' : 'unavailable'}>{profile.available ? 'Ready' : profile.reason ?? 'Unavailable'}</small></span></button>)}</div></div>
-          <SteeringPanel message={message} setMessage={setMessage} onSubmit={steer} disabled={!connected} expanded />
-          <form className="panel connection-card" onSubmit={saveApi}><p className="eyebrow">Connection</p><h2>Local agent address</h2><p>The dashboard remains useful as a read-only preview when the controller is offline.</p><label htmlFor="api-url">Agent API URL</label><div><input id="api-url" value={draftUrl} onChange={event => setDraftUrl(event.target.value)} /><button>Connect</button></div><span className={connected ? 'positive' : ''}>{connected ? `Connected · updated ${state.updated_at ? new Date(state.updated_at).toLocaleTimeString() : 'now'}` : 'Offline · showing preview state'}</span></form>
-        </section>}
-
-        {notice && <div className="toast" role="status">{notice}</div>}
-      </section>
-    </main>
-  );
+      {tab === 'control' && <><section className="section-intro"><div><span>Human authority</span><h2>Set the boundaries. Let the agent own the research.</h2><p>Time, compute, safety, pause and stop remain explicit human controls. Steering is recorded as intervention evidence.</p></div><div className="intro-stat"><span>Interventions this run</span><strong>{state.run.manual_interventions}</strong><small>fully autonomous is the target</small></div></section><section className="control-grid"><article className="card launch-card"><CardHead eyebrow="Campaign budget" title="Launch configuration" action={duration(budgetMinutes * 60)} /><label htmlFor="budget">Hard research time limit <b>{duration(budgetMinutes * 60)}</b></label><input id="budget" type="range" min="5" max="720" step="5" value={budgetMinutes} onChange={event => setBudgetMinutes(Number(event.target.value))} disabled={state.run.status === 'running'} /><div className="preset-row">{[30, 60, 180, 360].map(value => <button className={value === budgetMinutes ? 'active' : ''} onClick={() => setBudgetMinutes(value)} disabled={state.run.status === 'running'} key={value}>{duration(value * 60)}</button>)}</div><div className="launch-actions"><button className="launch-primary" onClick={() => post('/api/run/start', { budget_minutes: budgetMinutes, compute_profile_id: computeProfileId })} disabled={!connected || state.run.status === 'running'}>Start autonomous run</button><button onClick={() => post(state.run.status === 'paused' ? '/api/run/resume' : '/api/run/pause')} disabled={!connected || !['running', 'paused'].includes(state.run.status)}>{state.run.status === 'paused' ? 'Resume' : 'Pause'}</button><button className="stop" onClick={() => post('/api/run/stop')} disabled={!connected}>Stop</button></div><p className="control-note">Starting writes the budget, hardware selection and operator identity into the audit record.</p></article><article className="card compute-card"><CardHead eyebrow="Execution hardware" title="Choose a compute card" action="Auto-detected" /><div className="compute-list">{computeProfiles.map(profile => <button key={profile.id} className={`${computeProfileId === profile.id ? 'selected' : ''}`} disabled={!profile.available || state.run.status === 'running'} onClick={() => setComputeProfileId(profile.id)}><i /><span><strong>{profile.label}{profile.recommended && <em>Recommended</em>}</strong><small>{profile.accelerator}</small><small className={profile.available ? 'available' : 'unavailable'}>{profile.available ? 'Ready to use' : profile.reason ?? 'Unavailable'}</small></span></button>)}</div></article><SteerCard message={message} setMessage={setMessage} onSubmit={steer} disabled={!connected} large /><article className="card contract-card"><CardHead eyebrow="Trusted boundary" title="Scientific contract" action="Enforced" /><ul><li><b>Metric ownership</b><span>Generated code cannot read evaluator labels.</span></li><li><b>Leakage gate</b><span>Temporal and inference-time feature checks.</span></li><li><b>Promotion rule</b><span>Only full confirmation may replace the champion.</span></li><li><b>Failure recovery</b><span>Timeout, repair, backtrack and retain last valid model.</span></li></ul></article><form className="card connection-card" onSubmit={saveApi}><CardHead eyebrow="Local controller" title="Agent connection" action={connected ? 'Connected' : 'Offline'} /><label htmlFor="api">Controller address</label><div><input id="api" value={draftUrl} onChange={event => setDraftUrl(event.target.value)} /><button>Connect</button></div><p>{connected ? `Receiving live state${state.updated_at ? ` · ${new Date(state.updated_at).toLocaleTimeString()}` : ''}` : 'Showing a truthful read-only preview. Connect the local controller to operate the campaign.'}</p></form></section></>}
+      {notice && <div className="toast" role="status">{notice}</div>}
+    </section></main>;
 }
 
-function ExperimentRow({ experiment }: { experiment: Experiment }) {
-  const score = experiment.metrics?.primary;
-  return <div className="experiment-row"><span className={`experiment-state ${experiment.status}`} /><span className="experiment-id">{experiment.experiment_id.replace('iteration-', '#')}</span><strong>{experiment.title}</strong><span className="experiment-score">{score == null ? humanStatus(experiment.status) : formatScore(score)}</span><StatusPill status={experiment.status} /></div>;
-}
-
-function StatusPill({ status }: { status: string }) { return <span className={`experiment-delta status-${status}`}>{humanStatus(status)}</span>; }
-
-function SteeringPanel({ message, setMessage, onSubmit, disabled, expanded = false }: { message: string; setMessage: (value: string) => void; onSubmit: (event: FormEvent) => void; disabled: boolean; expanded?: boolean }) {
-  return <div className={`panel steering-panel ${expanded ? 'expanded' : ''}`}><div><p className="eyebrow">Human steering</p><h2>Guide without taking over</h2></div><p className="steering-copy">Add a constraint, point to evidence, or change priorities. The intervention is recorded and considered at the next decision boundary.</p><form className="steer-form" onSubmit={onSubmit}><label htmlFor={expanded ? 'steer-expanded' : 'steer'}>Message the research agent</label><textarea id={expanded ? 'steer-expanded' : 'steer'} value={message} onChange={event => setMessage(event.target.value)} placeholder="e.g. Prioritize experiments under 15 minutes; do not use validation labels in features." disabled={disabled} rows={expanded ? 7 : 2} /><div><span>{message.length}/1000</span><button type="submit" disabled={disabled || !message.trim()}>Send guidance</button></div></form></div>;
-}
+function CardHead({ eyebrow, title, action }: { eyebrow: string; title: string; action: string }) { return <header className="card-head"><div><span>{eyebrow}</span><h3>{title}</h3></div><small>{action}</small></header>; }
+function ExperimentLine({ experiment, detailed = false }: { experiment: Experiment; detailed?: boolean }) { return <div className={`experiment-line ${detailed ? 'detailed' : ''}`}><span className="experiment-index">{experiment.experiment_id.replace('iteration-', '#')}</span><div><strong>{experiment.title}</strong>{detailed && <small>{experiment.hypothesis ?? 'Organizer-provided reference pipeline'}</small>}</div><span className="experiment-rung">{experiment.fidelity?.label ?? experiment.family ?? 'Full'}</span><b>{experiment.metrics ? score(experiment.metrics.primary) : '—'}</b><Status value={experiment.status} /></div>; }
+function SteerCard({ message, setMessage, onSubmit, disabled, large = false }: { message: string; setMessage: (value: string) => void; onSubmit: (event: FormEvent) => void; disabled: boolean; large?: boolean }) { return <article className={`card steer-card ${large ? 'large' : ''}`}><CardHead eyebrow="Human steering" title="Guide without taking over" action="Audited intervention" /><p>Set a scientific constraint or research priority. The agent considers it at the next decision boundary.</p><form onSubmit={onSubmit}><textarea value={message} onChange={event => setMessage(event.target.value)} placeholder="e.g. Prioritize ideas that can be screened in under five minutes; preserve temporal causality." disabled={disabled} rows={large ? 5 : 3} aria-label="Steering message" /><div><span>{message.length}/1000</span><button disabled={disabled || !message.trim()}>Send to agent</button></div></form></article>; }
 
 const demoLiterature: LiteratureCard[] = [
-  { id: 'aide', title: 'AIDE: AI-Driven Exploration in the Space of Code', year: 2025, url: 'https://arxiv.org/abs/2502.13138', tags: ['agent', 'tree search'], claim: 'Organizes ML engineering as search over code solutions with improvement and debugging branches.', cautions: ['Keep evaluation outside model-authored code.'] },
-  { id: 'bpr', title: 'BPR: Bayesian Personalized Ranking', year: 2009, url: 'https://arxiv.org/abs/1205.2618', tags: ['pairwise', 'ranking'], claim: 'Directly optimizes preference for observed positives over sampled alternatives.', cautions: ['Negative sampling changes the objective.'] },
-  { id: 'din', title: 'Deep Interest Network', year: 2018, url: 'https://arxiv.org/abs/1706.06978', tags: ['sequence', 'attention'], claim: 'Uses candidate-aware attention to activate relevant behavior history.', cautions: ['History must be causal.'] },
-  { id: 'mmoe', title: 'Multi-gate Mixture-of-Experts', year: 2018, url: 'https://research.google/pubs/modeling-task-relationships-in-multi-task-learning-with-multi-gate-mixture-of-experts/', tags: ['multi-task', 'experts'], claim: 'Task gates can share useful structure while limiting negative transfer.', cautions: ['Auxiliary labels require ablation.'] },
+  { id: 'aide', title: 'AIDE: AI-Driven Exploration in the Space of Code', year: 2025, url: 'https://arxiv.org/abs/2502.13138', tags: ['agent', 'tree search'], claim: 'Explore, debug and refine ML code through explicit solution branches.', cautions: ['Keep evaluation outside generated code.'] },
+  { id: 'mlagent', title: 'ML-Agent: Reinforcing LLM Agents for Autonomous MLE', year: 2026, url: 'https://arxiv.org/abs/2505.23723', tags: ['agent', 'reward'], claim: 'Diverse action pools, atomic feedback and structured rewards improve agent learning.', cautions: ['Full RL training is much more expensive than our campaign.'] },
+  { id: 'bohb', title: 'BOHB: Robust and Efficient Hyperparameter Optimization', year: 2018, url: 'https://arxiv.org/abs/1807.01774', tags: ['budget', 'multi-fidelity'], claim: 'Combine guided search with early stopping for strong anytime performance.', cautions: ['Proxy fidelity must correlate with final performance.'] },
+  { id: 'kuairand', title: 'KuaiRand: An Unbiased Sequential Recommendation Dataset', year: 2022, url: 'https://arxiv.org/abs/2208.08696', tags: ['dataset', 'debiasing'], claim: 'Random exposure and rich feedback support debiasing, sequence and multi-task research.', cautions: ['The competition contract determines which fields are usable.'] },
 ];

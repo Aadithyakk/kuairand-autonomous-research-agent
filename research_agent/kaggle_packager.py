@@ -7,6 +7,7 @@ from pathlib import Path
 
 SOURCE_MARKER = "__CANDIDATE_SOURCE_REPR__"
 PROPOSAL_MARKER = "__PROPOSAL_REPR__"
+TRUSTED_MARKER = "__TRUSTED_COMPONENTS_SOURCE_REPR__"
 
 
 def package(template: Path, candidate: Path, proposal: Path, destination: Path) -> None:
@@ -18,7 +19,11 @@ def package(template: Path, candidate: Path, proposal: Path, destination: Path) 
     rendered = template_text.replace(f'"{SOURCE_MARKER}"', repr(source)).replace(
         f'"{PROPOSAL_MARKER}"', repr(json.dumps(proposal_value, ensure_ascii=False))
     )
-    if SOURCE_MARKER in rendered or PROPOSAL_MARKER in rendered:
+    if TRUSTED_MARKER in rendered:
+        trusted_path = template.parent / "trusted_components.py"
+        trusted_source = trusted_path.read_text(encoding="utf-8")
+        rendered = rendered.replace(f'"{TRUSTED_MARKER}"', repr(trusted_source))
+    if SOURCE_MARKER in rendered or PROPOSAL_MARKER in rendered or TRUSTED_MARKER in rendered:
         raise ValueError("Worker template rendering left unresolved markers")
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(rendered, encoding="utf-8")

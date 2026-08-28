@@ -22,6 +22,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
+from .fidelity import MultiFidelityPolicy
+
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -54,7 +56,7 @@ def detect_compute_profiles(config: dict[str, Any]) -> list[dict[str, Any]]:
         "accelerator": f"{cpu_count} logical cores · {machine}",
         "available": True,
         "detected": True,
-        "recommended": config.get("executor_mode") != "kaggle",
+        "recommended": config.get("executor_mode") not in {"kaggle", "kaggle_autonomous"},
         "reason": "Available for baselines, feature generation, and tree models.",
     }]
     if shutil.which("nvidia-smi") is not None:
@@ -77,11 +79,11 @@ def detect_compute_profiles(config: dict[str, Any]) -> list[dict[str, Any]]:
         profile = copy.deepcopy(configured)
         profile.setdefault("provider", "kaggle")
         profile.setdefault("detected", has_kaggle_token)
-        profile["available"] = bool(profile.get("enabled", True) and has_kaggle_token and config.get("executor_mode") == "kaggle")
+        profile["available"] = bool(profile.get("enabled", True) and has_kaggle_token and config.get("executor_mode") in {"kaggle", "kaggle_autonomous"})
         profile["recommended"] = bool(profile["available"] and profile.get("recommended", False))
         if not has_kaggle_token:
             profile["reason"] = "Kaggle token is not present in the agent process."
-        elif config.get("executor_mode") != "kaggle":
+        elif config.get("executor_mode") not in {"kaggle", "kaggle_autonomous"}:
             profile["reason"] = "Kaggle is authenticated, but this server is not using the Kaggle dispatcher."
         profiles.append(profile)
     return profiles
@@ -401,6 +403,7 @@ class ResearchController:
         self.literature = LiteratureIndex.from_path(root / paths["literature"])
         self.actions = read_json(root / paths["actions"])
         self.llm = LLMClient(config["llm"])
+        self.fidelity = MultiFidelityPolicy(config.get("search"))
         self.policy = ResearchPolicy(self.actions, self.literature, self.llm, config.get("random_seed", 2026))
         self.executor = ExperimentExecutor(config["executor_mode"], root / paths["workspace"], config.get("random_seed", 2026))
         self._thread: threading.Thread | None = None
@@ -436,12 +439,15 @@ class ResearchController:
                 "executor_mode": self.config["executor_mode"],
                 "llm_mode": self.config["llm"]["mode"],
                 "compute_profile_id": "local-cpu",
+                "search": self.fidelity.public_summary(),
+                "implementation_attempts": 0,
             },
             "baseline": {"metrics": baseline_metrics, "artifact": str(artifact_path), "status": artifact.get("status", "unknown")},
             "best": {"experiment_id": "iteration-000", "title": "Official FM baseline", "metrics": baseline_metrics},
             "current_experiment": None,
             "candidate_queue": [],
             "experiments": [],
+            "implementation_attempts": [],
             "decisions": [],
             "steering": [],
             "literature_hits": [],
@@ -519,6 +525,9 @@ class ResearchController:
 
         self.store.mutate(mark_running)
         self.store.event("control", "Autonomous experiment loop started.")
+        if self.config["executor_mode"] == "kaggle_autonomous":
+            self._real_campaign_loop(started)
+            return
         try:
             while not self._stop.is_set():
                 state = self.store.load()
@@ -573,6 +582,123 @@ class ResearchController:
             self.store.mutate(lambda state: state["run"].update(status="error", error=str(exc)))
             self.store.event("error", "Controller encountered an unrecovered error.", error=str(exc))
 
+    def _real_campaign_loop(self, started: float) -> None:
+        from .campaign import AutonomousKaggleCampaign
+
+        campaign = AutonomousKaggleCampaign(self.root, self.config)
+        try:
+            while not self._stop.is_set():
+                state = self.store.load()
+                if state["run"].get("status") == "paused":
+                    time.sleep(1.0)
+                    continue
+                elapsed = int(time.monotonic() - started)
+                state["run"]["elapsed_seconds"] = elapsed
+                self.store.save(state)
+                if elapsed >= int(state["run"]["budget_seconds"]):
+                    self._finish("budget_exhausted", "Research budget exhausted; champion retained.")
+                    return
+                if len(state["experiments"]) >= self.config["max_experiments"]:
+                    self._finish("completed", "Maximum autonomous experiment count reached.")
+                    return
+
+                sequence = len(state["experiments"]) + 1
+
+                def report_stage(stage_name: str, message: str, payload: dict[str, Any] | None) -> None:
+                    payload = payload or {}
+
+                    def update(current: dict[str, Any]) -> None:
+                        proposal = payload.get("proposal")
+                        if proposal:
+                            current["current_experiment"] = copy.deepcopy(proposal)
+                        elif not current.get("current_experiment"):
+                            current["current_experiment"] = {
+                                "id": f"campaign-{sequence:03d}",
+                                "experiment_id": f"iteration-{sequence:03d}",
+                                "title": "Autonomous research iteration",
+                                "family": "model-authored research",
+                                "hypothesis": "The planner is diagnosing prior results and selecting the next bounded experiment.",
+                                "status": "running",
+                                "started_at": utc_now(),
+                            }
+                        current["run"]["executor_mode"] = self.config["executor_mode"]
+                        current["run"]["llm_mode"] = self.config["llm"]["mode"]
+                        current["run"]["llm_model"] = self.config["llm"]["model"]
+                        current["run"]["search"] = self.fidelity.public_summary()
+                        current["run"]["worker"] = {
+                            "stage": stage_name,
+                            "message": message,
+                            "heartbeat_at": utc_now(),
+                            "kernel_ref": payload.get("kernel_ref"),
+                        }
+                        if current.get("current_experiment"):
+                            current["current_experiment"]["stage"] = stage_name
+                            current["current_experiment"]["status"] = "running"
+
+                    self.store.mutate(update)
+                    self.store.event("worker", message, stage=stage_name, kernel_ref=payload.get("kernel_ref"))
+
+                try:
+                    proposal, result = campaign.run_iteration(
+                        sequence,
+                        state["run"].get("compute_profile_id", "kaggle-cpu"),
+                        report_stage,
+                        self._stop.is_set,
+                    )
+                except Exception as exc:
+                    proposal = {
+                        "id": f"campaign-{sequence:03d}",
+                        "experiment_id": f"iteration-{sequence:03d}",
+                        "title": "Autonomous research iteration",
+                        "hypothesis": "The iteration failed before a proposal could be executed.",
+                        "family": "autonomous",
+                        "status": "failed",
+                    }
+                    result = {"status": "failed", "stage": "controller", "metrics": {}, "error": str(exc)}
+                if result.get("counts_as_experiment", result.get("status") == "completed"):
+                    self._record_result(proposal, result)
+                else:
+                    self._record_implementation_attempt(proposal, result)
+                    attempt_count = self.store.load()["run"].get("implementation_attempts", 0)
+                    if attempt_count >= int(self.config.get("campaign", {}).get("max_implementation_failures", 12)):
+                        self._finish("error", "Implementation failure budget exhausted before enough valid experiments completed.")
+                        return
+                if self._stop.is_set():
+                    self._finish("stopped", "Run stopped after the active remote experiment boundary.")
+                    return
+                if self._converged(self.store.load()):
+                    self._finish("converged", "Convergence rule satisfied; champion designated final.")
+                    return
+        except Exception as exc:
+            self.store.mutate(lambda state: state["run"].update(status="error", error=str(exc)))
+            self.store.event("error", "Real campaign encountered an unrecovered error.", error=str(exc))
+
+    def _record_implementation_attempt(self, selected: dict[str, Any], result: dict[str, Any]) -> None:
+        attempt = {
+            "attempt_id": uuid.uuid4().hex[:10],
+            "timestamp": utc_now(),
+            "experiment_id": selected.get("experiment_id"),
+            "candidate_id": selected.get("id"),
+            "title": selected.get("title", "Autonomous candidate"),
+            "hypothesis": selected.get("hypothesis"),
+            "failure_type": result.get("failure_type", "implementation_failed"),
+            "stage": result.get("stage"),
+            "error": result.get("error"),
+            "details": result.get("implementation_attempts", selected.get("implementation_attempts", [])),
+        }
+
+        def record(state: dict[str, Any]) -> None:
+            state.setdefault("implementation_attempts", []).append(attempt)
+            state["run"]["implementation_attempts"] = state["run"].get("implementation_attempts", 0) + 1
+            state["current_experiment"] = None
+
+        self.store.mutate(record)
+        self.store.event(
+            "repair",
+            f"Implementation attempt failed; scientific iteration {selected.get('experiment_id', '')} will be retried.",
+            failure_type=attempt["failure_type"], stage=attempt["stage"], error=attempt["error"],
+        )
+
     def _record_result(self, selected: dict[str, Any], result: dict[str, Any]) -> None:
         completed = copy.deepcopy(selected)
         completed.update(result)
@@ -602,12 +728,35 @@ class ResearchController:
     def _converged(self, state: dict[str, Any]) -> bool:
         patience = self.config["convergence_patience"]
         completed = [item for item in state["experiments"] if item.get("status") == "completed"]
-        if len(completed) < patience:
+        minimum = int(self.config.get("convergence_min_valid_experiments", patience))
+        if len(completed) < max(patience, minimum):
+            return False
+        required = set(self.config.get("convergence_required_families", []))
+        covered = {self._family_bucket(item) for item in completed}
+        if required and not required.issubset(covered):
             return False
         return all((item.get("delta_vs_champion") or 0) <= self.config["convergence_epsilon"] for item in completed[-patience:])
+
+    @staticmethod
+    def _family_bucket(item: dict[str, Any]) -> str:
+        text = " ".join(str(item.get(key, "")) for key in ("model_family", "family", "title", "change_kind")).lower()
+        if any(term in text for term in ("hybrid", "blend", "ensemble", "residual")):
+            return "hybrid"
+        if any(term in text for term in ("sequence", "sequential", "din", "dien", "transformer", "sasrec")):
+            return "sequence"
+        if any(term in text for term in ("collaborative", "bpr", "matrix", "graph", "cf")):
+            return "collaborative"
+        if any(term in text for term in ("tree", "lightgbm", "lambdarank", "catboost", "boost")):
+            return "tree"
+        if any(term in text for term in ("factorization", " fm", "fm ")):
+            return "factorization"
+        return "other"
 
     def _finish(self, status: str, message: str) -> None:
         self.store.event("complete", message, status=status)
         # Publish the terminal status last so observers know no further audit
         # writes from this loop remain pending.
-        self.store.mutate(lambda state: state["run"].update(status=status, completed_at=utc_now()))
+        self.store.mutate(lambda state: state["run"].update(
+            status=status, completed_at=utc_now(),
+            worker={"stage": status, "message": message, "heartbeat_at": utc_now(), "kernel_ref": None},
+        ))

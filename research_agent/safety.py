@@ -26,7 +26,7 @@ class CodeSafetyGate:
     }
     forbidden_fragments = {
         "validation_labels", "hidden_test", "hidden-test", "test_labels",
-        "http://", "https://", "../", "~", "/users/", "/etc/", "/var/",
+        "http://", "https://", "../", "/users/", "/etc/", "/var/",
     }
 
     def __init__(self, extra_allowed_import_roots: set[str] | None = None):
