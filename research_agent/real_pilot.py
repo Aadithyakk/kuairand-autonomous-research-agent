@@ -108,7 +108,7 @@ def kuairand_context(memory: list[dict[str, Any]]) -> dict[str, Any]:
             "The experiment must define main(), call it, and preserve validation row order.",
             "An implementation may train its own FM, but no precomputed FM score, checkpoint, or out-of-fold prediction artifact is currently available.",
         ],
-        "memory": memory[-6:],
+        "memory": memory[-10:],
     }
 
 
@@ -164,7 +164,7 @@ def review_program(
     source: str,
     output: Path,
     max_rounds: int = 2,
-    stage: str = "luna",
+    stage: str = "sol",
     progress: Callable[[str, str], None] | None = None,
 ) -> tuple[str, list[dict[str, Any]]]:
     reviews = []
@@ -235,6 +235,19 @@ def generate(
                 family = "factorization"
             candidate["model_family"] = family
     GenericResearchAgent._select(candidates)  # assigns scores and sorts in-place
+    severe_negative_terms = []
+    for item in memory:
+        delta = item.get("delta_vs_champion")
+        if isinstance(delta, (int, float)) and delta <= -0.01 and not item.get("whether_to_retry", False):
+            severe_negative_terms.extend(re.findall(r"[a-z0-9]+", str(item.get("hypothesis", "")).lower()))
+    negative_vocabulary = {term for term in severe_negative_terms if len(term) >= 5}
+    for candidate in candidates:
+        text = " ".join(str(candidate.get(key, "")) for key in ("title", "hypothesis", "model_family")).lower()
+        overlap = len(negative_vocabulary.intersection(re.findall(r"[a-z0-9]+", text)))
+        repair = any(term in text for term in ("repair", "ablation", "anchor", "baseline", "residual"))
+        if overlap >= 3 and not repair:
+            candidate["policy_score"] = round(float(candidate["policy_score"]) - 0.12, 6)
+    candidates.sort(key=lambda item: (-item["policy_score"], item["estimated_minutes"], item["id"]))
     max_candidate_attempts = int(config.get("campaign", {}).get("candidate_attempts_per_iteration", 3))
     attempts: list[dict[str, Any]] = []
     selected = copy.deepcopy(candidates[0])
@@ -312,9 +325,13 @@ def reflect(result_path: Path, proposal_path: Path, config_path: Path, memory_pa
         "timestamp": utc_now(),
         "experiment_id": proposal["id"],
         "hypothesis": proposal["hypothesis"],
+        "title": proposal.get("title"),
+        "model_family": proposal.get("model_family"),
         "status": result_report.get("result", {}).get("status"),
         "metrics": result_report.get("result", {}).get("metrics", {}),
-        "delta_vs_champion": result_report.get("result", {}).get("delta_vs_official_fm"),
+        "delta_vs_champion": result_report.get("result", {}).get(
+            "delta_vs_official_fm", result_report.get("result", {}).get("delta_vs_anchor")
+        ),
         "client_error": client.last_error,
         **review,
     }

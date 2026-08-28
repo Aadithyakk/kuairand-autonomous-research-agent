@@ -17,6 +17,14 @@ StageCallback = Callable[[str, str, dict[str, Any] | None], None]
 StopCallback = Callable[[], bool]
 
 
+def requires_gpu(model_family: str, compute_preference: str) -> bool:
+    preference = compute_preference.strip().lower()
+    family_tokens = set(model_family.lower().replace("-", "_").split("_"))
+    return preference in {"gpu", "t4", "cuda"} or bool(
+        family_tokens.intersection({"sequence", "sequential", "neural", "transformer", "din", "dien", "sasrec"})
+    )
+
+
 class AutonomousKaggleCampaign:
     """Run the real propose/review/Kaggle/evaluate/reflect loop unattended.
 
@@ -94,7 +102,7 @@ class AutonomousKaggleCampaign:
         kernel_ref = f"{self.kaggle_username}/{slug}"
         family = str(proposal.get("model_family", "")).lower()
         preference = str(proposal.get("compute_preference", "auto")).lower()
-        gpu = preference in {"gpu", "t4", "cuda"} or any(term in family for term in ("sequence", "neural", "transformer", "din", "dien"))
+        gpu = requires_gpu(family, preference)
         selected_compute = "kaggle-t4" if gpu else "kaggle-cpu"
         proposal["compute_profile_id"] = selected_compute
         metadata = {

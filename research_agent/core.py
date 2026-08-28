@@ -709,8 +709,9 @@ class ResearchController:
         def record(state: dict[str, Any]) -> None:
             champion = state["best"]["metrics"]["primary"]
             score = completed.get("metrics", {}).get("primary", -math.inf)
-            completed["delta_vs_champion"] = round(score - champion, 6) if math.isfinite(score) else None
-            completed["improved"] = completed["status"] == "completed" and score > champion
+            external = completed.get("external_validated", completed.get("status") == "completed")
+            completed["delta_vs_champion"] = round(score - champion, 6) if external and math.isfinite(score) else None
+            completed["improved"] = external and completed["status"] == "completed" and score > champion
             state["experiments"].append(completed)
             state["current_experiment"] = None
             if completed["improved"]:

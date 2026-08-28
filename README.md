@@ -19,7 +19,7 @@ The system treats KuaiRand-Pure as a controlled benchmark for an agent that can 
 - Kaggle-ready model lab containing FM, leakage-safe history features, LightGBM, LambdaRank, CatBoost, BPR, DIN-lite, diagnostics, and rank blending.
 - A generic planner → code generator → safety gate → external evaluator loop. The planner creates hypotheses instead of selecting from a fixed model sequence.
 - Searchable literature and organizer-lesson cards used as lightweight retrieval-augmented generation (RAG).
-- An OpenAI Responses research brain using GPT-5.6 Luna for routine work and GPT-5.6 Terra only after bounded review failure.
+- An OpenAI Responses research brain using GPT-5.6 Sol for planning, coding, repair, review, and reflection.
 - Repeated planner → coder → methodological reviewer roles; revised code must be reviewed again and explicitly approved.
 - A trusted Kaggle worker and packager that receive generated code but never receive the OpenAI API key.
 - A deterministic validation model used only to test the orchestration—not as the competition policy.
@@ -36,17 +36,19 @@ dataset + baseline + immutable evaluator
           diagnose current state
                   |
  local literature RAG + past experiments
-        + Luna research planner
+         + Sol research planner
                   |
        propose several new hypotheses
                   |
  generic cost/risk acquisition function
                   |
-       Luna coder → semantic reviewer
-             |             |
-       repair loop     Terra escalation
-             |             |
+        Sol coder → semantic reviewer
+             |
+        bounded repair loop
+             |
        explicit approval + static gate
+                  |
+ training-only temporal FM tournament
                   |
  sanitized Kaggle worker / isolated process
                   |
@@ -65,7 +67,7 @@ There are two separate validations, because combining them would overstate the r
 
 1. **Autonomous mechanism validation** uses a small controlled ranking benchmark. The agent must create a hypothesis, generate code, survive a deliberately unsafe first implementation being rejected, use the failure as memory, recover with a valid implementation, obtain externally computed metrics, and promote a better champion with zero human interventions.
 2. **KuaiRand readiness validation** checks the real archive schema, official split/label/metric contract, and the five-seed baseline artifact.
-3. **Real generated-program pilot** used GPT-5.6 Luna to propose and implement a hierarchical empirical-Bayes affinity scorer, automatically repaired four code defects, passed the deterministic gate, and ran on all 1,141,112 training rows plus 124,909 held-out validation rows. It completed correctly but lost to the FM: primary `0.581790` versus `0.601572`. This validates the execution and learning path, not model superiority.
+3. **Real generated-program pilots** validate code generation, repair, Kaggle dispatch, trusted external metrics, and negative-result memory. The current controller additionally rejects candidates on training-only chronological FM-anchor screens before allowing external confirmation.
 
 Run both:
 
@@ -127,8 +129,7 @@ The default production configuration uses the OpenAI Responses API:
 {
   "mode": "openai_responses",
   "base_url": "https://api.openai.com/v1",
-  "model": "gpt-5.6-luna",
-  "fallback_model": "gpt-5.6-terra",
+  "model": "gpt-5.6-sol",
   "api_key_env": "OPENAI_API_KEY",
   "reasoning_effort": "medium"
 }
@@ -141,7 +142,7 @@ export OPENAI_API_KEY="your-key"
 export KAGGLE_API_TOKEN="your-token"
 ```
 
-`OpenAICompatibleResearchModel` uses the endpoint for planning, complete program generation, methodological review, repair, and evidence-based reflection. Luna performs normal calls. If three Luna review rounds cannot approve a program, the controller escalates only the review to Terra. Invalid, unsafe, or unapproved programs fail closed. A local OpenAI-compatible endpoint remains supported with `mode: openai_compatible`.
+`OpenAICompatibleResearchModel` uses the endpoint for planning, complete program generation, methodological review, repair, and evidence-based reflection. Invalid, unsafe, or unapproved programs fail closed. Code-valid candidates must then survive two training-only temporal tournaments against a fixed FM anchor before private external validation is used. A local OpenAI-compatible endpoint remains supported with `mode: openai_compatible`.
 
 The supplied keys are never embedded in generated programs or Kaggle kernels. `.env`, runtime workspaces, Kaggle downloads, and virtual environments are ignored by Git.
 
@@ -216,6 +217,6 @@ The starter kit and KuaiRand dataset are not redistributed in this repository. O
 
 The autonomous outer loop passes its controlled validation, including safety rejection, repair, external evaluation, memory, and champion promotion. The real archive and five-seed FM reproduction pass readiness checks. The official FM mean remains **0.601572** primary (GAUC **0.667400**, nDCG@5 **0.535744**).
 
-One Luna-generated challenger has run end to end on real KuaiRand. It completed in 15.65 seconds and scored **0.581790** primary (GAUC **0.640372**, nDCG@5 **0.523208**), so it was rejected and the FM remained champion. The negative result is stored as agent memory. The architecture now prevents any revised program from running until a subsequent review explicitly approves it and escalates failed review loops from Luna to Terra.
+Multiple generated challengers have run end to end on real KuaiRand; none has beaten the official FM, and all negative results remain in research memory. The architecture now begins with the reproduced FM as its anchor, penalizes repetition of severely negative lineages, repairs implementation failures without spending scientific iterations, and screens model quality on chronological training holdouts before external evaluation.
 
-Not yet claimed: the agent has not beaten the FM; live/full-text literature RAG is not implemented; the hosted static dashboard cannot directly reach a private local controller; and a full multi-iteration budgeted campaign still needs to be completed.
+Not yet claimed: the agent has not beaten the FM; live/full-text literature RAG is not implemented; and the hosted static dashboard cannot directly reach a private local controller.

@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from research_agent.core import LLMClient, LiteratureIndex, ResearchController
+from research_agent.campaign import requires_gpu
 from research_agent.fidelity import MultiFidelityPolicy
 from research_agent.kaggle_packager import package
 
@@ -68,6 +69,11 @@ class AgentTests(unittest.TestCase):
         self.assertTrue(confirm["can_promote_champion"])
         self.assertTrue(policy.should_promote({"status": "completed", "metrics": {"primary": 0.599}}, 0.6015))
         self.assertFalse(policy.should_promote({"status": "failed", "metrics": {"primary": 0.7}}, 0.6015))
+
+    def test_compute_routing_uses_tokens_not_substrings(self):
+        self.assertFalse(requires_gpu("factorization_machine_lambda_gradient_boosting", "auto"))
+        self.assertTrue(requires_gpu("din_sequence", "auto"))
+        self.assertTrue(requires_gpu("tree", "t4"))
 
     def test_end_to_end_simulated_loop(self):
         controller = ResearchController(self.root, self.config)

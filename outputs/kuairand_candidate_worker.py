@@ -35,6 +35,11 @@ EXPERIMENT = WORK / "experiment"
 REPORT = Path("/kaggle/working/candidate_result.json")
 EVENTS = Path("/kaggle/working/candidate_events.jsonl")
 BASELINE = {"GAUC": 0.6674002647399903, "nDCG@5": 0.5357441067695617, "primary": 0.601572185754776}
+PROXY_MIN_DELTA = -0.003
+SCREEN_RUNGS = [
+    {"id": "smoke", "train_fraction": 0.08, "validation_fraction": 0.20, "timeout": 90, "seed": 2026},
+    {"id": "screen", "train_fraction": 0.35, "validation_fraction": 0.50, "timeout": 240, "seed": 2027},
+]
 POST_EXPOSURE = {
     "is_click", "is_like", "is_follow", "is_comment", "is_forward", "is_hate",
     "long_view", "play_time_ms", "profile_stay_time", "comment_stay_time", "is_profile_enter",
@@ -228,6 +233,112 @@ def smoke_test() -> dict:
     return {"passed": True, "rows": len(validation_small), "elapsed_seconds": elapsed}
 
 
+def trusted_module(directory: Path):
+    module_path = directory / "trusted_components.py"
+    module_path.write_text(TRUSTED_COMPONENTS_SOURCE, encoding="utf-8")
+    spec = importlib.util.spec_from_file_location("screen_trusted_components", module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Unable to load trusted screening components")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def temporal_rung(frame: pd.DataFrame, rung: dict) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    dates = np.sort(frame["date"].unique())
+    if len(dates) < 4:
+        raise ValueError("Temporal screen requires at least four dates")
+    boundary = dates[-2]
+    fit_pool = frame[frame["date"] < boundary].copy()
+    holdout_pool = frame[frame["date"] >= boundary].copy()
+    users = np.sort(holdout_pool["user_id"].astype(str).unique())
+    rng = np.random.default_rng(int(rung["seed"]))
+    count = max(2, int(math.ceil(len(users) * float(rung["validation_fraction"]))))
+    selected_users = set(rng.choice(users, size=min(count, len(users)), replace=False))
+    holdout = holdout_pool[holdout_pool["user_id"].astype(str).isin(selected_users)].copy()
+    fit = fit_pool[fit_pool["user_id"].astype(str).isin(selected_users)].copy()
+    keep_ratio = min(1.0, float(rung["train_fraction"]) / float(rung["validation_fraction"]))
+    if keep_ratio < 1.0:
+        fit = fit.sample(frac=keep_ratio, random_state=int(rung["seed"]))
+    fit = fit.sort_values(["date", "time_ms"], kind="stable").reset_index(drop=True)
+    holdout = holdout.sort_values(["user_id", "time_ms"], kind="stable").reset_index(drop=True)
+    labels = holdout["long_view"].to_numpy(np.int8)
+    public_holdout = holdout.drop(columns=["long_view"]).copy()
+    public_holdout.insert(0, "row_id", np.arange(len(public_holdout), dtype=np.int64))
+    evaluator = pd.DataFrame({
+        "row_id": public_holdout["row_id"].to_numpy(),
+        "user_id": public_holdout["user_id"].to_numpy(),
+        "label": labels,
+    })
+    return fit, public_holdout, evaluator
+
+
+def official_fm_proxy(fit: pd.DataFrame, holdout: pd.DataFrame, directory: Path, seed: int) -> np.ndarray:
+    trusted = trusted_module(directory)
+    quantiles = np.unique(np.quantile(pd.to_numeric(fit["duration_ms"], errors="coerce").fillna(0), np.linspace(0, 1, 11)[1:-1]))
+
+    def features(frame: pd.DataFrame) -> pd.DataFrame:
+        result = pd.DataFrame(index=frame.index)
+        for column in ("user_id", "video_id", "author_id", "tab"):
+            result[column] = frame[column].fillna("UNK").astype(str)
+        result["dur_bucket"] = np.searchsorted(quantiles, pd.to_numeric(frame["duration_ms"], errors="coerce").fillna(0)).astype(str)
+        return result
+
+    fit_features, holdout_features = features(fit), features(holdout)
+    columns = list(fit_features.columns)
+    fit_matrix, holdout_matrix, dimension = trusted.encode_fm(fit_features, holdout_features, columns)
+    labels = fit["long_view"].to_numpy(np.float32)
+    model = trusted.TrustedFM(dimension=dimension, factors=16, learning_rate=0.001, l2=1e-6, seed=seed)
+    rng = np.random.default_rng(seed)
+    for _ in range(12):
+        order = rng.permutation(len(labels))
+        for start in range(0, len(order), 8192):
+            batch = order[start:start + 8192]
+            model.step(fit_matrix[batch], labels[batch])
+    return model.predict(holdout_matrix).astype(np.float64)
+
+
+def quality_screen(public_train: pd.DataFrame) -> dict:
+    records = []
+    for rung in SCREEN_RUNGS:
+        directory = WORK / f"quality-{rung['id']}"
+        data = directory / "data"
+        data.mkdir(parents=True, exist_ok=True)
+        fit, holdout, evaluator = temporal_rung(public_train, rung)
+        fit.to_parquet(data / "train.parquet", index=False)
+        holdout.to_parquet(data / "validation.parquet", index=False)
+        (directory / "experiment.py").write_text(CANDIDATE_SOURCE, encoding="utf-8")
+        completed, timeout_error, elapsed = execute_program(directory, int(rung["timeout"]))
+        if timeout_error or completed is None or completed.returncode:
+            record = {
+                "rung": rung["id"], "passed": False, "reason": timeout_error or f"exit {completed.returncode if completed else 'unknown'}",
+                "elapsed_seconds": elapsed, "train_rows": len(fit), "validation_rows": len(holdout),
+                "stderr_tail": completed.stderr[-1200:] if completed else "",
+            }
+            records.append(record)
+            return {"passed": False, "records": records, "rejected_at": rung["id"]}
+        output = directory / "predictions.npy"
+        if not output.exists():
+            records.append({"rung": rung["id"], "passed": False, "reason": "predictions.npy missing"})
+            return {"passed": False, "records": records, "rejected_at": rung["id"]}
+        candidate_scores = np.load(output).astype(np.float64)
+        candidate_metrics = evaluate(evaluator, candidate_scores)
+        anchor_scores = official_fm_proxy(fit, holdout, directory, int(rung["seed"]))
+        anchor_metrics = evaluate(evaluator, anchor_scores)
+        delta = candidate_metrics["primary"] - anchor_metrics["primary"]
+        passed = bool(delta >= PROXY_MIN_DELTA)
+        record = {
+            "rung": rung["id"], "passed": passed, "candidate_metrics": candidate_metrics,
+            "anchor_metrics": anchor_metrics, "delta_vs_anchor": delta, "minimum_delta": PROXY_MIN_DELTA,
+            "elapsed_seconds": elapsed, "train_rows": len(fit), "validation_rows": len(holdout),
+        }
+        records.append(record)
+        event("screen", f"Training-only {rung['id']} tournament finished", screen=record)
+        if not passed:
+            return {"passed": False, "records": records, "rejected_at": rung["id"]}
+    return {"passed": True, "records": records}
+
+
 def run_candidate(evaluator: pd.DataFrame) -> dict:
     findings = inspect_source(CANDIDATE_SOURCE)
     if findings:
@@ -236,6 +347,26 @@ def run_candidate(evaluator: pd.DataFrame) -> dict:
     event("smoke", "Candidate smoke test finished", smoke=smoke)
     if not smoke["passed"]:
         return {"status": "failed", "stage": "smoke", "failure_type": "implementation_failed", "counts_as_experiment": False, "metrics": {}, "error": smoke["error"], "smoke": smoke}
+    public_train = pd.read_parquet(PUBLIC / "train.parquet")
+    screening = quality_screen(public_train)
+    if not screening["passed"]:
+        last = screening["records"][-1]
+        return {
+            "status": "screen_rejected", "stage": "quality_screen", "failure_type": "model_quality",
+            "counts_as_experiment": True, "external_validated": False,
+            "metrics": last.get("candidate_metrics", {}), "proxy_anchor": last.get("anchor_metrics", {}),
+            "delta_vs_anchor": last.get("delta_vs_anchor"), "error": last.get("reason", "Candidate fell below the temporal FM anchor"),
+            "fidelity": {
+                "id": last.get("rung", "screen"), "label": f"Temporal {last.get('rung', 'screen')}",
+                "train_fraction": next((item["train_fraction"] for item in SCREEN_RUNGS if item["id"] == last.get("rung")), 0.0),
+                "validation_fraction": next((item["validation_fraction"] for item in SCREEN_RUNGS if item["id"] == last.get("rung")), 0.0),
+                "seeds": 1, "max_seconds": next((item["timeout"] for item in SCREEN_RUNGS if item["id"] == last.get("rung")), 0),
+                "can_promote_champion": False,
+            },
+            "smoke": smoke, "screening": screening,
+        }
+    del public_train
+    gc.collect()
     EXPERIMENT.mkdir(parents=True, exist_ok=True)
     data = EXPERIMENT / "data"
     data.mkdir(exist_ok=True)
@@ -261,7 +392,9 @@ def run_candidate(evaluator: pd.DataFrame) -> dict:
         "status": "completed", "stage": "evaluation", "metrics": metrics,
         "delta_vs_official_fm": metrics["primary"] - BASELINE["primary"],
         "improved": metrics["primary"] > BASELINE["primary"],
-        "counts_as_experiment": True, "smoke": smoke, "elapsed_seconds": elapsed,
+        "counts_as_experiment": True, "external_validated": True,
+        "fidelity": {"id": "confirm", "label": "Full confirmation", "train_fraction": 1.0, "validation_fraction": 1.0, "seeds": 1, "max_seconds": 600, "can_promote_champion": True},
+        "smoke": smoke, "screening": screening, "elapsed_seconds": elapsed,
     }
 
 
