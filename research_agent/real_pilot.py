@@ -14,9 +14,9 @@ from .safety import CodeSafetyGate
 
 
 BASELINE = {"GAUC": 0.6674002647399903, "nDCG@5": 0.5357441067695617, "primary": 0.601572185754776}
-REVIEW_PROMPT = """You are the independent methodological reviewer in an autonomous recommender-research agent. Audit the proposed Python program against the hypothesis and benchmark contract. You diagnose only; you never rewrite code. The program's sole deliverable is one prediction per validation row and a trusted evaluator owns official metrics. If the proposal tunes hyperparameters, thresholds, gates, or ensemble weights, require a training-only chronological holdout. Verify projected columns separately against train_columns and validation_columns; row_id is validation-only and long_view is training-only. Check leakage, row order, unavailable inputs, hypothesis-to-code fidelity, finite scores, runtime, and outcome access. Return JSON with exactly approved (boolean) and issues (array of concise, actionable strings). Do not approve a different hypothesis."""
+REVIEW_PROMPT = """You are the independent methodological reviewer in an autonomous recommender-research agent. Audit the proposed Python program against the hypothesis and benchmark contract. You diagnose only; you never rewrite code. The program's sole deliverable is one prediction per validation row and a trusted worker owns smoke testing, temporal quality gates, official metrics, acceptance/abort policy, and champion promotion. Reject candidate-owned model-quality gates: the program must not raise, exit, or omit predictions because a temporal score, treatment delta, acceptance rule, or abort threshold is weak. If the proposal tunes hyperparameters, thresholds, or ensemble weights, require a training-only chronological holdout only for selecting settings, after which the program must still emit predictions. Verify projected columns separately against train_columns and validation_columns; row_id is validation-only and long_view is training-only. Check leakage, row order, unavailable inputs, hypothesis-to-code fidelity, finite scores, runtime, and outcome access. Return JSON with exactly approved (boolean) and issues (array of concise, actionable strings). Do not approve a different hypothesis."""
 
-REPAIR_PROMPT = """You are the coding agent repairing one autonomous ML experiment. Return JSON with only a code field containing a complete Python program. Preserve the proposal's hypothesis and model family exactly; do not substitute another model or weaken the acceptance/abort rules. Fix every supplied reviewer or deterministic issue. Obey the benchmark paths, schemas, label boundary, runtime, output contract, and allowed libraries. Prefer the supplied trusted_components helpers for frame loading, chronological splitting, FM encoding/training, and prediction validation when relevant. Use vectorized operations, define main(), call it, and write one finite score per validation row in unchanged row_id order. Never use validation outcomes, network, subprocess, dynamic execution, absolute paths, or parent paths."""
+REPAIR_PROMPT = """You are the coding agent repairing one autonomous ML experiment. Return JSON with only a code field containing a complete Python program. Preserve the proposal's hypothesis and model family exactly; do not substitute another model. The trusted worker—not candidate code—enforces acceptance rules, abort conditions, temporal quality thresholds, and champion promotion. Remove candidate-owned model-quality exceptions or early exits and always write treatment predictions when execution is structurally valid. An internal training-only holdout may select tuned settings but must not suppress output. Fix every supplied reviewer or deterministic issue. Obey the benchmark paths, schemas, label boundary, runtime, output contract, and allowed libraries. Prefer the supplied trusted_components helpers for frame loading, chronological splitting, FM encoding/training, and prediction validation when relevant. Use vectorized operations, define main(), call it, and write one finite score per validation row in unchanged row_id order. Never use validation outcomes, network, subprocess, dynamic execution, absolute paths, or parent paths."""
 
 
 def kuairand_context(memory: list[dict[str, Any]]) -> dict[str, Any]:
@@ -108,6 +108,7 @@ def kuairand_context(memory: list[dict[str, Any]]) -> dict[str, Any]:
             "Same-row click/like/follow/comment/watch outcomes are unavailable at inference and forbidden as features.",
             "If tuning is necessary, create a temporal holdout from training only.",
             "The temporal holdout is a directional candidate gate, not a requirement to reproduce the external five-seed official FM inside every candidate program.",
+            "Proposal acceptance_rule and abort_condition are controller metadata. Candidate code must not raise, exit, or omit predictions because model quality is weak; the trusted worker owns all quality gates.",
             "Only the trusted external evaluator compares a completed candidate with the immutable official FM baseline and decides champion promotion.",
             "The experiment must define main(), call it, and preserve validation row order.",
             "An implementation may train its own FM, but no precomputed FM score, checkpoint, or out-of-fold prediction artifact is currently available.",
@@ -135,7 +136,32 @@ def deterministic_findings(source: str, proposal: dict[str, Any]) -> list[str]:
     ):
         findings.append("Hypothesis requires an FM implementation, but the program does not contain one")
     findings.extend(trusted_api_findings(source))
+    findings.extend(candidate_quality_gate_findings(source))
     return sorted(set(findings))
+
+
+def candidate_quality_gate_findings(source: str) -> list[str]:
+    """Keep scientific quality decisions in the trusted worker, not candidate exits."""
+
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return []
+    quality_terms = (
+        "acceptance gate", "improvement gate", "quality gate", "abort threshold",
+        "temporal primary", "temporal abort", "treatment failed", "insufficient gain",
+        "below control", "below baseline",
+    )
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Raise):
+            continue
+        messages = [
+            str(item.value).lower() for item in ast.walk(node)
+            if isinstance(item, ast.Constant) and isinstance(item.value, str)
+        ]
+        if any(term in message for message in messages for term in quality_terms):
+            return ["Candidate must emit predictions; the trusted worker owns temporal and model-quality gates"]
+    return []
 
 
 def trusted_api_findings(source: str) -> list[str]:

@@ -14,7 +14,7 @@ from research_agent.benchmark import ToyRankingBenchmark, evaluate_ranking
 from research_agent.core import LiteratureIndex
 from research_agent.safety import CodeSafetyGate
 from research_agent.real_pilot import (
-    deterministic_findings, feasibility_findings, kuairand_context,
+    candidate_quality_gate_findings, deterministic_findings, feasibility_findings, kuairand_context,
     normalize_requirements, trusted_api_findings,
 )
 
@@ -92,6 +92,18 @@ if __name__ == '__main__':
 """
         proposal = {"title": "Paired FM feature ablation", "hypothesis": "FM feature improves ranking", "model_family": "factorization_machine"}
         self.assertEqual(deterministic_findings(source, proposal), [])
+
+    def test_candidate_model_quality_gate_is_rejected_but_structural_guard_is_allowed(self):
+        quality_gate = """def main():
+    if treatment_primary < control_primary:
+        raise RuntimeError('Treatment failed temporal primary improvement gate')
+"""
+        structural_guard = """def main():
+    if not finite_scores:
+        raise RuntimeError('Predictions are non-finite')
+"""
+        self.assertTrue(candidate_quality_gate_findings(quality_gate))
+        self.assertEqual(candidate_quality_gate_findings(structural_guard), [])
 
     def test_feasibility_gate_rejects_unavailable_fm_score_artifact(self):
         context = kuairand_context([])
