@@ -1,0 +1,23 @@
+{
+  "measurement_scope": "ordered-categorical training plus cached-candidate consensus verification",
+  "training_wall_seconds": 91.506,
+  "training_cpu_seconds": 499.479,
+  "training_cpu_hours": 0.138744,
+  "training_cpu_utilization_percent": 545.84,
+  "training_peak_rss_mb": 11897.938,
+  "verification_wall_seconds": 7.635,
+  "verification_cpu_seconds": 7.629,
+  "verification_cpu_hours": 0.002119,
+  "verification_peak_rss_mb": 476.141,
+  "gpu_count": 0,
+  "gpu_seconds": 0.0,
+  "gpu_hours": 0.0,
+  "peak_gpu_memory_mb": 0.0,
+  "device": "cpu",
+  "candidate_search_complete_tracking": false,
+  "hardware": {
+    "logical_cpu_count": 16,
+    "architecture": "arm64",
+    "processor": "arm"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "title": "Ordered categorical full-history consensus",
+  "experiment_type": "offline_ordered_categorical_consensus",
+  "hypothesis": "Ordered categorical target statistics over high-cardinality user/item fields and causal history features can add ranking signal that is not captured by the session-context consensus.",
+  "split_protocol": {
+    "candidate_training_dates": [20220408, 20220419],
+    "candidate_early_stop_dates": [20220420, 20220421],
+    "validation_dates": [20220422, 20220428],
+    "validation_labels_used_as_features": false,
+    "hidden_test_accessed": false
+  },
+  "candidate": {
+    "model": "CatBoostClassifier",
+    "loss": "Logloss",
+    "iterations_requested": 250,
+    "iterations_retained": 249,
+    "depth": 8,
+    "learning_rate": 0.08,
+    "seed": 151,
+    "history_length": 40,
+    "standalone_primary": 0.6044598817825317,
+    "temporal_holdout_primary": 0.5590392351150513
+  },
+  "consensus": {
+    "normalization": "within-user standardized ordinal rank",
+    "prior_session_consensus_weight": 0.76,
+    "ordered_categorical_weight": 0.24
+  },
+  "acceptance": "Promote only when the official validation primary score improves and every prediction feature is available without validation outcomes.",
+  "result": "accepted_as_research_best_target_not_reached"
+}
