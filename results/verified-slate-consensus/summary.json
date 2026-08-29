@@ -44,8 +44,14 @@
     "Session-count and size 11-20 residuals: both had mixed held-out fold effects after active-day routing and were rejected.",
     "Third-history-quartile mean residual: fixed primary reached 0.61281383 and GAUC improved, but nDCG@5 fell to 0.54328007 and two held-out folds regressed.",
     "Fourth-history-quartile median residual: both aggregate metrics improved, but one fold lost 0.00002295—more than the 0.00002098 aggregate primary gain.",
-    "Recent high-coverage watch residual: fixed primary reached 0.61279941, but one fold lost 0.00001168 relative to its 0.00001860 aggregate gain."
+    "Recent high-coverage watch residual: fixed primary reached 0.61279941, but one fold lost 0.00001168 relative to its 0.00001860 aggregate gain.",
+    "Training-aggregate transfer audit and a 205-artifact residual rescan found no stable new correction.",
+    "Random-log CatBoost transferred poorly (0.56101394 standard-log primary), while a nested 204-prior full random-panel search regressed to 0.61274505 OOF.",
+    "Public-validation pointwise/pairwise stackers, linear pairwise stackers, and a structural expert router all failed the user-disjoint acceptance test.",
+    "User-disjoint public-feedback rates selected zero weight in every fold.",
+    "Localized top-k reranking across 20 diverse experts regressed to 0.61234045 nested OOF primary."
   ],
+  "latest_rejected_cycle": "rejected-cycle-2026-08-30.json",
   "target_primary": 0.7,
   "target_reached": false,
   "remaining_gap": 0.08721919059753414

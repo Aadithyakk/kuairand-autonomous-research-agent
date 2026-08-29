@@ -1,0 +1,147 @@
+{
+  "status": "no_verified_gain",
+  "branch": "feature/experiment-resource-tracking",
+  "starting_commit": "c1de8a7e55668e1792af66b8bffe1421d5704ca9",
+  "protocol": "Official April 8-21 train and April 22-28 validation split; no hidden-test outcomes; four user-ID-modulo folds for residual selection; only label-free validation-slate features or outcomes from the separately supplied random-exposure log were admitted as model inputs.",
+  "retained_champion": {
+    "primary": 0.6127808094024658,
+    "gauc": 0.6822733879089355,
+    "ndcg5": 0.5432882308959961,
+    "baseline_primary": 0.6014695167541504,
+    "gain_over_baseline": 0.01131129264831543,
+    "target_primary": 0.7,
+    "remaining_gap": 0.08721919059753414
+  },
+  "experiments": [
+    {
+      "name": "training-aggregate transfer audit",
+      "result": "rejected",
+      "evidence": "Training-only item, author, and music long-view rates reached only 0.58072, 0.57914, and 0.57871 standalone primary; personalized aggregates were weaker.",
+      "resource_usage": {
+        "wall_seconds": 21.919,
+        "cpu_seconds": 24.969,
+        "cpu_hours": 0.006936,
+        "peak_rss_mb": 2117.078,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "exhaustive retained-artifact residual rescan",
+      "result": "rejected",
+      "evidence": "Among 205 retained score artifacts, 204 selected zero residual weight. The only nonzero artifact was the already rejected coverage gate and regressed held-out fold 2.",
+      "resource_usage": {
+        "wall_seconds": 106.192,
+        "cpu_seconds": 106.159,
+        "cpu_hours": 0.029489,
+        "peak_rss_mb": 1274.906,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "random-log CatBoost transfer",
+      "result": "rejected",
+      "evidence": "The model reached 0.6785539 AUC on a random-log temporal holdout but only 0.56101394 primary on the standard-log validation slate; every residual fold selected zero weight.",
+      "resource_usage": {
+        "wall_seconds": 48.217,
+        "cpu_seconds": 121.655,
+        "cpu_hours": 0.033793,
+        "peak_rss_mb": 3224.984,
+        "gpu_hours": 0.0,
+        "trees": 121
+      }
+    },
+    {
+      "name": "public-validation OOF model stackers",
+      "result": "rejected",
+      "evidence": "A 20-model pointwise CatBoost stacker reached 0.60909677 OOF primary and a YetiRankPairwise stacker reached 0.6099876; all positive blends regressed.",
+      "resource_usage": {
+        "pointwise": {
+          "wall_seconds": 156.296,
+          "cpu_seconds": 971.926,
+          "cpu_hours": 0.26998,
+          "peak_rss_mb": 2839.547
+        },
+        "pairwise": {
+          "wall_seconds": 303.095,
+          "cpu_seconds": 2080.839,
+          "cpu_hours": 0.578011,
+          "peak_rss_mb": 2346.766
+        },
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "linear pairwise rank stackers",
+      "result": "rejected",
+      "evidence": "Unweighted, top-5-weighted L2=0.1, and top-5-weighted L2=1.0 variants reached 0.61095261, 0.61188244, and 0.61049827 OOF primary.",
+      "resource_usage": {
+        "sequential_wall_seconds": 78.978,
+        "cpu_seconds": 79.018,
+        "cpu_hours": 0.02195,
+        "peak_rss_mb": 1208.266,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "OOF structural expert router",
+      "result": "rejected",
+      "evidence": "The best apparent fixed recipe reached 0.61278676 at alpha=-0.075, a 0.0000054 change with mixed held-out fold effects, below the stability threshold.",
+      "resource_usage": {
+        "wall_seconds": 42.431,
+        "cpu_seconds": 88.382,
+        "cpu_hours": 0.02455,
+        "peak_rss_mb": 1338.109,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "user-disjoint public-feedback rates",
+      "result": "rejected",
+      "evidence": "Video, author, music, tag, type-duration, tab-duration, and cross-duration rates all selected exactly zero correction in all four folds.",
+      "resource_usage": {
+        "wall_seconds": 127.144,
+        "cpu_seconds": 129.4,
+        "cpu_hours": 0.035944,
+        "peak_rss_mb": 1577.812,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "full random-exposure feedback panel",
+      "result": "rejected",
+      "evidence": "A nested search across 204 smoothed mean, log-odds, and lower-confidence-bound priors from 288338 random exposures fell to 0.61274505 OOF primary (0.68226254 GAUC, 0.5432276 nDCG@5); three of four held-out folds regressed.",
+      "resource_usage": {
+        "wall_seconds": 85.412,
+        "cpu_seconds": 86.506,
+        "cpu_hours": 0.024029,
+        "peak_rss_mb": 1793.266,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "localized top-k expert reranking",
+      "result": "rejected",
+      "evidence": "Nested selection over 20 diverse models, champion-only versus union candidate pools, five top-k widths, and eight weights fell to 0.61234045 OOF primary (0.68178904 GAUC, 0.5428919 nDCG@5); only one fold improved.",
+      "resource_usage": {
+        "wall_seconds": 74.746,
+        "cpu_seconds": 74.727,
+        "cpu_hours": 0.020757,
+        "peak_rss_mb": 1257.125,
+        "gpu_hours": 0.0
+      }
+    }
+  ],
+  "failed_recovery_events": [
+    "The first YetiRank OOF stacker stopped after fold 0 because of an inference API mismatch; the corrected full run is reported above.",
+    "Two full-random-panel prototype runs were stopped when profiling exposed quadratic and overly dense evaluator grids; the final sort-based nested run is reported above."
+  ],
+  "successful_run_totals": {
+    "wall_seconds": 1044.43,
+    "cpu_seconds": 3763.581,
+    "cpu_hours": 1.045439,
+    "peak_rss_mb": 3224.984,
+    "gpu_hours": 0.0,
+    "note": "Totals exclude interrupted recovery attempts whose trackers did not reach finalization."
+  },
+  "conclusion": "No candidate in this cycle met the acceptance rule of a positive aggregate gain with stable held-out fold behavior. The 0.6127808094 champion remains authoritative."
+}
