@@ -519,6 +519,37 @@ if batch_slate_tree is not None:
     scores = scores + 0.01 * median_margin_gate * (
         user_rank(mean_model_fraction) - user_rank(scores)
     )
+
+    # Users active on exactly two supplied validation dates form a distinct
+    # low-observation regime. Four disjoint user folds consistently selected an
+    # extrapolation away from the ordered model for this regime. Active-day
+    # count and both ranks are outcome-free.
+    active_day_count = np.zeros(len(scores), dtype=np.int16)
+    for indices_list in groups.values():
+        indices = np.asarray(indices_list, dtype=np.int64)
+        active_day_count[indices] = len(np.unique(dates[indices]))
+    two_day_gate = (active_day_count == 2).astype(np.float64)
+    scores = scores - 0.5225 * two_day_gate * (
+        ordered - user_rank(scores)
+    )
+
+    three_four_day_gate = (
+        (active_day_count >= 3) & (active_day_count <= 4)
+    ).astype(np.float64)
+    scores = scores - 0.175 * three_four_day_gate * (
+        watch - user_rank(scores)
+    )
+
+    group_size = np.zeros(len(scores), dtype=np.int16)
+    for indices_list in groups.values():
+        indices = np.asarray(indices_list, dtype=np.int64)
+        group_size[indices] = len(indices)
+    medium_slate_gate = ((group_size >= 6) & (group_size <= 10)).astype(
+        np.float64
+    )
+    scores = scores + 0.01 * medium_slate_gate * (
+        batch_slate_tree - user_rank(scores)
+    )
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -571,6 +602,9 @@ print(json.dumps({
             "high_margin_ordered_consensus": 0.34,
             "median_margin_quantile": 0.5,
             "median_margin_model_mean_consensus": 0.01,
+            "two_active_days_ordered_extrapolation": -0.5225,
+            "three_four_active_days_watch_extrapolation": -0.175,
+            "medium_slate_batch_consensus": 0.01,
         } if not skip_batch_slate else {}),
     },
     "feature_scope": "training-only outcome priors plus label-free full evaluation slate",

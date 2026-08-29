@@ -160,17 +160,95 @@
       "positive_heldout_user_folds": 4,
       "heldout_fold_primary_gains": [0.0000914931, 0.0000357032, 0.0000432134, 0.0000674129]
     },
+    "structural_gate_discovery_audit": {
+      "model_training_required": false,
+      "source_models": 20,
+      "candidate_corrections": 144,
+      "wall_seconds": 186.339,
+      "cpu_seconds": 186.302,
+      "cpu_hours": 0.051751,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1367.656,
+      "gpu_hours": 0.0
+    },
+    "two_active_days_ordered_gate": {
+      "scan_wall_seconds": 19.029,
+      "scan_cpu_seconds": 19.015,
+      "scan_cpu_hours": 0.005282,
+      "scan_peak_rss_mb": 1356.547,
+      "slice_wall_seconds": 15.553,
+      "slice_cpu_seconds": 15.549,
+      "slice_cpu_hours": 0.004319,
+      "slice_peak_rss_mb": 1086.266,
+      "gpu_hours": 0.0,
+      "fold_weights": [-0.54, -0.55, -0.43, -0.57],
+      "oof_primary": 0.612510085105896,
+      "fixed_primary": 0.6125684380531311,
+      "positive_heldout_user_folds": 4
+    },
+    "three_four_active_days_watch_gate": {
+      "scan_wall_seconds": 18.587,
+      "scan_cpu_seconds": 18.564,
+      "scan_cpu_hours": 0.005157,
+      "scan_peak_rss_mb": 1337.391,
+      "slice_wall_seconds": 15.711,
+      "slice_cpu_seconds": 15.708,
+      "slice_cpu_hours": 0.004363,
+      "slice_peak_rss_mb": 1088.688,
+      "gpu_hours": 0.0,
+      "fold_weights": [-0.18, -0.18, -0.18, -0.16],
+      "oof_primary": 0.612615704536438,
+      "fixed_primary": 0.6126254796981812,
+      "positive_heldout_user_folds": 3
+    },
+    "structural_gate_residual_rescan": {
+      "candidate_corrections": 144,
+      "wall_seconds": 186.834,
+      "cpu_seconds": 186.794,
+      "cpu_hours": 0.051887,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1347.922,
+      "gpu_hours": 0.0
+    },
+    "medium_slate_batch_gate": {
+      "model_training_required": false,
+      "slice_wall_seconds": 16.13,
+      "slice_cpu_seconds": 16.127,
+      "slice_cpu_hours": 0.00448,
+      "slice_peak_rss_mb": 1088.969,
+      "gpu_hours": 0.0,
+      "fold_weights": [0.01, 0.01, 0.01, 0.01],
+      "oof_primary": 0.6126559972763062,
+      "fixed_primary": 0.6126559972763062,
+      "positive_heldout_user_folds": 3,
+      "unchanged_heldout_user_folds": 1,
+      "changed_pair_orderings": 35
+    },
     "tracked_verification": {
-      "wall_seconds": 14.247,
-      "cpu_seconds": 14.246,
-      "cpu_hours": 0.003957,
-      "cpu_utilization_percent": 99.99,
-      "peak_rss_mb": 1079.031,
+      "wall_seconds": 14.817,
+      "cpu_seconds": 14.814,
+      "cpu_hours": 0.004115,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1081.156,
       "gpu_hours": 0.0,
       "peak_gpu_memory_mb": 0.0
     }
   },
   "rejected_experiments": {
+    "structural_gate_followup_rejections": {
+      "wall_seconds": 125.377,
+      "cpu_hours": 0.034808,
+      "peak_rss_mb": 1348.594,
+      "gpu_hours": 0.0,
+      "candidates": [
+        "size_6_10_q25_gap",
+        "repeat_any_batch_gap",
+        "sessions_2_3_trimmed_gap",
+        "days_3_4_batch_gap",
+        "size_11_20_batch_gap"
+      ],
+      "reason": "OOF regression, aggregate nDCG regression, zero residual weight, or mixed held-out fold effects after accepted routing stages."
+    },
     "third_pass_top_decile_trimmed_consensus": {
       "model_training_required": false,
       "scan_wall_seconds": 94.081,

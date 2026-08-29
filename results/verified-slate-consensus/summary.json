@@ -8,18 +8,18 @@
     "hidden_test_accessed": false
   },
   "champion": {
-    "primary": 0.6124310493469238,
-    "gauc": 0.6818247437477112,
-    "ndcg5": 0.5430374145507812,
+    "primary": 0.6126559972763062,
+    "gauc": 0.6821738481521606,
+    "ndcg5": 0.5431381464004517,
     "users": 22377,
     "rows": 124909
   },
   "baseline_primary": 0.6014695167541504,
-  "previous_verified_primary": 0.6123714447021484,
-  "gain_over_previous_verified": 0.000059604644775390625,
-  "gain_over_baseline": 0.010961532592773438,
-  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + high-margin ordered-model gate + median-margin 20-model mean gate",
-  "selection_evidence": "All twenty sequential corrections improved cross-fitted primary on disjoint user folds. The final 20-model mean gate selected weight 0.01 independently on every four-fold training partition, producing 0.6124310 stitched OOF and fixed primary; each held-out fold improved.",
+  "previous_verified_primary": 0.6124310493469238,
+  "gain_over_previous_verified": 0.00022494792938232422,
+  "gain_over_baseline": 0.011186480522155762,
+  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + two confidence gates + active-day expert routing + medium-slate batch consensus",
+  "selection_evidence": "All twenty-three sequential corrections improved cross-fitted primary on disjoint user folds. The new two-day ordered, three/four-day watch, and size 6-10 batch gates selected consistent fold directions; the final recipe reproduces 0.6126560 primary with both GAUC and nDCG@5 above the prior champion.",
   "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. The three priors use outcomes only from the April 8-21 training block. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit before April 22-28 inference. The final gates use only the frozen champion's normalized within-user top margin and frozen model ranks. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
   "rejected_ablations": [
     "Monte Carlo dropout LCB: fold correction signs disagreed and OOF primary regressed.",
@@ -39,9 +39,11 @@
     "Temporally selected per-user expert gate: improved the April 20-21 probe from 0.5599496 to 0.5600790 and reached 0.6059629 standalone, but additive OOF regressed to 0.6122078.",
     "Top-weighted pointwise batch-slate tree: improved its standalone score to 0.5921983, but additive OOF regressed to 0.6122713.",
     "Contrastively separated long/short sequence encoder: temporal selection chose epoch 3, then the leak-free refit reached 0.6030859 standalone; additive OOF regressed to 0.6122197 and reranked fold signs disagreed.",
-    "Third-pass top-decile trimmed-consensus residual: aggregate fixed primary reached 0.6124525, but held-out folds 0 and 1 regressed, so the 0.0000215 apparent gain was rejected."
+    "Third-pass top-decile trimmed-consensus residual: aggregate fixed primary reached 0.6124525, but held-out folds 0 and 1 regressed, so the 0.0000215 apparent gain was rejected.",
+    "Repeated-video batch residual: fixed primary reached 0.6126777, but nDCG@5 fell and held-out fold 0 regressed after changing 3,699 pair orderings.",
+    "Session-count and size 11-20 residuals: both had mixed held-out fold effects after active-day routing and were rejected."
   ],
   "target_primary": 0.7,
   "target_reached": false,
-  "remaining_gap": 0.08756895065307613
+  "remaining_gap": 0.0873440027236938
 }
