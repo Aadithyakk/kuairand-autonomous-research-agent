@@ -1,0 +1,41 @@
+--- champion/candidate.py
++++ candidate/candidate.py
+@@ -0,0 +1,38 @@
++import numpy as np
++
++PARAMETERS = {
++    "k": 16,
++    "lr": 0.001,
++    "epochs": 40,
++    "batch_size": 8192,
++    "patience": 4,
++    "seed": 0,
++    "ensemble_seeds": [0, 1, 2],
++    "positive_weight": 3.0,
++}
++
++def sigmoid(logits):
++    logits = np.asarray(logits, dtype=np.float64)
++    out = np.empty_like(logits)
++    nonnegative = logits >= 0.0
++    out[nonnegative] = 1.0 / (1.0 + np.exp(-logits[nonnegative]))
++    exp_logits = np.exp(logits[~nonnegative])
++    out[~nonnegative] = exp_logits / (1.0 + exp_logits)
++    return out
++
++def weighted_logistic_loss_and_logit_gradient(logits, labels):
++    """Positive-weighted BCE used by the NumPy FM training loop."""
++    logits = np.asarray(logits, dtype=np.float64)
++    labels = np.asarray(labels, dtype=np.float64)
++    if logits.shape != labels.shape:
++        raise ValueError("logits and labels must have identical shapes")
++    if logits.size == 0 or not np.all((labels == 0.0) | (labels == 1.0)):
++        raise ValueError("labels must be a non-empty binary array")
++
++    positive_weight = PARAMETERS["positive_weight"]
++    per_example = ((1.0 - labels) * np.logaddexp(0.0, logits) +
++                   positive_weight * labels * np.logaddexp(0.0, -logits))
++    probabilities = sigmoid(logits)
++    gradient = ((1.0 - labels) * probabilities -
++                positive_weight * labels * (1.0 - probabilities)) / logits.size
++    return float(np.mean(per_example)), gradient

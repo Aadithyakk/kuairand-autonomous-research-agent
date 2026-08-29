@@ -1,0 +1,31 @@
+{
+  "abort_condition": "Abort on any non-finite loss, gradient, logit, GAUC, or nDCG@5; use early stopping after 4 unimproved epochs, cap training at 40 epochs, and terminate the run if wall-clock time exceeds 120 seconds.",
+  "acceptance": "Using validation data only, accept as the new champion if primary is at least 0.6037843061447144, GAUC is at least 0.6702978942871094, and nDCG@5 is at least 0.5366707776069641. This also remains above the organizer baseline plus epsilon. Otherwise reject.",
+  "change_summary": "Train one seed-0 NumPy FM with positive_weight=2.75 instead of the champion's 2.5. Keep k=16, lr=0.001, epochs=40, batch_size=8192, patience=4, and all other behavior fixed.",
+  "expected_gain": 0.0001,
+  "experiment_type": "fm_positive_weight",
+  "hypothesis": "Changing only the positive-example logistic-loss weight from 2.5 to 2.75 will increase KuaiRand-Pure long_view validation primary by at least 0.0001 relative to the current champion, without reducing either GAUC or nDCG@5 by more than 0.0002.",
+  "parameters": {
+    "batch_size": 8192,
+    "ensemble_seeds": [
+      0,
+      1,
+      2
+    ],
+    "epochs": 40,
+    "k": 16,
+    "lr": 0.001,
+    "patience": 4,
+    "positive_weight": 2.75,
+    "seed": 0
+  },
+  "rationale": "The observed seed-0 result improved from primary 0.6034932136535645 at positive_weight=2.0 to 0.6036843061447144 at 2.5. A single run at 2.75 is a low-cost local test of whether that upward trend continues, while avoiding the runtime risk of another multi-seed ensemble.",
+  "response_id": "resp_0c76e9cf96c5b605006a91c0cfd83887d092249d2fc46e523c",
+  "title": "Refine champion positive weight from 2.5 to 2.75",
+  "usage": {
+    "input_tokens": 1618,
+    "output_tokens": 4307,
+    "reasoning_tokens": 3106,
+    "total_tokens": 5925
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "abort_condition": "Abort if any member produces non-finite or misaligned validation logits. Stop each member after patience=4 without improvement or 40 epochs, whichever occurs first; do not retry or add seeds. Reject if the finite ensemble result misses the acceptance threshold.",
+  "acceptance": "Accept only if KuaiRand-Pure validation primary is at least 0.6054932136535645, corresponding to a gain of at least epsilon=0.002 over the observed champion. Compute and report both validation GAUC and nDCG@5 without hidden-test access.",
+  "change_summary": "Replace the champion's single seed-0 prediction with the arithmetic mean of validation logits from seeds [0, 1, 2]. Keep k=16, lr=0.001, epochs=40, batch_size=8192, patience=4, and positive_weight=2.0 unchanged for every member.",
+  "expected_gain": 0.002,
+  "experiment_type": "fm_ensemble",
+  "hypothesis": "Averaging validation logits from independently trained seed-0, seed-1, and seed-2 FMs, all using the champion configuration with positive_weight=2.0, will improve validation primary score by at least 0.002 over the single-seed champion.",
+  "parameters": {
+    "batch_size": 8192,
+    "ensemble_seeds": [
+      0,
+      1,
+      2
+    ],
+    "epochs": 40,
+    "k": 16,
+    "lr": 0.001,
+    "patience": 4,
+    "positive_weight": 2.0,
+    "seed": 0
+  },
+  "rationale": "The observed champion uses only seed 0. Retaining its configuration while averaging three independently initialized models tests whether reducing seed-specific variance improves ranking. This is one supported isolated change\u2014single-model logits versus mean logits\u2014and requires at most three 40-epoch NumPy FM fits.",
+  "response_id": "resp_0757142b42d2aff4006a91c019e82487d0baccbddd4f1a9a7d",
+  "title": "Three-seed logit ensemble of the positive-weighted FM champion",
+  "usage": {
+    "input_tokens": 1128,
+    "output_tokens": 3257,
+    "reasoning_tokens": 2588,
+    "total_tokens": 4385
+  }
+}

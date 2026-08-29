@@ -1,0 +1,26 @@
+import numpy as np
+
+MEMBER_CONFIGS = tuple(
+    {
+        "k": 16,
+        "lr": 0.001,
+        "epochs": 40,
+        "batch_size": 8192,
+        "patience": 4,
+        "seed": seed,
+        "positive_weight": 2.0,
+    }
+    for seed in (0, 1, 2)
+)
+
+def mean_validation_logits(logits_by_seed):
+    """Return the arithmetic mean of aligned FM validation logits."""
+    seeds = (0, 1, 2)
+    arrays = [np.asarray(logits_by_seed[s], dtype=np.float64) for s in seeds]
+    if any(a.ndim != 1 for a in arrays):
+        raise ValueError("Each member must provide one-dimensional validation logits")
+    if len({a.shape for a in arrays}) != 1:
+        raise ValueError("Validation logits must be aligned and have identical shapes")
+    if not all(np.all(np.isfinite(a)) for a in arrays):
+        raise FloatingPointError("Non-finite validation logits")
+    return np.mean(np.stack(arrays, axis=0), axis=0)

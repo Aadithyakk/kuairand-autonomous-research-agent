@@ -1,0 +1,31 @@
+{
+  "abort_condition": "Abort and reject the run if training or validation produces a non-finite value, the official executor exceeds its runtime limit, or the configuration differs from the listed parameters. Do not retry with extra seeds or inspect hidden-test data.",
+  "acceptance": "Evaluate only on the fixed validation split and report both GAUC and nDCG@5. Accept if primary is at least 0.6054932136535645, which is the observed champion primary 0.6034932136535645 plus epsilon 0.002; otherwise reject.",
+  "change_summary": "Train one seed-0 NumPy FM with positive_weight=2.5 instead of the champion's 2.0. Keep k=16, lr=0.001, epochs=40, batch_size=8192, patience=4, and all other behavior fixed.",
+  "expected_gain": 0.002,
+  "experiment_type": "fm_positive_weight",
+  "hypothesis": "Increasing only the positive-example logistic-loss weight from 2.0 to 2.5 will improve the KuaiRand-Pure long_view validation primary score by at least 0.002 relative to the current champion.",
+  "parameters": {
+    "batch_size": 8192,
+    "ensemble_seeds": [
+      0,
+      1,
+      2
+    ],
+    "epochs": 40,
+    "k": 16,
+    "lr": 0.001,
+    "patience": 4,
+    "positive_weight": 2.5,
+    "seed": 0
+  },
+  "rationale": "The only completed positive-weight experiment improved the primary score when the weight moved from 1.0 to 2.0. A conservative one-step increase tests whether that trend continues without the runtime risk of the previously failed three-model ensemble. This is a single-seed, single-model run and does not assume an unobserved metric result.",
+  "response_id": "resp_03bd7a37f6d93070006a91c08bef3487d0a0f7e756d1107152",
+  "title": "Tune champion positive weight from 2.0 to 2.5",
+  "usage": {
+    "input_tokens": 1274,
+    "output_tokens": 2461,
+    "reasoning_tokens": 1552,
+    "total_tokens": 3735
+  }
+}

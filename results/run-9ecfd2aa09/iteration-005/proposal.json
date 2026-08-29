@@ -1,0 +1,31 @@
+{
+  "abort_condition": "Abort on non-finite training loss or logits, or if the trusted executor exceeds 120 seconds. Otherwise apply early stopping with validation patience 4 and a maximum of 40 epochs.",
+  "acceptance": "Accept if validation primary is at least 0.6038807465, validation GAUC is at least 0.6697874401, and validation nDCG@5 is at least 0.5373741124. Do not access hidden-test data.",
+  "change_summary": "Train one seed-0 NumPy FM with positive_weight=3.0 instead of the champion's 2.75. Keep k=16, lr=0.001, epochs=40, batch_size=8192, patience=4, and all other behavior fixed. Evaluate only on validation GAUC and nDCG@5.",
+  "expected_gain": 0.0001,
+  "experiment_type": "fm_positive_weight",
+  "hypothesis": "Changing only the positive-example logistic-loss weight from 2.75 to 3.0 will increase KuaiRand-Pure long_view validation primary by at least 0.0001 relative to the observed champion, without reducing either GAUC or nDCG@5 by more than 0.0002.",
+  "parameters": {
+    "batch_size": 8192,
+    "ensemble_seeds": [
+      0,
+      1,
+      2
+    ],
+    "epochs": 40,
+    "k": 16,
+    "lr": 0.001,
+    "patience": 4,
+    "positive_weight": 3.0,
+    "seed": 0
+  },
+  "rationale": "The observed primary score increased at positive weights 2.0, 2.5, and 2.75. A single-seed weight-3.0 run is a low-cost local continuation that tests whether the improvement persists while avoiding the runtime risk previously encountered by the three-model ensemble.",
+  "response_id": "resp_0bda812b6526622c006a91c12c1b0487d0ab2f74302b94641b",
+  "title": "Increase champion positive weight from 2.75 to 3.0",
+  "usage": {
+    "input_tokens": 1984,
+    "output_tokens": 2393,
+    "reasoning_tokens": 1552,
+    "total_tokens": 4377
+  }
+}

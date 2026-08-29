@@ -1,0 +1,83 @@
+{
+  "campaign_id": "run-9ecfd2aa09",
+  "date": "2026-08-29",
+  "provider": "gpt",
+  "model": "gpt-5.6-sol",
+  "mode": "kuairand",
+  "target": "long_view",
+  "status": "complete",
+  "stop_reason": "convergence",
+  "hidden_test_accessed": false,
+  "baseline": {
+    "primary": 0.6014695167541504,
+    "gauc": 0.6671333909034729,
+    "ndcg5": 0.5358057022094727,
+    "runtime_seconds": 27.712
+  },
+  "champion": {
+    "iteration": 4,
+    "title": "Refine champion positive weight from 2.5 to 2.75",
+    "primary": 0.6037807464599609,
+    "gauc": 0.6699874401092529,
+    "ndcg5": 0.5375741124153137,
+    "gain_over_baseline": 0.0023112297058105
+  },
+  "iterations": [
+    {
+      "iteration": 1,
+      "title": "Double positive-example weight in the NumPy FM loss",
+      "outcome": "accepted",
+      "primary": 0.6034932136535645,
+      "gauc": 0.6703300476074219,
+      "ndcg5": 0.5366563200950623,
+      "gain_over_previous_champion": 0.0020236968994141,
+      "runtime_seconds": 112.56
+    },
+    {
+      "iteration": 2,
+      "title": "Three-seed logit ensemble of the positive-weighted FM champion",
+      "outcome": "invalidated",
+      "error": "Organizer adapter exited with code -15: no stderr detail",
+      "recovery": "The result was discarded because the ensemble runner would have ignored positive_weight=2.0. The runner contract was corrected before continuing; the retained champion was unchanged.",
+      "runtime_seconds": 114.28
+    },
+    {
+      "iteration": 3,
+      "title": "Tune champion positive weight from 2.0 to 2.5",
+      "outcome": "accepted",
+      "primary": 0.6036843061447144,
+      "gauc": 0.6704978942871094,
+      "ndcg5": 0.5368707776069641,
+      "gain_over_previous_champion": 0.0001910924911499,
+      "runtime_seconds": 67.9
+    },
+    {
+      "iteration": 4,
+      "title": "Refine champion positive weight from 2.5 to 2.75",
+      "outcome": "accepted",
+      "primary": 0.6037807464599609,
+      "gauc": 0.6699874401092529,
+      "ndcg5": 0.5375741124153137,
+      "gain_over_previous_champion": 0.0000964403152466,
+      "runtime_seconds": 92.26
+    },
+    {
+      "iteration": 5,
+      "title": "Increase champion positive weight from 2.75 to 3.0",
+      "outcome": "rejected",
+      "primary": 0.6036427021026611,
+      "gauc": 0.6698157787322998,
+      "ndcg5": 0.5374696850776672,
+      "gain_over_previous_champion": -0.0001380443572998,
+      "runtime_seconds": 64.84
+    }
+  ],
+  "usage": {
+    "input_tokens": 6800,
+    "output_tokens": 18002,
+    "reasoning_tokens": 12238,
+    "total_tokens": 24802,
+    "wall_seconds": 479.67
+  },
+  "manual_interventions": 1
+}

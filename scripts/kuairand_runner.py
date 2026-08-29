@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Trusted KuaiRand validation adapter.
+
+The research agent receives aggregate validation metrics only. This process owns
+label access and never evaluates the test date range during development.
+"""
+from __future__ import annotations
+
+import csv
+import importlib.util
+import json
+import os
+import sys
+import time
+from pathlib import Path
+
+import numpy as np
+
+
+ROOT = Path(__file__).resolve().parents[1]
+STARTER = Path(os.getenv("KUAI_STARTER_KIT_DIR", ROOT / "external" / "kuairand-starter-kit")).resolve()
+
+
+def load_module(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if not spec or not spec.loader:
+        raise RuntimeError(f"Cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+data_module = load_module("official_data", STARTER / "data.py")
+evaluate_module = load_module("official_evaluate", STARTER / "evaluate.py")
+sys.modules["data"] = data_module
+sys.modules["evaluate"] = evaluate_module
+baseline_module = load_module("official_baseline", STARTER / "baseline.py")
+
+
+def load_development_splits(data_dir: Path) -> dict:
+    """Load train/validation only. Rows after 2022-04-28 are discarded."""
+    video_to_author: dict[str, str] = {}
+    with (data_dir / "video_features_basic_pure.csv").open(encoding="utf-8") as stream:
+        for row in csv.DictReader(stream):
+            video_to_author[row["video_id"]] = row["author_id"]
+
+    train, valid = [], []
+    for filename in ("log_standard_4_08_to_4_21_pure.csv", "log_standard_4_22_to_5_08_pure.csv"):
+        with (data_dir / filename).open(encoding="utf-8") as stream:
+            for row in csv.DictReader(stream):
+                date = int(row["date"])
+                if date > 20220428:
+                    continue
+                item = (
+                    date, row["user_id"], row["video_id"], video_to_author.get(row["video_id"], "UNK"),
+                    row["tab"], float(row["duration_ms"]), 1 if row["long_view"] != "0" else 0,
+                )
+                (train if date <= 20220421 else valid).append(item)
+    if len(train) != 1_141_112 or len(valid) != 124_909:
+        raise RuntimeError(f"Unexpected split sizes: train={len(train)}, valid={len(valid)}")
+    return {"train": train, "valid": valid, "test": []}
+
+
+class WeightedFM(baseline_module.FM):
+    def __init__(self, *args, positive_weight: float = 1.0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.positive_weight = positive_weight
+
+    def step(self, X, y):
+        z, E, S = self.logits(X)
+        weights = np.where(y > 0.5, self.positive_weight, 1.0).astype(np.float32)
+        g = ((baseline_module.sigmoid(z) - y) * weights / weights.sum()).astype(np.float32)
+        gV = np.zeros_like(self.V)
+        gW = np.zeros_like(self.W)
+        np.add.at(gW, X, g[:, None])
+        np.add.at(gV, X, g[:, None, None] * (S[:, None, :] - E))
+        gV += self.l2 * self.V
+        gW += self.l2 * self.W
+        self.t += 1
+        b1, b2, eps = 0.9, 0.999, 1e-8
+        for parameter, gradient, mean, variance in ((self.V, gV, self.mV, self.vV), (self.W, gW, self.mW, self.vW)):
+            mean *= b1
+            mean += (1 - b1) * gradient
+            variance *= b2
+            variance += (1 - b2) * (gradient * gradient)
+            parameter -= self.lr * (mean / (1 - b1 ** self.t)) / (np.sqrt(variance / (1 - b2 ** self.t)) + eps)
+        self.b -= self.lr * g.sum()
+        probabilities = baseline_module.sigmoid(z)
+        loss = -(weights * (y * np.log(probabilities + 1e-9) + (1 - y) * np.log(1 - probabilities + 1e-9))).sum() / weights.sum()
+        return float(loss)
+
+
+def train_one(train_x, train_y, valid_x, valid_y, valid_users, dimension: int, output_dir: Path, parameters: dict, seed: int, positive_weight: float):
+    k = max(4, min(int(parameters.get("k", 16)), 32))
+    lr = max(0.0001, min(float(parameters.get("lr", 0.001)), 0.01))
+    epochs = max(5, min(int(parameters.get("epochs", 40)), 60))
+    batch = max(2048, min(int(parameters.get("batch_size", 8192)), 32768))
+    patience = max(2, min(int(parameters.get("patience", 4)), 8))
+    model = WeightedFM(dimension, k=k, lr=lr, seed=seed, positive_weight=positive_weight)
+    random = np.random.default_rng(seed)
+    best_score, best_state, bad = -1.0, None, 0
+    history = []
+    for epoch in range(1, epochs + 1):
+        order = random.permutation(len(train_y))
+        losses = [model.step(train_x[order[start:start + batch]], train_y[order[start:start + batch]]) for start in range(0, len(order), batch)]
+        scores = model.predict(valid_x)
+        metrics = evaluate_module.evaluate(valid_users, valid_y, scores)
+        history.append({
+            "epoch": epoch, "loss": float(np.mean(losses)), "GAUC": float(metrics["GAUC"]),
+            "nDCG@5": float(metrics["nDCG@5"]), "primary": float(metrics["primary"]),
+            "users": int(metrics["users"]), "rows": int(metrics["rows"]),
+        })
+        if metrics["primary"] > best_score + 1e-5:
+            best_score, bad = metrics["primary"], 0
+            best_state = (model.V.copy(), model.W.copy(), np.float32(model.b), scores.copy())
+        else:
+            bad += 1
+            if bad >= patience:
+                break
+    if best_state is None:
+        raise RuntimeError("FM training produced no checkpoint")
+    model.V, model.W, model.b, best_scores = best_state
+    np.savez_compressed(output_dir / f"checkpoint-seed-{seed}.npz", V=model.V, W=model.W, b=model.b)
+    return best_scores, {"seed": seed, "positive_weight": positive_weight, "epochs": history}
+
+
+def train_fm(splits: dict, output_dir: Path, proposal: dict) -> dict:
+    encoded, dimension = data_module.encode(splits)
+    train_x, train_y, _ = encoded["train"]
+    valid_x, valid_y, valid_users = encoded["valid"]
+    parameters = proposal.get("parameters", {})
+    experiment_type = proposal.get("experiment_type", "fm_config")
+    seed = int(parameters.get("seed", 0))
+    seeds = parameters.get("ensemble_seeds", [seed]) if experiment_type == "fm_ensemble" else [seed]
+    seeds = [int(value) for value in seeds[:3]]
+    positive_weight = float(parameters.get("positive_weight", 1.0))
+    positive_weight = max(1.0, min(positive_weight, 10.0))
+    predictions, histories = [], []
+    for model_seed in seeds:
+        scores, history = train_one(train_x, train_y, valid_x, valid_y, valid_users, dimension, output_dir, parameters, model_seed, positive_weight)
+        predictions.append(scores)
+        histories.append(history)
+    best_scores = np.mean(np.stack(predictions), axis=0)
+    final = evaluate_module.evaluate(valid_users, valid_y, best_scores)
+    (output_dir / "training-history.json").write_text(json.dumps({"experiment_type": experiment_type, "runs": histories}, indent=2), encoding="utf-8")
+    return {"primary": float(final["primary"]), "gauc": float(final["GAUC"]), "ndcg5": float(final["nDCG@5"])}
+
+
+def main() -> int:
+    request_path = os.getenv("KUAI_RUNNER_REQUEST")
+    if not request_path:
+        raise RuntimeError("KUAI_RUNNER_REQUEST is required")
+    request = json.loads(Path(request_path).read_text(encoding="utf-8"))
+    output_dir = Path(request_path).resolve().parent
+    data_dir = Path(request["dataset_path"]).resolve()
+    started = time.monotonic()
+    proposal = {"experiment_type": "fm_config", "parameters": {}}
+    if request.get("action") == "experiment":
+        proposal_path = Path(request["proposal_path"])
+        proposal = json.loads(proposal_path.read_text(encoding="utf-8"))
+    metrics = train_fm(load_development_splits(data_dir), output_dir, proposal)
+    metrics["runtime_seconds"] = round(time.monotonic() - started, 3)
+    Path(request["metrics_path"]).write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    print(json.dumps({"action": request.get("action"), "metrics": metrics}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
