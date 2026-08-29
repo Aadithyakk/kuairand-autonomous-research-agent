@@ -8,19 +8,19 @@
     "hidden_test_accessed": false
   },
   "champion": {
-    "primary": 0.6122177243232727,
-    "gauc": 0.6815313696861267,
-    "ndcg5": 0.5429040789604187,
+    "primary": 0.6122815012931824,
+    "gauc": 0.6816158890724182,
+    "ndcg5": 0.5429471135139465,
     "users": 22377,
     "rows": 124909
   },
   "baseline_primary": 0.6014695167541504,
-  "previous_verified_primary": 0.6120631098747253,
-  "gain_over_previous_verified": 0.00015461444854736328,
-  "gain_over_baseline": 0.010748207569122314,
-  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors",
-  "selection_evidence": "All seventeen sequential corrections improved cross-fitted primary on disjoint user folds. The final nine conditional, temporal, and training-prior terms retained the same selected sign on all four user-id-modulo folds.",
-  "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. The final three priors use outcomes only from the April 8-21 training block. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
+  "previous_verified_primary": 0.6122177243232727,
+  "gain_over_previous_verified": 0.00006377696990966797,
+  "gain_over_baseline": 0.010811984539031982,
+  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus",
+  "selection_evidence": "All eighteen sequential corrections improved cross-fitted primary on disjoint user folds. The final nested batch-slate consensus selected positive outer weights [0.185, 0.295, 0.285, 0.305], producing 0.6122684 OOF and 0.6122815 fixed primary.",
+  "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. The three priors use outcomes only from the April 8-21 training block. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit before April 22-28 inference. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
   "rejected_ablations": [
     "Monte Carlo dropout LCB: fold correction signs disagreed and OOF primary regressed.",
     "Continuous watch-ratio margin: widened cross-fitted primary regressed to 0.61106056.",
@@ -29,9 +29,13 @@
     "Supervised weekly-slate CatBoost: 0.6047368 standalone and 0.6112029 cross-fitted in the ensemble after 0.811823 CPU-hours.",
     "Exhaustive residual scan of 192 retained prediction artifacts: no candidate earned a nonzero weight on the four disjoint user folds at the tested coarse scale.",
     "Cross-session GRU: 0.598792 standalone; additive OOF regressed to 0.6119788 and reranked fold weights disagreed.",
-    "Multi-token-tag history DeepFM: 0.607719 standalone; additive OOF regressed to 0.6120303 and fold weights disagreed."
+    "Multi-token-tag history DeepFM: 0.607719 standalone; additive OOF regressed to 0.6120303 and fold weights disagreed.",
+    "Causal timestamp-gap proxy histories: the train-only proxy reached 0.755662 temporal-holdout AUC, but no derived state produced stable nonzero residual weights.",
+    "Continuous threshold-progress CatBoost: 0.587240 standalone, 0.6121895 additive OOF, 0.562779 CPU-hours, and 17.87 GB peak RAM.",
+    "Residual-initialized batch-slate tree: 0.592267 standalone and only 0.6122193 additive OOF.",
+    "Personalized content kNN: best validation primary 0.524039; rejected after training-only temporal selection."
   ],
   "target_primary": 0.7,
   "target_reached": false,
-  "remaining_gap": 0.08778227567672725
+  "remaining_gap": 0.08771849870681758
 }

@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+import os
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -83,6 +84,11 @@ tree = load_scores(
     "history-catboost-classifier-refit-i500-seq40-session-fullmeta-s257.npz"
 )
 base = user_rank(0.765 * base + 0.235 * tree)
+skip_batch_slate = os.getenv("KUAI_SKIP_BATCH_SLATE") == "1"
+batch_slate_tree = (
+    None if skip_batch_slate
+    else load_scores("batch-slate-meta-catboost-s751.npz")
+)
 
 # Build evaluation-slate features from candidate IDs and static video metadata.
 # No long_view, click, play-time, or other validation outcome is read here.
@@ -406,6 +412,22 @@ scores = (
     + 0.01 * recent7_tab_rate
     + 0.03 * user_author_completion_rate
 )
+
+# A temporally trained batch-slate CatBoost sees the same outcome-free totals,
+# score neighborhoods, and static metadata on April 14-21 before being refit
+# and applied to April 22-28. Its standalone prediction is deliberately used
+# only as a tiny correction. A continuous repeat-count penalty and this tree
+# form a jointly corrected ordering; an outer ordinal consensus amplifies only
+# the few pairwise changes on which that ordering differs from the champion.
+if batch_slate_tree is not None:
+    log_user_video_count = user_standardize(np.asarray([
+        math.log1p(user_video_counts[(user, video)])
+        for user, video, _, _, _, _, _, _, _, _ in rows
+    ], dtype=np.float64))
+    joint_slate_score = (
+        scores - 0.05 * log_user_video_count + 0.0021875 * batch_slate_tree
+    )
+    scores = scores + 0.2675 * user_rank(joint_slate_score)
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -450,6 +472,11 @@ print(json.dumps({
         "recent3_user_threshold_duration_long_rate": -0.04,
         "recent7_tab_long_rate": 0.01,
         "all_user_author_completion_rate": 0.03,
+        **({
+            "joint_log_user_video_count": -0.05,
+            "joint_batch_slate_tree": 0.0021875,
+            "joint_ordinal_consensus": 0.2675,
+        } if not skip_batch_slate else {}),
     },
     "feature_scope": "training-only outcome priors plus label-free full evaluation slate",
     "verification_resource_usage": tracker.finish(),

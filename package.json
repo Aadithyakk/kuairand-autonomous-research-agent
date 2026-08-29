@@ -13,7 +13,7 @@
     "test:backend": "python3 -m unittest discover -s backend/tests -v",
     "build": "vinext build",
     "start": "vinext start",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern runtime"
   },
   "dependencies": {
     "next": "16.2.6",
