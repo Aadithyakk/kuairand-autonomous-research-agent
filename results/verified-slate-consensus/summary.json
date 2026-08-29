@@ -8,28 +8,30 @@
     "hidden_test_accessed": false
   },
   "champion": {
-    "primary": 0.6120631098747253,
-    "gauc": 0.6814045310020447,
-    "ndcg5": 0.542721688747406,
+    "primary": 0.6122177243232727,
+    "gauc": 0.6815313696861267,
+    "ndcg5": 0.5429040789604187,
     "users": 22377,
     "rows": 124909
   },
   "baseline_primary": 0.6014695167541504,
-  "previous_verified_primary": 0.6118398904800415,
-  "gain_over_previous_verified": 0.0002232193946838379,
-  "gain_over_baseline": 0.010593593120574951,
-  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + session-length and tab corrections + date-tab leave-one-out smoothing + immediate temporal-neighbor delta",
-  "selection_evidence": "All fourteen sequential corrections improved cross-fitted primary on disjoint user folds. The final six conditional and temporal terms retained the same selected sign on all four user-id-modulo folds.",
-  "leakage_note": "The correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. It never reads long_view, click, watch time, or another validation outcome. Deployments that do not know the complete candidate slate must not use this correction as written.",
+  "previous_verified_primary": 0.6120631098747253,
+  "gain_over_previous_verified": 0.00015461444854736328,
+  "gain_over_baseline": 0.010748207569122314,
+  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors",
+  "selection_evidence": "All seventeen sequential corrections improved cross-fitted primary on disjoint user folds. The final nine conditional, temporal, and training-prior terms retained the same selected sign on all four user-id-modulo folds.",
+  "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. The final three priors use outcomes only from the April 8-21 training block. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
   "rejected_ablations": [
     "Monte Carlo dropout LCB: fold correction signs disagreed and OOF primary regressed.",
     "Continuous watch-ratio margin: widened cross-fitted primary regressed to 0.61106056.",
     "Synthetic-exposure density weighting: square-root OOF primary was 0.611053 and full weighting was 0.6109525.",
     "Video-type slate concentration: fixed score improved but cross-fitted primary regressed, so it was excluded.",
     "Supervised weekly-slate CatBoost: 0.6047368 standalone and 0.6112029 cross-fitted in the ensemble after 0.811823 CPU-hours.",
-    "Exhaustive residual scan of 192 retained prediction artifacts: no candidate earned a nonzero weight on the four disjoint user folds at the tested coarse scale."
+    "Exhaustive residual scan of 192 retained prediction artifacts: no candidate earned a nonzero weight on the four disjoint user folds at the tested coarse scale.",
+    "Cross-session GRU: 0.598792 standalone; additive OOF regressed to 0.6119788 and reranked fold weights disagreed.",
+    "Multi-token-tag history DeepFM: 0.607719 standalone; additive OOF regressed to 0.6120303 and fold weights disagreed."
   ],
   "target_primary": 0.7,
   "target_reached": false,
-  "remaining_gap": 0.08793689012527461
+  "remaining_gap": 0.08778227567672725
 }

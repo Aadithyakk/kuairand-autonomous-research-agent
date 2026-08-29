@@ -42,12 +42,34 @@
       "peak_rss_mb": 1126.141,
       "gpu_hours": 0.0
     },
+    "history_prior_exhaustive_audit": {
+      "candidate_features": 386,
+      "wall_seconds": 340.443,
+      "cpu_seconds": 346.168,
+      "cpu_hours": 0.096158,
+      "peak_rss_mb": 2420.172,
+      "gpu_hours": 0.0
+    },
+    "history_prior_stage2_audit": {
+      "wall_seconds": 72.432,
+      "cpu_seconds": 78.526,
+      "cpu_hours": 0.021813,
+      "peak_rss_mb": 2396.969,
+      "gpu_hours": 0.0
+    },
+    "history_prior_stage3_audit": {
+      "wall_seconds": 70.43,
+      "cpu_seconds": 76.257,
+      "cpu_hours": 0.021183,
+      "peak_rss_mb": 2393.562,
+      "gpu_hours": 0.0
+    },
     "tracked_verification": {
-      "wall_seconds": 10.097,
-      "cpu_seconds": 10.094,
-      "cpu_hours": 0.002804,
+      "wall_seconds": 12.611,
+      "cpu_seconds": 12.606,
+      "cpu_hours": 0.003502,
       "cpu_utilization_percent": 99.96,
-      "peak_rss_mb": 803.422,
+      "peak_rss_mb": 1052.688,
       "gpu_hours": 0.0,
       "peak_gpu_memory_mb": 0.0
     }
@@ -100,6 +122,34 @@
       "peak_rss_mb": 973.984,
       "gpu_hours": 0.0,
       "accepted_nonzero_residuals": 0
+    },
+    "cross_session_gru": {
+      "wall_seconds": 67.099,
+      "cpu_seconds": 87.504,
+      "cpu_hours": 0.024307,
+      "peak_rss_mb": 3763.625,
+      "standalone_primary": 0.5987919569015503,
+      "cross_fitted_additive_primary": 0.6119788
+    },
+    "cross_session_gru_residual_audit": {
+      "wall_seconds": 21.89,
+      "cpu_seconds": 21.887,
+      "cpu_hours": 0.00608,
+      "peak_rss_mb": 1045.922
+    },
+    "multitag_history_deepfm": {
+      "wall_seconds": 40.581,
+      "cpu_seconds": 125.855,
+      "cpu_hours": 0.03496,
+      "peak_rss_mb": 16200.906,
+      "standalone_primary": 0.6077193,
+      "cross_fitted_additive_primary": 0.6120303
+    },
+    "multitag_history_residual_audit": {
+      "wall_seconds": 22.384,
+      "cpu_seconds": 22.36,
+      "cpu_hours": 0.006211,
+      "peak_rss_mb": 1027.766
     }
   }
 }

@@ -100,6 +100,7 @@ with (data_dir / "video_features_basic_pure.csv").open(encoding="utf-8") as stre
 rows: list[
     tuple[str, str, str, str, str, tuple[str, ...], int, int, int, int]
 ] = []
+threshold_duration_buckets: list[int] = []
 with (data_dir / "log_standard_4_22_to_5_08_pure.csv").open(
     encoding="utf-8"
 ) as stream:
@@ -115,6 +116,10 @@ with (data_dir / "log_standard_4_22_to_5_08_pure.csv").open(
             tags, date, int(row["hourmin"]) // 400, int(row["time_ms"]),
             int(row["tab"]),
         ))
+        duration = float(row["duration_ms"])
+        threshold_duration_buckets.append(
+            0 if duration < 10_000 else 1 if duration < 18_000 else 2
+        )
 
 if len(rows) != len(valid_y):
     raise RuntimeError(f"Validation alignment failed: {len(rows)} != {len(valid_y)}")
@@ -321,6 +326,86 @@ for indices in ordered_user_indices.values():
         neighbor_delta[index] = neighbor_score - scores[index]
 neighbor_delta = user_standardize(neighbor_delta)
 scores = scores + 0.01 * neighbor_delta
+
+# Add three Bayesian-smoothed cross-conditional priors computed strictly from
+# the April 8-21 training block. Recent-window priors intentionally use only
+# their named suffix of the training period; no validation outcome is read.
+recent3_long_sum: Counter[tuple[str, int]] = Counter()
+recent3_long_count: Counter[tuple[str, int]] = Counter()
+recent7_tab_sum: Counter[int] = Counter()
+recent7_tab_count: Counter[int] = Counter()
+user_author_completion_sum: Counter[tuple[str, str]] = Counter()
+user_author_completion_count: Counter[tuple[str, str]] = Counter()
+recent3_total = 0
+recent3_positive = 0
+recent7_total = 0
+recent7_positive = 0
+completion_total = 0
+completion_positive = 0
+with (data_dir / "log_standard_4_08_to_4_21_pure.csv").open(
+    encoding="utf-8"
+) as stream:
+    for row in csv.DictReader(stream):
+        date = int(row["date"])
+        user = row["user_id"]
+        author = video_metadata.get(
+            row["video_id"], ("UNK", "UNK", "UNK", ("UNK",))
+        )[0]
+        duration = float(row["duration_ms"])
+        threshold_bucket = (
+            0 if duration < 10_000 else 1 if duration < 18_000 else 2
+        )
+        long_view = int(row["long_view"] != "0")
+        completion = int(float(row["play_time_ms"]) >= 0.95 * duration)
+        if date >= 20220419:
+            key = (user, threshold_bucket)
+            recent3_long_sum[key] += long_view
+            recent3_long_count[key] += 1
+            recent3_total += 1
+            recent3_positive += long_view
+        if date >= 20220415:
+            tab = int(row["tab"])
+            recent7_tab_sum[tab] += long_view
+            recent7_tab_count[tab] += 1
+            recent7_total += 1
+            recent7_positive += long_view
+        author_key = (user, author)
+        user_author_completion_sum[author_key] += completion
+        user_author_completion_count[author_key] += 1
+        completion_total += 1
+        completion_positive += completion
+
+recent3_prior = recent3_positive / recent3_total
+recent7_prior = recent7_positive / recent7_total
+completion_prior = completion_positive / completion_total
+recent3_user_threshold_rate = np.empty(len(rows), dtype=np.float64)
+recent7_tab_rate = np.empty(len(rows), dtype=np.float64)
+user_author_completion_rate = np.empty(len(rows), dtype=np.float64)
+for index, (user, _, author, _, _, _, _, _, _, tab) in enumerate(rows):
+    threshold_key = (user, threshold_duration_buckets[index])
+    threshold_count = recent3_long_count[threshold_key]
+    recent3_user_threshold_rate[index] = (
+        recent3_long_sum[threshold_key] + 8.0 * recent3_prior
+    ) / (threshold_count + 8.0)
+    tab_count = recent7_tab_count[tab]
+    recent7_tab_rate[index] = (
+        recent7_tab_sum[tab] + 30.0 * recent7_prior
+    ) / (tab_count + 30.0)
+    author_key = (user, author)
+    author_count = user_author_completion_count[author_key]
+    user_author_completion_rate[index] = (
+        user_author_completion_sum[author_key] + 6.0 * completion_prior
+    ) / (author_count + 6.0)
+
+recent3_user_threshold_rate = user_standardize(recent3_user_threshold_rate)
+recent7_tab_rate = user_standardize(recent7_tab_rate)
+user_author_completion_rate = user_standardize(user_author_completion_rate)
+scores = (
+    scores
+    - 0.04 * recent3_user_threshold_rate
+    + 0.01 * recent7_tab_rate
+    + 0.03 * user_author_completion_rate
+)
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -362,7 +447,10 @@ print(json.dumps({
         "tab": 0.0525,
         "date_tab_leave_one_out_score": 0.02,
         "immediate_temporal_neighbor_delta": 0.01,
+        "recent3_user_threshold_duration_long_rate": -0.04,
+        "recent7_tab_long_rate": 0.01,
+        "all_user_author_completion_rate": 0.03,
     },
-    "feature_scope": "label-free full evaluation slate",
+    "feature_scope": "training-only outcome priors plus label-free full evaluation slate",
     "verification_resource_usage": tracker.finish(),
 }, indent=2), flush=True)
