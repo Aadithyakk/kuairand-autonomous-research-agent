@@ -132,17 +132,59 @@
       "positive_heldout_user_folds": 3,
       "heldout_fold_primary_gains": [-0.0001347661, 0.0002592802, 0.0000870824, 0.0001543164]
     },
-    "tracked_verification": {
-      "wall_seconds": 13.079,
-      "cpu_seconds": 13.076,
-      "cpu_hours": 0.003632,
+    "median_margin_model_mean_audit": {
+      "model_training_required": false,
+      "source_models": 20,
+      "candidate_corrections": 65,
+      "wall_seconds": 91.692,
+      "cpu_seconds": 91.674,
+      "cpu_hours": 0.025465,
       "cpu_utilization_percent": 99.98,
-      "peak_rss_mb": 1061.281,
+      "peak_rss_mb": 1275.703,
+      "gpu_hours": 0.0,
+      "selected_margin_quantile": 0.5,
+      "selected_fold_weights": [0.01, 0.01, 0.01, 0.01],
+      "oof_primary": 0.6124310493469238,
+      "fixed_primary": 0.6124310493469238
+    },
+    "median_margin_model_mean_slice_verification": {
+      "wall_seconds": 14.492,
+      "cpu_seconds": 14.489,
+      "cpu_hours": 0.004025,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1064.906,
+      "gpu_hours": 0.0,
+      "changed_user_groups": 30,
+      "changed_top_items": 0,
+      "changed_pair_orderings": 30,
+      "positive_heldout_user_folds": 4,
+      "heldout_fold_primary_gains": [0.0000914931, 0.0000357032, 0.0000432134, 0.0000674129]
+    },
+    "tracked_verification": {
+      "wall_seconds": 14.247,
+      "cpu_seconds": 14.246,
+      "cpu_hours": 0.003957,
+      "cpu_utilization_percent": 99.99,
+      "peak_rss_mb": 1079.031,
       "gpu_hours": 0.0,
       "peak_gpu_memory_mb": 0.0
     }
   },
   "rejected_experiments": {
+    "third_pass_top_decile_trimmed_consensus": {
+      "model_training_required": false,
+      "scan_wall_seconds": 94.081,
+      "scan_cpu_seconds": 94.051,
+      "scan_cpu_hours": 0.026125,
+      "scan_peak_rss_mb": 1278.297,
+      "slice_wall_seconds": 15.696,
+      "slice_cpu_seconds": 15.692,
+      "slice_cpu_hours": 0.004359,
+      "slice_peak_rss_mb": 1087.688,
+      "gpu_hours": 0.0,
+      "fixed_primary": 0.612452507019043,
+      "heldout_fold_primary_gains": [-0.0000327826, -0.0000278354, 0.0000649691, 0.0000816584]
+    },
     "personalized_transfer_signal_audit": {
       "wall_seconds": 19.223,
       "cpu_seconds": 22.254,

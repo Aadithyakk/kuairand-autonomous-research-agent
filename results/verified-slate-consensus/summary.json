@@ -8,19 +8,19 @@
     "hidden_test_accessed": false
   },
   "champion": {
-    "primary": 0.6123714447021484,
-    "gauc": 0.6817284226417542,
-    "ndcg5": 0.5430144667625427,
+    "primary": 0.6124310493469238,
+    "gauc": 0.6818247437477112,
+    "ndcg5": 0.5430374145507812,
     "users": 22377,
     "rows": 124909
   },
   "baseline_primary": 0.6014695167541504,
-  "previous_verified_primary": 0.6122815012931824,
-  "gain_over_previous_verified": 0.00008994340896606445,
-  "gain_over_baseline": 0.010901927947998047,
-  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + high-margin ordered-model gate",
-  "selection_evidence": "All nineteen sequential corrections improved cross-fitted primary on disjoint user folds. The final high-margin gate selected weight 0.34 independently on every four-fold training partition, producing 0.6123714 stitched OOF and fixed primary.",
-  "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. The three priors use outcomes only from the April 8-21 training block. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit before April 22-28 inference. The final gate uses only the frozen champion's normalized within-user top margin and frozen ordered-model rank. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
+  "previous_verified_primary": 0.6123714447021484,
+  "gain_over_previous_verified": 0.000059604644775390625,
+  "gain_over_baseline": 0.010961532592773438,
+  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + high-margin ordered-model gate + median-margin 20-model mean gate",
+  "selection_evidence": "All twenty sequential corrections improved cross-fitted primary on disjoint user folds. The final 20-model mean gate selected weight 0.01 independently on every four-fold training partition, producing 0.6124310 stitched OOF and fixed primary; each held-out fold improved.",
+  "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. The three priors use outcomes only from the April 8-21 training block. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit before April 22-28 inference. The final gates use only the frozen champion's normalized within-user top margin and frozen model ranks. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
   "rejected_ablations": [
     "Monte Carlo dropout LCB: fold correction signs disagreed and OOF primary regressed.",
     "Continuous watch-ratio margin: widened cross-fitted primary regressed to 0.61106056.",
@@ -38,9 +38,10 @@
     "Cross-model confidence from 20 structurally diverse models: mean/median/vote/dispersion corrections produced no stable gain; the best OOF result was 0.6122835 with mixed-sign weights.",
     "Temporally selected per-user expert gate: improved the April 20-21 probe from 0.5599496 to 0.5600790 and reached 0.6059629 standalone, but additive OOF regressed to 0.6122078.",
     "Top-weighted pointwise batch-slate tree: improved its standalone score to 0.5921983, but additive OOF regressed to 0.6122713.",
-    "Contrastively separated long/short sequence encoder: temporal selection chose epoch 3, then the leak-free refit reached 0.6030859 standalone; additive OOF regressed to 0.6122197 and reranked fold signs disagreed."
+    "Contrastively separated long/short sequence encoder: temporal selection chose epoch 3, then the leak-free refit reached 0.6030859 standalone; additive OOF regressed to 0.6122197 and reranked fold signs disagreed.",
+    "Third-pass top-decile trimmed-consensus residual: aggregate fixed primary reached 0.6124525, but held-out folds 0 and 1 regressed, so the 0.0000215 apparent gain was rejected."
   ],
   "target_primary": 0.7,
   "target_reached": false,
-  "remaining_gap": 0.08762855529785152
+  "remaining_gap": 0.08756895065307613
 }

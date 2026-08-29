@@ -1,7 +1,7 @@
 {
   "title": "Confidence-gated temporal batch-slate correction over the tree-regularized consensus",
   "experiment_type": "offline_slate_reranking",
-  "hypothesis": "Because the official metric ranks all seven validation days jointly within each user, full-slate repetition statistics can recover policy-confidence and fatigue signals that causal session features miss. When the resulting champion is unusually overconfident about rank one, a gated ordered-model consensus can correct sparse top-rank errors without reading validation outcomes.",
+  "hypothesis": "Because the official metric ranks all seven validation days jointly within each user, full-slate repetition statistics can recover policy-confidence and fatigue signals that causal session features miss. When the resulting champion is unusually overconfident about rank one, gated ordered-model and broad model-mean consensus can correct sparse ranking errors without reading validation outcomes.",
   "protocol": {
     "train_dates": "2022-04-08 through 2022-04-21",
     "validation_dates": "2022-04-22 through 2022-04-28",
@@ -9,7 +9,7 @@
     "hidden_test_accessed": false,
     "validation_outcomes_used_as_features": false,
     "candidate_information_used": ["user_id", "video_id", "author_id", "music_id", "video_type", "hourmin", "time_ms", "tab", "static tag tokens and item statistics", "training-only long_view and play_time_ms aggregates", "outcome-free full-slate score neighborhoods"],
-    "selection": "Tune each scalar only on disjoint user folds. The first eight stages use two user-parity folds; the remaining conditional, temporal, training-prior, and confidence-gated stages use four user-id-modulo folds. Train the batch-slate tree on April 14-19, early-stop on April 20-21, refit on April 14-21, then select only its outer consensus scalar on the same four disjoint user folds. Gate the final ordered-model correction using the label-free, within-user normalized top-score margin. Fix every deployable weight to the mean of independently selected weights."
+    "selection": "Tune each scalar only on disjoint user folds. The first eight stages use two user-parity folds; the remaining conditional, temporal, training-prior, and confidence-gated stages use four user-id-modulo folds. Train the batch-slate tree on April 14-19, early-stop on April 20-21, refit on April 14-21, then select only its outer consensus scalar on the same four disjoint user folds. Gate the final ordered-model and 20-model mean corrections using the label-free, within-user normalized top-score margin. Fix every deployable weight to the mean of independently selected weights."
   },
   "features": {
     "token_personal_mean": "Within-user standardized mean across an item's tag tokens of log1p(user-slate token count) - 0.25 * log1p(global-slate token count).",
@@ -32,7 +32,8 @@
     "joint_log_user_video_count": "Within-user standardized log count of the exact user-video pair in the supplied batch slate; it refines the earlier binary repeat flag.",
     "batch_slate_tree": "Temporally trained CatBoost correction using static metadata, full-slate totals, session lengths, base-score leave-one-out groups, and neighboring base predictions. It never receives validation outcomes.",
     "joint_ordinal_consensus": "Within-user ordinal rank of the champion after the continuous repeat penalty and tiny batch-slate tree correction, added back at a cross-fitted scalar weight.",
-    "high_margin_ordered_consensus": "For rows belonging to the row-weighted highest quartile of within-user normalized top-score margin, add 0.34 times the rank difference between the frozen temporally ordered CatBoost and the preceding champion. The gate and correction use scores only."
+    "high_margin_ordered_consensus": "For rows belonging to the row-weighted highest quartile of within-user normalized top-score margin, add 0.34 times the rank difference between the frozen temporally ordered CatBoost and the preceding champion. The gate and correction use scores only.",
+    "median_margin_model_mean_consensus": "For rows at or above the row-weighted median normalized top-score margin, add 0.01 times the difference between the mean within-user fractional rank of 20 frozen model families and the preceding champion rank."
   },
   "selection_evidence": [
     {
@@ -172,12 +173,24 @@
       "fixed_primary": 0.6123714447021484,
       "fixed_gauc": 0.6817284226417542,
       "fixed_ndcg5": 0.5430144667625427
+    },
+    {
+      "stage": "median_margin_model_mean_consensus",
+      "source_models": 20,
+      "margin_quantile": 0.5,
+      "fold_weights": [0.01, 0.01, 0.01, 0.01],
+      "fixed_weight": 0.01,
+      "oof_primary": 0.6124310493469238,
+      "fixed_primary": 0.6124310493469238,
+      "fixed_gauc": 0.6818247437477112,
+      "fixed_ndcg5": 0.5430374145507812,
+      "heldout_fold_primary_gains": [0.0000914931, 0.0000357032, 0.0000432134, 0.0000674129]
     }
   ],
   "rejected_followup": {
     "feature": "video-type concentration",
     "reason": "Its fixed full-validation score rose to 0.61145884, but its cross-fitted primary fell to 0.61134475 versus 0.61135924 before the feature. It was excluded. A supervised weekly-slate CatBoost was also rejected after scoring 0.6047368 standalone and 0.6112029 cross-fitted in the ensemble."
   },
-  "acceptance": "Accept only stages whose disjoint-user weights agree in sign and whose cross-fitted primary improves over the preceding stage. The final high-margin correction satisfied this rule with the identical positive weight 0.34 selected on all four user-modulo training partitions.",
+  "acceptance": "Accept only stages whose disjoint-user weights agree in sign and whose cross-fitted primary improves over the preceding stage. The final model-mean correction satisfied this rule with the identical positive weight 0.01 selected on all four user-modulo training partitions and positive held-out primary gains on every fold.",
   "accepted": true
 }

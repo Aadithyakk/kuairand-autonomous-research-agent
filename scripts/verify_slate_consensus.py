@@ -52,6 +52,19 @@ def user_standardize(values: np.ndarray) -> np.ndarray:
     return output
 
 
+def normalized_user_top_margin(values: np.ndarray) -> np.ndarray:
+    output = np.zeros(len(values), dtype=np.float64)
+    for indices_list in groups.values():
+        indices = np.asarray(indices_list, dtype=np.int64)
+        if len(indices) < 2:
+            continue
+        order = indices[np.argsort(-values[indices], kind="stable")]
+        output[indices] = (
+            values[order[0]] - values[order[1]]
+        ) / max(float(values[indices].std()), 1e-8)
+    return output
+
+
 def load_scores(name: str) -> np.ndarray:
     path = ROOT / "runtime" / name
     if not path.exists():
@@ -60,6 +73,25 @@ def load_scores(name: str) -> np.ndarray:
             "Run the documented base-model experiments before verification."
         )
     return user_rank(np.load(path)["scores"])
+
+
+def load_fractional_ranks(name: str) -> np.ndarray:
+    path = ROOT / "runtime" / name
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Missing retained experiment artifact: {path}. "
+            "Run the documented base-model experiments before verification."
+        )
+    values = np.load(path)["scores"]
+    output = np.empty(len(values), dtype=np.float64)
+    for indices_list in groups.values():
+        indices = np.asarray(indices_list, dtype=np.int64)
+        group = values[indices]
+        order = np.argsort(group, kind="stable")
+        ranks = np.empty(len(group), dtype=np.float64)
+        ranks[order] = np.arange(len(group), dtype=np.float64)
+        output[indices] = ranks / max(len(group) - 1, 1)
+    return output
 
 
 # Reconstruct the previously verified tree-regularized consensus.
@@ -435,21 +467,58 @@ if batch_slate_tree is not None:
     # move the ordering partway toward the temporally ordered CatBoost. The gate
     # uses only frozen scores and is normalized within user; no validation
     # outcome is read. The quantile is row-weighted to reproduce selection.
-    normalized_top_margin = np.zeros(len(scores), dtype=np.float64)
-    for indices_list in groups.values():
-        indices = np.asarray(indices_list, dtype=np.int64)
-        if len(indices) < 2:
-            continue
-        order = indices[np.argsort(-scores[indices], kind="stable")]
-        normalized_top_margin[indices] = (
-            scores[order[0]] - scores[order[1]]
-        ) / max(float(scores[indices].std()), 1e-8)
+    normalized_top_margin = normalized_user_top_margin(scores)
     eligible_top_margins = normalized_top_margin[normalized_top_margin > 0]
     high_margin_threshold = float(np.quantile(eligible_top_margins, 0.75))
     high_margin_gate = (normalized_top_margin >= high_margin_threshold).astype(
         np.float64
     )
     scores = scores + 0.34 * high_margin_gate * (ordered - user_rank(scores))
+
+    # A much smaller second correction uses broad model agreement only where
+    # the already gated champion remains above its median normalized top
+    # margin. Each source contributes only its within-user fractional rank, so
+    # calibration scale and validation outcomes are absent from this feature.
+    confidence_source_names = [
+        "final-sessionx-consensus.npz",
+        "stacked-reranker-scores-history-rank_xendcg-cutoff20220413-rolling0-"
+        "components0-session1-sessionx1-sessionw1.npz",
+        "history-catboost-classifier-probe-i250-seq40-plain-s151.npz",
+        "history-deepfm-k16-h128-lr0.001-session-fullmeta-watchratio0.4-s293.npz",
+        "history-deepfm-k16-h128-lr0.001-session-fullmeta-"
+        "sessionmargin0.05m1.0f0.1-s293.npz",
+        "history-catboost-classifier-refit-i500-seq40-session-fullmeta-s257.npz",
+        "batch-slate-meta-catboost-s751.npz",
+        "history-deepfm-k16-h128-lr0.001-session-fullmeta-s293.npz",
+        "history-deepfm-k16-h128-lr0.001-session-fullmeta-aux0.15-s337.npz",
+        "multitask-a0.2-k16-h128-lr0.001-s71.npz",
+        "din-h20-k16-hidden128-lr0.001-s0.npz",
+        "cross-session-gru-e8-h64-head128-s431.npz",
+        "history-catboost-ranker-probe-i220-seq40-session-s157.npz",
+        "lgbm-lambdarank-r500-l31-lr0.03-leaf100-s0.npz",
+        "lightgcn-k32-l2-lr0.01-s0.npz",
+        "ffm-base-star-k16-lr0.001-s401.npz",
+        "ordinal-watch-a0.3-k16-h128-lr0.001-s121.npz",
+        "threshold-deepfm-a0.3-k16-h128-lr0.001-s131.npz",
+        "stacked-catboost-classifier-scores-extended-cutoff20220413-session1-"
+        "sessionx1-sessionw0-multir0-trend0-affinity0-ctx0.npz",
+        "stacked-linear-scores-history-cutoff20220413-rolling0-components0-"
+        "session1-sessionx1-sessionw0-multir0-trend0-affinity0-ctx0-"
+        "transition1.npz",
+    ]
+    mean_model_fraction = np.mean(
+        [load_fractional_ranks(name) for name in confidence_source_names],
+        axis=0,
+    )
+    normalized_top_margin = normalized_user_top_margin(scores)
+    eligible_top_margins = normalized_top_margin[normalized_top_margin > 0]
+    median_margin_threshold = float(np.quantile(eligible_top_margins, 0.50))
+    median_margin_gate = (
+        normalized_top_margin >= median_margin_threshold
+    ).astype(np.float64)
+    scores = scores + 0.01 * median_margin_gate * (
+        user_rank(mean_model_fraction) - user_rank(scores)
+    )
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -500,6 +569,8 @@ print(json.dumps({
             "joint_ordinal_consensus": 0.2675,
             "high_margin_quantile": 0.75,
             "high_margin_ordered_consensus": 0.34,
+            "median_margin_quantile": 0.5,
+            "median_margin_model_mean_consensus": 0.01,
         } if not skip_batch_slate else {}),
     },
     "feature_scope": "training-only outcome priors plus label-free full evaluation slate",
