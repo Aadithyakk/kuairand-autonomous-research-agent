@@ -8,8 +8,8 @@
     "ranking_unit": "all logged validation impressions for one user",
     "hidden_test_accessed": false,
     "validation_outcomes_used_as_features": false,
-    "candidate_information_used": ["user_id", "video_id", "author_id", "music_id", "video_type", "hourmin", "static tag tokens"],
-    "selection": "Tune each scalar only on disjoint user folds. The first eight stages use two user-parity folds; the two conditional graph stages use four user-id-modulo folds and fix the deployable weight to the mean of the independently selected weights."
+    "candidate_information_used": ["user_id", "video_id", "author_id", "music_id", "video_type", "hourmin", "time_ms", "tab", "static tag tokens"],
+    "selection": "Tune each scalar only on disjoint user folds. The first eight stages use two user-parity folds; the remaining six conditional/temporal stages use four user-id-modulo folds and fix the deployable weight to the mean of the independently selected weights."
   },
   "features": {
     "token_personal_mean": "Within-user standardized mean across an item's tag tokens of log1p(user-slate token count) - 0.25 * log1p(global-slate token count).",
@@ -21,7 +21,11 @@
     "type_leave_one_out_score": "Within-user standardized mean accepted score of the other slate rows with the same video type; singleton groups retain their own score.",
     "author_leave_one_out_score": "Within-user standardized mean accepted score of the other slate rows with the same author; singleton groups retain their own score.",
     "author_daypart_leave_one_out_delta": "Within-user standardized difference between the accepted score and the other rows sharing author and four-hour daypart, computed after the broad type/author graph pass.",
-    "music_type_leave_one_out_delta": "Within-user standardized difference between the accepted score and the other rows sharing music and video type, recomputed after the author-daypart correction."
+    "music_type_leave_one_out_delta": "Within-user standardized difference between the accepted score and the other rows sharing music and video type, recomputed after the author-daypart correction.",
+    "log_session_length": "Within-user standardized log1p length of the 30-minute-gap session reconstructed from time_ms.",
+    "tab": "Within-user standardized outcome-free feed-tab identifier.",
+    "date_tab_leave_one_out_score": "Within-user standardized mean accepted score of other rows on the same date and tab, recomputed after session length and tab corrections.",
+    "immediate_temporal_neighbor_delta": "Within-user standardized difference between each row's accepted score and the mean score of its immediately previous/next chronological neighbors."
   },
   "selection_evidence": [
     {
@@ -93,12 +97,40 @@
       "fixed_weight": -0.115,
       "oof_primary": 0.6117796897888184,
       "fixed_primary": 0.6118398904800415
+    },
+    {
+      "stage": "log_session_length",
+      "fold_weights": [-0.06, -0.06, -0.06, -0.05],
+      "fixed_weight": -0.0575,
+      "oof_primary": 0.6118736267089844,
+      "fixed_primary": 0.6119065284729004
+    },
+    {
+      "stage": "tab",
+      "fold_weights": [0.06, 0.06, 0.03, 0.06],
+      "fixed_weight": 0.0525,
+      "oof_primary": 0.6120058298110962,
+      "fixed_primary": 0.6119692921638489
+    },
+    {
+      "stage": "date_tab_leave_one_out_score",
+      "fold_weights": [0.02, 0.02, 0.02, 0.02],
+      "fixed_weight": 0.02,
+      "oof_primary": 0.61204993724823,
+      "fixed_primary": 0.61204993724823
+    },
+    {
+      "stage": "immediate_temporal_neighbor_delta",
+      "fold_weights": [0.01, 0.01, 0.01, 0.01],
+      "fixed_weight": 0.01,
+      "oof_primary": 0.6120631098747253,
+      "fixed_primary": 0.6120631098747253
     }
   ],
   "rejected_followup": {
     "feature": "video-type concentration",
     "reason": "Its fixed full-validation score rose to 0.61145884, but its cross-fitted primary fell to 0.61134475 versus 0.61135924 before the feature. It was excluded. A supervised weekly-slate CatBoost was also rejected after scoring 0.6047368 standalone and 0.6112029 cross-fitted in the ensemble."
   },
-  "acceptance": "Accept only stages whose disjoint-user weights agree in sign and whose cross-fitted primary improves over the preceding stage. The final two terms satisfied this rule on all four user-modulo folds.",
+  "acceptance": "Accept only stages whose disjoint-user weights agree in sign and whose cross-fitted primary improves over the preceding stage. The final six terms satisfied this rule on all four user-modulo folds.",
   "accepted": true
 }

@@ -8,27 +8,28 @@
     "hidden_test_accessed": false
   },
   "champion": {
-    "primary": 0.6118398904800415,
-    "gauc": 0.6811138391494751,
-    "ndcg5": 0.5425660014152527,
+    "primary": 0.6120631098747253,
+    "gauc": 0.6814045310020447,
+    "ndcg5": 0.542721688747406,
     "users": 22377,
     "rows": 124909
   },
   "baseline_primary": 0.6014695167541504,
-  "previous_verified_primary": 0.6116783618927002,
-  "gain_over_previous_verified": 0.0001615285873413086,
-  "gain_over_baseline": 0.010370373725891113,
-  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad type/author leave-one-out smoothing + 0.15 author-daypart leave-one-out delta - 0.115 music-type leave-one-out delta",
-  "selection_evidence": "All ten sequential corrections improved cross-fitted primary on disjoint user folds. The final author-daypart and music-type deltas retained the same sign on all four user-id-modulo folds.",
+  "previous_verified_primary": 0.6118398904800415,
+  "gain_over_previous_verified": 0.0002232193946838379,
+  "gain_over_baseline": 0.010593593120574951,
+  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + session-length and tab corrections + date-tab leave-one-out smoothing + immediate temporal-neighbor delta",
+  "selection_evidence": "All fourteen sequential corrections improved cross-fitted primary on disjoint user folds. The final six conditional and temporal terms retained the same selected sign on all four user-id-modulo folds.",
   "leakage_note": "The correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. It never reads long_view, click, watch time, or another validation outcome. Deployments that do not know the complete candidate slate must not use this correction as written.",
   "rejected_ablations": [
     "Monte Carlo dropout LCB: fold correction signs disagreed and OOF primary regressed.",
     "Continuous watch-ratio margin: widened cross-fitted primary regressed to 0.61106056.",
     "Synthetic-exposure density weighting: square-root OOF primary was 0.611053 and full weighting was 0.6109525.",
     "Video-type slate concentration: fixed score improved but cross-fitted primary regressed, so it was excluded.",
-    "Supervised weekly-slate CatBoost: 0.6047368 standalone and 0.6112029 cross-fitted in the ensemble after 0.811823 CPU-hours."
+    "Supervised weekly-slate CatBoost: 0.6047368 standalone and 0.6112029 cross-fitted in the ensemble after 0.811823 CPU-hours.",
+    "Exhaustive residual scan of 192 retained prediction artifacts: no candidate earned a nonzero weight on the four disjoint user folds at the tested coarse scale."
   ],
   "target_primary": 0.7,
   "target_reached": false,
-  "remaining_gap": 0.08816010951995845
+  "remaining_gap": 0.08793689012527461
 }
