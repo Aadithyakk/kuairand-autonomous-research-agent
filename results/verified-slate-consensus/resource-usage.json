@@ -104,12 +104,40 @@
       "oof_primary": 0.6122684,
       "fixed_primary": 0.6122815012931824
     },
-    "tracked_verification": {
-      "wall_seconds": 13.687,
-      "cpu_seconds": 13.685,
-      "cpu_hours": 0.003801,
+    "high_margin_gated_consensus_audit": {
+      "model_training_required": false,
+      "source_models": 20,
+      "candidate_corrections": 65,
+      "wall_seconds": 92.035,
+      "cpu_seconds": 92.012,
+      "cpu_hours": 0.025559,
       "cpu_utilization_percent": 99.98,
-      "peak_rss_mb": 1055.172,
+      "peak_rss_mb": 1287.922,
+      "gpu_hours": 0.0,
+      "selected_margin_quantile": 0.75,
+      "selected_fold_weights": [0.34, 0.34, 0.34, 0.34],
+      "oof_primary": 0.6123714447021484,
+      "fixed_primary": 0.6123714447021484
+    },
+    "high_margin_candidate_slice_verification": {
+      "wall_seconds": 13.884,
+      "cpu_seconds": 13.88,
+      "cpu_hours": 0.003855,
+      "cpu_utilization_percent": 99.97,
+      "peak_rss_mb": 1064.203,
+      "gpu_hours": 0.0,
+      "changed_user_groups": 352,
+      "changed_top_items": 31,
+      "changed_pair_orderings": 629,
+      "positive_heldout_user_folds": 3,
+      "heldout_fold_primary_gains": [-0.0001347661, 0.0002592802, 0.0000870824, 0.0001543164]
+    },
+    "tracked_verification": {
+      "wall_seconds": 13.079,
+      "cpu_seconds": 13.076,
+      "cpu_hours": 0.003632,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1061.281,
       "gpu_hours": 0.0,
       "peak_gpu_memory_mb": 0.0
     }

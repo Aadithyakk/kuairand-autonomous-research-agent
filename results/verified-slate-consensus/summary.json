@@ -8,19 +8,19 @@
     "hidden_test_accessed": false
   },
   "champion": {
-    "primary": 0.6122815012931824,
-    "gauc": 0.6816158890724182,
-    "ndcg5": 0.5429471135139465,
+    "primary": 0.6123714447021484,
+    "gauc": 0.6817284226417542,
+    "ndcg5": 0.5430144667625427,
     "users": 22377,
     "rows": 124909
   },
   "baseline_primary": 0.6014695167541504,
-  "previous_verified_primary": 0.6122177243232727,
-  "gain_over_previous_verified": 0.00006377696990966797,
-  "gain_over_baseline": 0.010811984539031982,
-  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus",
-  "selection_evidence": "All eighteen sequential corrections improved cross-fitted primary on disjoint user folds. The final nested batch-slate consensus selected positive outer weights [0.185, 0.295, 0.285, 0.305], producing 0.6122684 OOF and 0.6122815 fixed primary.",
-  "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. The three priors use outcomes only from the April 8-21 training block. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit before April 22-28 inference. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
+  "previous_verified_primary": 0.6122815012931824,
+  "gain_over_previous_verified": 0.00008994340896606445,
+  "gain_over_baseline": 0.010901927947998047,
+  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + high-margin ordered-model gate",
+  "selection_evidence": "All nineteen sequential corrections improved cross-fitted primary on disjoint user folds. The final high-margin gate selected weight 0.34 independently on every four-fold training partition, producing 0.6123714 stitched OOF and fixed primary.",
+  "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. The three priors use outcomes only from the April 8-21 training block. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit before April 22-28 inference. The final gate uses only the frozen champion's normalized within-user top margin and frozen ordered-model rank. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
   "rejected_ablations": [
     "Monte Carlo dropout LCB: fold correction signs disagreed and OOF primary regressed.",
     "Continuous watch-ratio margin: widened cross-fitted primary regressed to 0.61106056.",
@@ -42,5 +42,5 @@
   ],
   "target_primary": 0.7,
   "target_reached": false,
-  "remaining_gap": 0.08771849870681758
+  "remaining_gap": 0.08762855529785152
 }

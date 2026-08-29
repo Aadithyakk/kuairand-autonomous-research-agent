@@ -428,6 +428,28 @@ if batch_slate_tree is not None:
         scores - 0.05 * log_user_video_count + 0.0021875 * batch_slate_tree
     )
     scores = scores + 0.2675 * user_rank(joint_slate_score)
+
+if batch_slate_tree is not None:
+    # The frozen champion is least reliable when its first-place score is
+    # unusually far from the runner-up. For only the highest-margin quartile,
+    # move the ordering partway toward the temporally ordered CatBoost. The gate
+    # uses only frozen scores and is normalized within user; no validation
+    # outcome is read. The quantile is row-weighted to reproduce selection.
+    normalized_top_margin = np.zeros(len(scores), dtype=np.float64)
+    for indices_list in groups.values():
+        indices = np.asarray(indices_list, dtype=np.int64)
+        if len(indices) < 2:
+            continue
+        order = indices[np.argsort(-scores[indices], kind="stable")]
+        normalized_top_margin[indices] = (
+            scores[order[0]] - scores[order[1]]
+        ) / max(float(scores[indices].std()), 1e-8)
+    eligible_top_margins = normalized_top_margin[normalized_top_margin > 0]
+    high_margin_threshold = float(np.quantile(eligible_top_margins, 0.75))
+    high_margin_gate = (normalized_top_margin >= high_margin_threshold).astype(
+        np.float64
+    )
+    scores = scores + 0.34 * high_margin_gate * (ordered - user_rank(scores))
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -476,6 +498,8 @@ print(json.dumps({
             "joint_log_user_video_count": -0.05,
             "joint_batch_slate_tree": 0.0021875,
             "joint_ordinal_consensus": 0.2675,
+            "high_margin_quantile": 0.75,
+            "high_margin_ordered_consensus": 0.34,
         } if not skip_batch_slate else {}),
     },
     "feature_scope": "training-only outcome priors plus label-free full evaluation slate",
