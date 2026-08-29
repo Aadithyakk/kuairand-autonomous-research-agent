@@ -1,0 +1,66 @@
+{
+  "status": "no_verified_gain",
+  "branch": "feature/experiment-resource-tracking",
+  "starting_commit": "214c53c",
+  "protocol": "Official April 8-21 train and April 22-28 validation split; April 8-18 to April 19-21 temporal screening for multi-view candidates; no hidden-test outcomes; four user-ID-modulo folds for residual selection. All neighbor support, outcomes, priors, and similarities come only from the training block.",
+  "retained_champion": {
+    "primary": 0.612804651260376,
+    "gauc": 0.6822999715805054,
+    "ndcg5": 0.5433093309402466,
+    "baseline_primary": 0.6014695167541504,
+    "gain_over_baseline": 0.011335134506225586,
+    "target_primary": 0.7,
+    "remaining_gap": 0.08719534873962398
+  },
+  "experiments": [
+    {
+      "name": "multi-view user-neighbor collaborative filtering",
+      "result": "rejected",
+      "evidence": "April 8-18 to April 19-21 screening selected signed and TF-IDF exposure profiles over item, author, music, tag-set, and type targets. The strongest validation standalone candidate reached 0.58122635 after within-user ranking. None improved the retained champion stably: the best apparent OOF result was 0.61280525, but its fixed score was 0.61280108 and one held-out fold regressed.",
+      "resource_usage": {
+        "candidate_training_and_temporal_screen": {
+          "wall_seconds": 178.395,
+          "cpu_seconds": 185.55,
+          "cpu_hours": 0.051542,
+          "peak_rss_mb": 5360.344
+        },
+        "five_residual_audits": {
+          "wall_seconds": 98.726,
+          "cpu_seconds": 98.712,
+          "cpu_hours": 0.02742,
+          "peak_rss_mb": 1220.281
+        },
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "support-aware and uncertainty-penalized neighbor ranking",
+      "result": "rejected",
+      "evidence": "The accepted neighbor graph has nonzero support for 75.16% of validation rows, but median weighted support is only 0.1632. A 55-candidate scan covered empirical-Bayes smoothing, support shrinkage, hard support gates, and beta-posterior lower-confidence bounds. The best fixed residual reached 0.61280525, only +0.00000060, with a negative fold; the best fixed replacement scored 0.61280417. Neither met the stable-gain rule.",
+      "resource_usage": {
+        "neighbor_retraining_with_support_diagnostics": {
+          "wall_seconds": 7.036,
+          "cpu_seconds": 8.197,
+          "cpu_hours": 0.002277,
+          "peak_rss_mb": 4258.953
+        },
+        "confidence_candidate_scan": {
+          "wall_seconds": 70.241,
+          "cpu_seconds": 70.228,
+          "cpu_hours": 0.019508,
+          "peak_rss_mb": 1482.844
+        },
+        "gpu_hours": 0.0
+      }
+    }
+  ],
+  "successful_tracked_run_totals": {
+    "wall_seconds": 354.398,
+    "cpu_seconds": 362.687,
+    "cpu_hours": 0.100747,
+    "peak_rss_mb": 5360.344,
+    "gpu_hours": 0.0,
+    "note": "An earlier multi-view prototype run failed after candidate construction because of a result-name parser bug; its incomplete tracker record is excluded from these totals."
+  },
+  "conclusion": "Multi-view similarity and support-aware uncertainty corrections did not provide a stable gain beyond 0.6128046513. The accepted smoothing-8, squared-similarity, 60-neighbor correction remains authoritative; its trainer now retains support diagnostics for future autonomous audits."
+}

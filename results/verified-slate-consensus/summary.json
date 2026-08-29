@@ -22,6 +22,8 @@
   "selection_evidence": "The final user-neighbor correction was selected from a temporally screened family. An April 8-18 exposure graph ranked April 19-21 candidates from other users' prior outcomes; the frozen 60-neighbor, squared-similarity, smoothing-8 candidate then selected weight 0.002 on every one of four disjoint validation-user folds. Its held-out primary gains were [0.00003803, 0.00001961, 0.00002128, 0.00001639]. The final recipe reproduces 0.61280465 primary with both GAUC and nDCG@5 above the 0.61278081 prior champion.",
   "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. Outcome priors, coverage membership, and the user-neighbor graph use only the April 8-21 training block; the validation slate contributes identifiers but no outcomes. The neighbor graph uses training exposure overlap for similarity and other users' training outcomes for candidate estimates. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit before April 22-28 inference. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
   "rejected_ablations": [
+    "Multi-view user-neighbor profiles over item, author, music, tag-set, and type contexts reached 0.58122635 standalone but did not improve the champion stably; the best apparent OOF micro-gain regressed at its fixed weight.",
+    "Support-aware neighbor smoothing, gates, and beta-posterior LCB produced a best fixed residual of 0.61280525, but the +0.00000060 change included a negative user fold and was rejected.",
     "Monte Carlo dropout LCB: fold correction signs disagreed and OOF primary regressed.",
     "Continuous watch-ratio margin: widened cross-fitted primary regressed to 0.61106056.",
     "Synthetic-exposure density weighting: square-root OOF primary was 0.611053 and full weighting was 0.6109525.",
@@ -55,7 +57,7 @@
     "Three-seed duration-regime experts reached 0.60820252 standalone and 0.61280549 fixed, but fold 1 regressed; coverage gating and independent regime biases did not stabilize the gain.",
     "Whole-user residual CatBoost rankers reached 0.61187887 (PairLogitPairwise) and 0.61124790 (QuerySoftMax) standalone, but their cross-fitted corrections regressed and were excluded."
   ],
-  "latest_rejected_cycle": "rejected-cycle-2026-08-30-survival-duration.json",
+  "latest_rejected_cycle": "rejected-cycle-2026-08-30-neighbor-confidence.json",
   "latest_accepted_cycle": "accepted-cycle-2026-08-30-user-neighbor.json",
   "target_primary": 0.7,
   "target_reached": false,

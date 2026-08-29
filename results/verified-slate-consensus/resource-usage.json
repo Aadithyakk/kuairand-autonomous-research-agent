@@ -610,6 +610,43 @@
       "cpu_hours": 0.009541,
       "peak_rss_mb": 795.453,
       "best_validation_primary": 0.5240389
+    },
+    "multiview_user_neighbor": {
+      "wall_seconds": 178.395,
+      "cpu_seconds": 185.55,
+      "cpu_hours": 0.051542,
+      "peak_rss_mb": 5360.344,
+      "gpu_hours": 0.0,
+      "best_standalone_primary": 0.58122635,
+      "best_fixed_ensemble_primary": 0.61280108,
+      "accepted": false
+    },
+    "multiview_user_neighbor_residual_audits": {
+      "runs": 5,
+      "wall_seconds": 98.726,
+      "cpu_seconds": 98.712,
+      "cpu_hours": 0.02742,
+      "peak_rss_mb": 1220.281,
+      "gpu_hours": 0.0
+    },
+    "user_neighbor_support_diagnostics": {
+      "wall_seconds": 7.036,
+      "cpu_seconds": 8.197,
+      "cpu_hours": 0.002277,
+      "peak_rss_mb": 4258.953,
+      "gpu_hours": 0.0,
+      "nonzero_support_fraction": 0.75161918,
+      "median_weighted_support": 0.16319597
+    },
+    "user_neighbor_confidence_scan": {
+      "candidate_count": 55,
+      "wall_seconds": 70.241,
+      "cpu_seconds": 70.228,
+      "cpu_hours": 0.019508,
+      "peak_rss_mb": 1482.844,
+      "gpu_hours": 0.0,
+      "best_fixed_primary": 0.61280525,
+      "accepted": false
     }
   }
 }

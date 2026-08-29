@@ -129,6 +129,9 @@ item_prior = (
 
 valid_items = item_codes[valid_indices]
 scores = np.empty(len(valid_indices), dtype=np.float32)
+neighbor_support = np.empty(len(valid_indices), dtype=np.float32)
+neighbor_positive = np.empty(len(valid_indices), dtype=np.float32)
+row_item_prior = np.empty(len(valid_indices), dtype=np.float32)
 grouped: dict[int, list[int]] = {}
 for row, user in enumerate(valid_users):
     grouped.setdefault(int(user), []).append(row)
@@ -146,13 +149,24 @@ for user, raw_rows in grouped.items():
     )
     denominator = local_weights @ local_exposure
     numerator = local_weights @ local_positive
+    neighbor_support[rows] = denominator.astype(np.float32)
+    neighbor_positive[rows] = numerator.astype(np.float32)
+    row_item_prior[rows] = item_prior[items].astype(np.float32)
     scores[rows] = (
         (numerator + NEIGHBOR_SMOOTHING * item_prior[items])
         / (denominator + NEIGHBOR_SMOOTHING)
     ).astype(np.float32)
 
 output = ROOT / "runtime" / "user-neighbor-cf-n60.npz"
-np.savez_compressed(output, **{"positive_p2.0_s8.0": scores})
+np.savez_compressed(
+    output,
+    **{
+        "positive_p2.0_s8.0": scores,
+        "neighbor_support": neighbor_support,
+        "neighbor_positive": neighbor_positive,
+        "item_prior": row_item_prior,
+    },
+)
 metrics = runner.evaluate_module.evaluate(
     user_values[valid_indices].tolist(),
     (
