@@ -37,7 +37,8 @@
     "Hierarchical personalized dense slopes: 0.600019 standalone, but the personalized component was only 0.510101 and additive OOF regressed to 0.6122667 with mixed-sign fold weights.",
     "Cross-model confidence from 20 structurally diverse models: mean/median/vote/dispersion corrections produced no stable gain; the best OOF result was 0.6122835 with mixed-sign weights.",
     "Temporally selected per-user expert gate: improved the April 20-21 probe from 0.5599496 to 0.5600790 and reached 0.6059629 standalone, but additive OOF regressed to 0.6122078.",
-    "Top-weighted pointwise batch-slate tree: improved its standalone score to 0.5921983, but additive OOF regressed to 0.6122713."
+    "Top-weighted pointwise batch-slate tree: improved its standalone score to 0.5921983, but additive OOF regressed to 0.6122713.",
+    "Contrastively separated long/short sequence encoder: temporal selection chose epoch 3, then the leak-free refit reached 0.6030859 standalone; additive OOF regressed to 0.6122197 and reranked fold signs disagreed."
   ],
   "target_primary": 0.7,
   "target_reached": false,

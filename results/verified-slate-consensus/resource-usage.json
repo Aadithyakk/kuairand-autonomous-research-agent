@@ -189,6 +189,32 @@
       "cross_fitted_primary": 0.6122713,
       "fold_weights": [-0.005, 0.01, 0.025, 0.025]
     },
+    "contrastive_long_short_sequence": {
+      "wall_seconds": 74.692,
+      "cpu_seconds": 179.227,
+      "cpu_hours": 0.049785,
+      "cpu_utilization_percent": 239.95,
+      "peak_rss_mb": 1698.734,
+      "gpu_hours": 0.0,
+      "temporal_holdout_primary": 0.55987507,
+      "selected_epoch": 3,
+      "standalone_primary": 0.6030859,
+      "standalone_gauc": 0.6697636,
+      "standalone_ndcg5": 0.5364081
+    },
+    "contrastive_long_short_residual_audit": {
+      "wall_seconds": 27.309,
+      "cpu_seconds": 27.305,
+      "cpu_hours": 0.007585,
+      "cpu_utilization_percent": 99.99,
+      "peak_rss_mb": 1378.375,
+      "gpu_hours": 0.0,
+      "cross_fitted_additive_primary": 0.6122197,
+      "fixed_additive_primary": 0.61227626,
+      "additive_fold_weights": [0.1, -0.005, -0.005, -0.015],
+      "cross_fitted_reranked_primary": 0.61228126,
+      "reranked_fold_weights": [0.075, -0.08, 0.07, -0.095]
+    },
     "mc_dropout_lcb": {
       "wall_seconds": 23.141,
       "cpu_seconds": 74.679,
