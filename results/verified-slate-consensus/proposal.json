@@ -8,8 +8,8 @@
     "ranking_unit": "all logged validation impressions for one user",
     "hidden_test_accessed": false,
     "validation_outcomes_used_as_features": false,
-    "candidate_information_used": ["user_id", "video_id", "author_id", "static tag tokens"],
-    "selection": "At each stage, tune one scalar weight on one user-parity fold and apply it to the other, repeat in both directions, then fix the deployable weight to the mean of the two selected weights."
+    "candidate_information_used": ["user_id", "video_id", "author_id", "music_id", "video_type", "hourmin", "static tag tokens"],
+    "selection": "Tune each scalar only on disjoint user folds. The first eight stages use two user-parity folds; the two conditional graph stages use four user-id-modulo folds and fix the deployable weight to the mean of the independently selected weights."
   },
   "features": {
     "token_personal_mean": "Within-user standardized mean across an item's tag tokens of log1p(user-slate token count) - 0.25 * log1p(global-slate token count).",
@@ -19,7 +19,9 @@
     "author_repeat_per_video": "Within-user standardized log1p ratio of author exposures to distinct videos for that author.",
     "token_videos_per_author_mean": "Within-user standardized mean across tag tokens of log1p(distinct token videos / distinct token authors).",
     "type_leave_one_out_score": "Within-user standardized mean accepted score of the other slate rows with the same video type; singleton groups retain their own score.",
-    "author_leave_one_out_score": "Within-user standardized mean accepted score of the other slate rows with the same author; singleton groups retain their own score."
+    "author_leave_one_out_score": "Within-user standardized mean accepted score of the other slate rows with the same author; singleton groups retain their own score.",
+    "author_daypart_leave_one_out_delta": "Within-user standardized difference between the accepted score and the other rows sharing author and four-hour daypart, computed after the broad type/author graph pass.",
+    "music_type_leave_one_out_delta": "Within-user standardized difference between the accepted score and the other rows sharing music and video type, recomputed after the author-daypart correction."
   },
   "selection_evidence": [
     {
@@ -77,12 +79,26 @@
       "fixed_weight": -0.02,
       "oof_primary": 0.6116783618927002,
       "fixed_primary": 0.6116783618927002
+    },
+    {
+      "stage": "author_daypart_leave_one_out_delta",
+      "fold_weights": [0.15, 0.15, 0.15, 0.15],
+      "fixed_weight": 0.15,
+      "oof_primary": 0.6117651462554932,
+      "fixed_primary": 0.6117651462554932
+    },
+    {
+      "stage": "music_type_leave_one_out_delta",
+      "fold_weights": [-0.14, -0.12, -0.08, -0.12],
+      "fixed_weight": -0.115,
+      "oof_primary": 0.6117796897888184,
+      "fixed_primary": 0.6118398904800415
     }
   ],
   "rejected_followup": {
     "feature": "video-type concentration",
     "reason": "Its fixed full-validation score rose to 0.61145884, but its cross-fitted primary fell to 0.61134475 versus 0.61135924 before the feature. It was excluded. A supervised weekly-slate CatBoost was also rejected after scoring 0.6047368 standalone and 0.6112029 cross-fitted in the ensemble."
   },
-  "acceptance": "Accept only stages whose disjoint-user weights agree in sign and whose cross-fitted primary improves over the preceding stage.",
+  "acceptance": "Accept only stages whose disjoint-user weights agree in sign and whose cross-fitted primary improves over the preceding stage. The final two terms satisfied this rule on all four user-modulo folds.",
   "accepted": true
 }

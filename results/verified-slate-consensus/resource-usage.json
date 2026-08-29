@@ -21,12 +21,19 @@
       "peak_rss_mb": 809.625,
       "gpu_hours": 0.0
     },
+    "conditional_graph_selection_audit": {
+      "wall_seconds": 37.243,
+      "cpu_seconds": 38.205,
+      "cpu_hours": 0.010612,
+      "peak_rss_mb": 956.781,
+      "gpu_hours": 0.0
+    },
     "tracked_verification": {
-      "wall_seconds": 8.552,
-      "cpu_seconds": 8.549,
-      "cpu_hours": 0.002375,
-      "cpu_utilization_percent": 99.96,
-      "peak_rss_mb": 724.281,
+      "wall_seconds": 9.115,
+      "cpu_seconds": 9.113,
+      "cpu_hours": 0.002531,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 762.922,
       "gpu_hours": 0.0,
       "peak_gpu_memory_mb": 0.0
     }
