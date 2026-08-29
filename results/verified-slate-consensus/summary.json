@@ -33,7 +33,11 @@
     "Causal timestamp-gap proxy histories: the train-only proxy reached 0.755662 temporal-holdout AUC, but no derived state produced stable nonzero residual weights.",
     "Continuous threshold-progress CatBoost: 0.587240 standalone, 0.6121895 additive OOF, 0.562779 CPU-hours, and 17.87 GB peak RAM.",
     "Residual-initialized batch-slate tree: 0.592267 standalone and only 0.6122193 additive OOF.",
-    "Personalized content kNN: best validation primary 0.524039; rejected after training-only temporal selection."
+    "Personalized content kNN: best validation primary 0.524039; rejected after training-only temporal selection.",
+    "Hierarchical personalized dense slopes: 0.600019 standalone, but the personalized component was only 0.510101 and additive OOF regressed to 0.6122667 with mixed-sign fold weights.",
+    "Cross-model confidence from 20 structurally diverse models: mean/median/vote/dispersion corrections produced no stable gain; the best OOF result was 0.6122835 with mixed-sign weights.",
+    "Temporally selected per-user expert gate: improved the April 20-21 probe from 0.5599496 to 0.5600790 and reached 0.6059629 standalone, but additive OOF regressed to 0.6122078.",
+    "Top-weighted pointwise batch-slate tree: improved its standalone score to 0.5921983, but additive OOF regressed to 0.6122713."
   ],
   "target_primary": 0.7,
   "target_reached": false,
