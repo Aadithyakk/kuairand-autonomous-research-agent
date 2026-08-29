@@ -9,9 +9,13 @@ const stageLabels: Record<string, string> = {
 
 type Metrics = { primary: number; gauc: number; ndcg5: number };
 type Stage = { name: string; status: 'done' | 'active' | 'waiting' };
+type ResourceUsage = {
+  wall_seconds: number; train_seconds: number; cpu_seconds: number; cpu_hours: number; cpu_utilization_percent: number;
+  peak_rss_mb: number; gpu_count: number; gpu_seconds: number; gpu_hours: number; peak_gpu_memory_mb: number; device: string;
+};
 type Iteration = {
   number: number; title: string; status: string; stage: string; metrics: Metrics | null; delta: number | null;
-  gain?: number; duration_seconds: number; error?: string; evidence?: string; artifact?: string; accepted: boolean;
+  gain?: number; duration_seconds: number; error?: string; evidence?: string; artifact?: string; accepted: boolean; resource_usage?: ResourceUsage | null;
 };
 type EventItem = { id: number; time: string; kind: string; title: string; detail: string; iteration?: number; stage?: string };
 type State = {
@@ -19,7 +23,7 @@ type State = {
   config: { model: string; reasoning_effort: string; max_iterations: number; max_hours: number; convergence_epsilon: number; convergence_patience: number; api_key_available: boolean; dataset_available: boolean; adapter_available: boolean };
   current: null | { number: number; title: string; hypothesis: string; stage: string; status: string; activity: string; stages: Stage[]; acceptance: string; abort_condition: string; expected_gain: number | null; error?: string };
   metrics: { baseline: Metrics; champion: Metrics; delta: number };
-  usage: { input_tokens: number; output_tokens: number; reasoning_tokens: number; total_tokens: number; wall_seconds: number };
+  usage: { input_tokens: number; output_tokens: number; reasoning_tokens: number; total_tokens: number; wall_seconds: number; train_seconds: number; cpu_seconds: number; cpu_hours: number; gpu_hours: number; peak_rss_mb: number; peak_gpu_memory_mb: number; experiments_measured: number };
   iterations: Iteration[];
   events: EventItem[];
 };
@@ -29,6 +33,8 @@ function elapsed(seconds: number) {
   const whole = Math.max(0, Math.floor(seconds));
   return `${String(Math.floor(whole / 3600)).padStart(2, '0')}:${String(Math.floor((whole % 3600) / 60)).padStart(2, '0')}:${String(whole % 60).padStart(2, '0')}`;
 }
+function computeHours(value: number) { return value < 0.01 ? `${(value * 60).toFixed(1)}m` : `${value.toFixed(2)}h`; }
+function memory(value?: number) { return value ? `${Math.round(value).toLocaleString()} MB` : '—'; }
 function timeLabel(value: string) { return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 function statusTone(status: string) {
   if (status === 'accepted' || status === 'complete') return 'good';
@@ -131,6 +137,7 @@ export default function Home() {
           <article className="metric-card featured"><span>Champion primary</span><strong>{score(champion?.primary)}</strong><small>{state ? `${state.metrics.delta >= 0 ? '+' : ''}${state.metrics.delta.toFixed(4)} over baseline` : 'Waiting for local engine'}</small></article>
           <article className="metric-card"><span>GAUC</span><strong>{score(champion?.gauc)}</strong><small>validation-best</small></article>
           <article className="metric-card"><span>nDCG@5</span><strong>{score(champion?.ndcg5)}</strong><small>validation-best</small></article>
+          <article className="metric-card"><span>Compute used</span><strong>{computeHours(state?.usage.cpu_hours ?? 0)} CPU</strong><small>{computeHours(state?.usage.gpu_hours ?? 0)} GPU · {memory(state?.usage.peak_rss_mb)} peak RAM</small></article>
           <article className="metric-card"><span>Budget</span><strong>{String(completedCount).padStart(2, '0')} / {state?.config.max_iterations ?? 50}</strong><small>{elapsed(state?.usage.wall_seconds ?? 0)} elapsed · {elapsed(remainingSeconds)} left</small></article>
         </div>
 
@@ -156,7 +163,7 @@ export default function Home() {
             <div className="run-meta">
               <div><span>Acceptance</span><b>{current?.acceptance ?? `Primary gain ≥ ${state?.config.convergence_epsilon?.toFixed(4) ?? '0.0020'}`}</b></div>
               <div><span>Abort condition</span><b>{current?.abort_condition ?? 'Invalid metrics, timeout, or runner failure'}</b></div>
-              <div><span>Resources</span><b>{(state?.usage.total_tokens ?? 0).toLocaleString()} tokens · {state?.campaign.mode ?? 'demo'} mode</b></div>
+              <div><span>Resources</span><b>{(state?.usage.total_tokens ?? 0).toLocaleString()} tokens · {computeHours(state?.usage.cpu_hours ?? 0)} CPU · {computeHours(state?.usage.gpu_hours ?? 0)} GPU</b></div>
             </div>
           </section>
 
@@ -172,8 +179,8 @@ export default function Home() {
           <div className="panel-heading"><div><p className="eyebrow">Campaign history</p><h2>Iterations</h2></div><span className="subtle">Validation-best checkpoint retained · hidden test untouched</span></div>
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Iteration</th><th>Experiment</th><th>Status</th><th>Primary</th><th>Δ baseline</th><th>Runtime</th></tr></thead>
-              <tbody>{[...(state?.iterations ?? [])].reverse().map((item) => <tr key={item.number}><td className="mono">#{String(item.number).padStart(3, '0')}</td><td><b>{item.title}</b>{item.error && <small className="row-note">{item.error}</small>}</td><td><span className={`status ${statusTone(item.status)}`}>{item.status}</span></td><td className="mono">{score(item.metrics?.primary)}</td><td className={`mono ${(item.delta ?? 0) > 0 ? 'positive' : ''}`}>{item.delta == null ? '—' : `${item.delta >= 0 ? '+' : ''}${item.delta.toFixed(4)}`}</td><td className="mono">{elapsed(item.duration_seconds)}</td></tr>)}</tbody>
+              <thead><tr><th>Iteration</th><th>Experiment</th><th>Status</th><th>Primary</th><th>Δ baseline</th><th>Train</th><th>Compute</th><th>Peak RAM</th></tr></thead>
+              <tbody>{[...(state?.iterations ?? [])].reverse().map((item) => <tr key={item.number}><td className="mono">#{String(item.number).padStart(3, '0')}</td><td><b>{item.title}</b>{item.error && <small className="row-note">{item.error}</small>}</td><td><span className={`status ${statusTone(item.status)}`}>{item.status}</span></td><td className="mono">{score(item.metrics?.primary)}</td><td className={`mono ${(item.delta ?? 0) > 0 ? 'positive' : ''}`}>{item.delta == null ? '—' : `${item.delta >= 0 ? '+' : ''}${item.delta.toFixed(4)}`}</td><td className="mono">{item.resource_usage ? elapsed(item.resource_usage.train_seconds) : elapsed(item.duration_seconds)}</td><td className="mono resource-cell">{item.resource_usage ? `${computeHours(item.resource_usage.cpu_hours)} CPU · ${computeHours(item.resource_usage.gpu_hours)} GPU` : '—'}</td><td className="mono">{memory(item.resource_usage?.peak_rss_mb)}</td></tr>)}</tbody>
             </table>
           </div>
         </section>
@@ -182,7 +189,7 @@ export default function Home() {
           <div><span className={state?.config.api_key_available ? 'ready' : 'missing'} />GPT key <b>{state?.config.api_key_available ? 'ready' : 'not set'}</b></div>
           <div><span className={state?.config.dataset_available ? 'ready' : 'missing'} />KuaiRand data <b>{state?.config.dataset_available ? 'ready' : 'not connected'}</b></div>
           <div><span className={state?.config.adapter_available ? 'ready' : 'missing'} />Runner adapter <b>{state?.config.adapter_available ? 'ready' : 'not connected'}</b></div>
-          <div className="resource-total">Input {state?.usage.input_tokens.toLocaleString() ?? 0} · Reasoning {state?.usage.reasoning_tokens.toLocaleString() ?? 0} · Output {state?.usage.output_tokens.toLocaleString() ?? 0}</div>
+          <div className="resource-total">Train {elapsed(state?.usage.train_seconds ?? 0)} · CPU {computeHours(state?.usage.cpu_hours ?? 0)} · GPU {computeHours(state?.usage.gpu_hours ?? 0)} · Tokens {(state?.usage.total_tokens ?? 0).toLocaleString()}</div>
         </section>
       </section>
 

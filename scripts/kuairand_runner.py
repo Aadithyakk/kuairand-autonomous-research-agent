@@ -18,6 +18,12 @@ import numpy as np
 
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from backend.kuailab.resources import ProcessResourceTracker
+
+
 STARTER = Path(os.getenv("KUAI_STARTER_KIT_DIR", ROOT / "external" / "kuairand-starter-kit")).resolve()
 
 
@@ -154,13 +160,23 @@ def main() -> int:
     request = json.loads(Path(request_path).read_text(encoding="utf-8"))
     output_dir = Path(request_path).resolve().parent
     data_dir = Path(request["dataset_path"]).resolve()
+    tracker = ProcessResourceTracker()
     started = time.monotonic()
     proposal = {"experiment_type": "fm_config", "parameters": {}}
     if request.get("action") == "experiment":
         proposal_path = Path(request["proposal_path"])
         proposal = json.loads(proposal_path.read_text(encoding="utf-8"))
-    metrics = train_fm(load_development_splits(data_dir), output_dir, proposal)
+    load_started = time.monotonic()
+    splits = load_development_splits(data_dir)
+    data_loading_seconds = time.monotonic() - load_started
+    train_started = time.monotonic()
+    metrics = train_fm(splits, output_dir, proposal)
+    train_seconds = time.monotonic() - train_started
     metrics["runtime_seconds"] = round(time.monotonic() - started, 3)
+    usage = tracker.finish(train_seconds=train_seconds)
+    usage["data_loading_seconds"] = round(data_loading_seconds, 3)
+    metrics["resource_usage"] = usage
+    (output_dir / "resource-usage.json").write_text(json.dumps(usage, indent=2, sort_keys=True), encoding="utf-8")
     Path(request["metrics_path"]).write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     print(json.dumps({"action": request.get("action"), "metrics": metrics}, sort_keys=True))
     return 0

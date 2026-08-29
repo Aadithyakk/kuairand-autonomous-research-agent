@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
+from .resources import empty_campaign_usage
+
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -17,7 +19,7 @@ def utc_now() -> str:
 def initial_state(config: dict) -> dict:
     baseline = {"primary": 0.6016, "gauc": 0.6612, "ndcg5": 0.5310}
     return {
-        "version": 2,
+        "version": 3,
         "campaign": {
             "id": None,
             "status": "idle",
@@ -31,7 +33,7 @@ def initial_state(config: dict) -> dict:
         "config": config,
         "current": None,
         "metrics": {"baseline": baseline, "champion": baseline, "delta": 0.0},
-        "usage": {"input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0, "total_tokens": 0, "wall_seconds": 0.0},
+        "usage": empty_campaign_usage(),
         "iterations": [{
             "number": 0,
             "title": "Demo FM baseline",
@@ -58,7 +60,18 @@ class StateStore:
         self.lock = threading.RLock()
         directory.mkdir(parents=True, exist_ok=True)
         self._state = self._read() or initial_state(config)
+        self._migrate(config)
         self._write()
+
+    def _migrate(self, config: dict) -> None:
+        defaults = initial_state(config)
+        self._state["version"] = 3
+        self._state.setdefault("config", config)
+        usage = self._state.setdefault("usage", {})
+        for key, value in defaults["usage"].items():
+            usage.setdefault(key, value)
+        for item in self._state.get("iterations", []):
+            item.setdefault("resource_usage", None)
 
     def _read(self) -> dict | None:
         try:

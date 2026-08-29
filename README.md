@@ -14,6 +14,7 @@ The previous repository is not a dependency. This implementation was rebuilt fro
 - Champion promotion, 50-iteration and six-hour budgets, and convergence after three gains below 0.002.
 - Live dashboard controls: start, pause, resume, stop, and steer the next hypothesis.
 - Token accounting split into input, output, reasoning, and total tokens.
+- Per-run compute accounting: training and wall time, CPU time/hours, average CPU utilization, peak RAM, GPU-hours, and peak VRAM.
 
 ## Verified real run
 
@@ -88,11 +89,21 @@ Your adapter must use the organizer starter kit to train/validate the candidate,
   "primary": 0.6078,
   "gauc": 0.6731,
   "ndcg5": 0.5425,
-  "runtime_seconds": 412.8
+  "runtime_seconds": 412.8,
+  "resource_usage": {
+    "wall_seconds": 412.8,
+    "train_seconds": 391.4,
+    "cpu_seconds": 1460.2,
+    "peak_rss_mb": 2840,
+    "gpu_count": 1,
+    "gpu_seconds": 391.4,
+    "peak_gpu_memory_mb": 6120,
+    "device": "gpu"
+  }
 }
 ```
 
-All three metrics must be finite values in `[0, 1]`. A non-zero exit, timeout, missing file, or invalid metric fails the iteration, retains the prior champion, and records recovery evidence. Generated candidate code is saved for review but is never executed directly by KuaiLab; isolation is the adapter's responsibility (normally a pinned container built around the official starter kit).
+All three metrics must be finite values in `[0, 1]`. `resource_usage` is optional for third-party adapters; KuaiLab falls back to wall time, child-process CPU time, and peak resident memory when it is absent. GPU-hours and peak VRAM must be supplied by GPU-backed adapters because the controller cannot reliably infer accelerator use across containers. A non-zero exit, timeout, missing file, or invalid metric fails the iteration, retains the prior champion, and still records the compute spent before failure. Generated candidate code is saved for review but is never executed directly by KuaiLab; isolation is the adapter's responsibility (normally a pinned container built around the official starter kit).
 
 ## Evidence layout
 
@@ -116,6 +127,8 @@ runtime/
     runner.stdout.log         # real mode
     runner.stderr.log         # real mode
     metrics.json              # real mode
+    resource-usage.json       # normalized per-run compute evidence
+  resource-summary.json       # campaign totals and per-iteration usage
 ```
 
 The hidden test is not part of the autonomous loop. Only the retained validation-best checkpoint should be evaluated once under the challenge's final-submission procedure.

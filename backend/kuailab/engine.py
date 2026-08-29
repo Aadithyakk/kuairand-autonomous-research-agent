@@ -11,6 +11,7 @@ from pathlib import Path
 from .benchmark import CommandBenchmark, SyntheticBenchmark
 from .config import Settings
 from .provider import DemoProvider, OpenAIProvider, Proposal
+from .resources import add_resource_usage, empty_campaign_usage
 from .state import StateStore, utc_now
 
 
@@ -54,13 +55,14 @@ class CampaignEngine:
                 }
                 state["current"] = None
                 state["metrics"] = {"baseline": baseline, "champion": baseline, "delta": 0.0}
-                state["usage"] = {"input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0, "total_tokens": 0, "wall_seconds": 0.0}
+                state["usage"] = empty_campaign_usage()
                 state["events"] = []
                 state["iterations"] = [{
                     "number": 0, "title": "Demo FM baseline" if mode == "demo" else "Measuring organizer baseline",
                     "status": "baseline", "stage": "complete" if mode == "demo" else "waiting", "metrics": baseline if mode == "demo" else None,
                     "delta": 0.0 if mode == "demo" else None, "accepted": True, "duration_seconds": 0.0,
                     "provider": "demo" if mode == "demo" else "organizer", "evidence": "synthetic-demo" if mode == "demo" else None,
+                    "resource_usage": None,
                 }]
 
             self.store.update(initialize)
@@ -167,7 +169,9 @@ class CampaignEngine:
                     state["metrics"] = {"baseline": baseline_metrics, "champion": baseline_metrics, "delta": 0.0}
                     state["iterations"][0].update(title="Organizer baseline", stage="complete", metrics=baseline_metrics,
                                                   delta=0.0, duration_seconds=measured.runtime_seconds,
-                                                  evidence=measured.evidence, artifact=str(baseline_workspace))
+                                                  evidence=measured.evidence, artifact=str(baseline_workspace),
+                                                  resource_usage=measured.resource_usage)
+                    add_resource_usage(state["usage"], measured.resource_usage)
                 self.store.update(save_baseline)
                 self.store.event("result", "Baseline reproduced", f"Primary {baseline_metrics['primary']:.4f} · GAUC {baseline_metrics['gauc']:.4f} · nDCG@5 {baseline_metrics['ndcg5']:.4f}", 0, "baseline")
             for number in range(1, self.settings.max_iterations + 1):
@@ -205,8 +209,15 @@ class CampaignEngine:
                         "prior_iterations": snapshot["iterations"][-6:],
                         "epsilon": self.settings.convergence_epsilon,
                         "remaining_iterations": self.settings.max_iterations - number + 1,
+                        "resource_usage": snapshot["usage"],
                         "steering": snapshot["campaign"].get("steering"),
-                        "constraints": ["GAUC and nDCG@5 validation", "no hidden-test access", "one isolated change", "must be reproducible"],
+                        "constraints": [
+                            "GAUC and nDCG@5 validation",
+                            "no hidden-test access",
+                            "one isolated change",
+                            "must be reproducible",
+                            "prefer validation gain per CPU/GPU hour when expected gains are similar",
+                        ],
                         "executor_contract": {
                             "runtime": "NumPy-only official Factorization Machine; no Torch and no arbitrary package installation",
                             "experiment_types": {
@@ -256,6 +267,7 @@ class CampaignEngine:
                         "delta": baseline_delta, "gain": gain, "accepted": accepted, "duration_seconds": duration,
                         "provider": provider_name, "evidence": evaluation.evidence, "artifact": str(workspace),
                         "change_summary": proposal.change_summary, "response_id": proposal.response_id,
+                        "resource_usage": evaluation.resource_usage,
                     }
 
                     def finish_iteration(state: dict) -> None:
@@ -263,28 +275,39 @@ class CampaignEngine:
                         if accepted:
                             state["metrics"]["champion"] = metrics
                             state["metrics"]["delta"] = baseline_delta
+                        add_resource_usage(state["usage"], evaluation.resource_usage)
                         state["current"]["status"] = "complete"
                         for item in state["current"]["stages"]:
                             item["status"] = "done"
                         state["usage"]["wall_seconds"] = round(time.monotonic() - started, 2)
                     self.store.update(finish_iteration)
                     action = "Champion promoted" if accepted else "Candidate rejected"
-                    self.store.event("result", action, f"Primary {metrics['primary']:.4f} · gain {gain:+.4f} · {evaluation.evidence}", number, "reflect")
+                    usage = evaluation.resource_usage
+                    self.store.event(
+                        "result",
+                        action,
+                        f"Primary {metrics['primary']:.4f} · gain {gain:+.4f} · train {usage['train_seconds']:.1f}s · CPU {usage['cpu_hours']:.4f}h · GPU {usage['gpu_hours']:.4f}h",
+                        number,
+                        "reflect",
+                    )
                     small_gain_streak = small_gain_streak + 1 if gain < self.settings.convergence_epsilon else 0
                     if small_gain_streak >= self.settings.convergence_patience:
                         stop_reason = f"converged: {small_gain_streak} consecutive gains below {self.settings.convergence_epsilon:.4f}"
                         break
                 except Exception as error:
                     duration = round(time.monotonic() - iteration_started, 2)
+                    resource_usage = getattr(error, "resource_usage", None)
                     failed = {
                         "number": number, "title": self.store.snapshot().get("current", {}).get("title", "Experiment"),
                         "status": "failed", "stage": "failed", "metrics": None, "delta": None, "accepted": False,
                         "duration_seconds": duration, "provider": provider_name, "error": str(error)[:800], "artifact": str(workspace),
+                        "resource_usage": resource_usage,
                     }
                     def record_failure(state: dict) -> None:
                         state["iterations"].append(failed)
                         if state["current"]:
                             state["current"].update(status="failed", error=failed["error"])
+                        add_resource_usage(state["usage"], resource_usage)
                         state["usage"]["wall_seconds"] = round(time.monotonic() - started, 2)
                     self.store.update(record_failure)
                     self.store.event("error", "Iteration failed · recovered", failed["error"], number, "failed")
@@ -294,6 +317,13 @@ class CampaignEngine:
                     continue
         except Exception as error:
             stop_reason = f"campaign error: {str(error)[:300]}"
+            resource_usage = getattr(error, "resource_usage", None)
+            if resource_usage:
+                def record_campaign_failure(state: dict) -> None:
+                    add_resource_usage(state["usage"], resource_usage)
+                    if mode == "kuairand" and state["iterations"] and state["iterations"][0]["stage"] != "complete":
+                        state["iterations"][0].update(status="failed", stage="failed", error=str(error)[:800], resource_usage=resource_usage)
+                self.store.update(record_campaign_failure)
             self.store.event("error", "Campaign stopped unexpectedly", stop_reason)
         finally:
             final_status = "stopped" if self._stop.is_set() else "complete"
@@ -302,3 +332,20 @@ class CampaignEngine:
                 state["usage"]["wall_seconds"] = round(time.monotonic() - started, 2)
             self.store.update(complete)
             self.store.event("campaign", "Campaign finished", stop_reason)
+            final = self.store.snapshot()
+            summary_path = self.settings.state_dir / "campaigns" / campaign_id / "resource-summary.json"
+            summary_path.parent.mkdir(parents=True, exist_ok=True)
+            summary_path.write_text(json.dumps({
+                "campaign": final["campaign"],
+                "usage": final["usage"],
+                "iterations": [
+                    {
+                        "number": item["number"],
+                        "status": item["status"],
+                        "primary": item.get("metrics", {}).get("primary") if item.get("metrics") else None,
+                        "gain": item.get("gain"),
+                        "resource_usage": item.get("resource_usage"),
+                    }
+                    for item in final["iterations"]
+                ],
+            }, indent=2, sort_keys=True), encoding="utf-8")
