@@ -86,14 +86,17 @@ class OpenAIProvider:
             "properties": {
                 "title": {"type": "string"},
                 "experiment_type": {"type": "string", "enum": [
-                    "fm_config", "fm_positive_weight", "fm_ensemble", "fm_pairwise", "fm_pairwise_blend"
+                    "fm_config", "fm_positive_weight", "fm_ensemble", "fm_pairwise", "fm_pairwise_blend",
+                    "fm_deep_blend"
                 ]},
                 "hypothesis": {"type": "string"}, "rationale": {"type": "string"},
                 "change_summary": {"type": "string"}, "code": {"type": "string"},
                 "parameters": {"type": "object", "additionalProperties": False,
                     "required": [
                         "k", "lr", "epochs", "batch_size", "patience", "seed", "ensemble_seeds", "positive_weight",
-                        "pairwise_lr", "pairwise_epochs", "pairwise_patience", "pairwise_seed", "blend_weight"
+                        "pairwise_lr", "pairwise_epochs", "pairwise_patience", "pairwise_seed", "blend_weight",
+                        "deep_lr", "deep_epochs", "deep_patience", "deep_seed", "deep_hidden", "deep_dropout",
+                        "deep_threads", "deep_blend_weight"
                     ],
                     "properties": {
                         "k": {"type": "integer"},
@@ -108,7 +111,15 @@ class OpenAIProvider:
                         "pairwise_epochs": {"type": "integer"},
                         "pairwise_patience": {"type": "integer"},
                         "pairwise_seed": {"type": "integer"},
-                        "blend_weight": {"type": "number"}
+                        "blend_weight": {"type": "number"},
+                        "deep_lr": {"type": "number"},
+                        "deep_epochs": {"type": "integer"},
+                        "deep_patience": {"type": "integer"},
+                        "deep_seed": {"type": "integer"},
+                        "deep_hidden": {"type": "integer"},
+                        "deep_dropout": {"type": "number"},
+                        "deep_threads": {"type": "integer"},
+                        "deep_blend_weight": {"type": "number"}
                     }},
                 "acceptance": {"type": "string"}, "abort_condition": {"type": "string"}, "expected_gain": {"type": "number"},
             },

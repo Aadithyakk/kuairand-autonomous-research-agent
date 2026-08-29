@@ -10,7 +10,7 @@ The previous repository is not a dependency. This implementation was rebuilt fro
 - GPT-5.6 Sol provider with high reasoning and strict JSON output.
 - Deterministic no-cost demo provider and synthetic benchmark for end-to-end smoke testing.
 - Real KuaiRand-Pure adapter built around the supplied organizer starter kit, plus a fail-closed external-adapter contract for alternative runners.
-- Typed pointwise, positive-weighted, multi-seed, BPR pairwise, and pointwise/pairwise-blend experiment executors.
+- Typed pointwise, positive-weighted, multi-seed, BPR pairwise, pointwise/pairwise-blend, and DeepFM-blend experiment executors.
 - Atomic `state.json`, append-only `events.jsonl`, proposal source, unified diff, runner logs, metrics, failures, and recovery evidence.
 - Champion promotion, 50-iteration and six-hour budgets, and convergence after three gains below 0.002.
 - Live dashboard controls: start, pause, resume, stop, and steer the next hypothesis.
@@ -19,13 +19,13 @@ The previous repository is not a dependency. This implementation was rebuilt fro
 
 ## Verified real runs
 
-On 29 August 2026, KuaiLab completed a GPT-5.6 Sol campaign against the supplied KuaiRand-Pure validation split. It first improved the retained FM champion from `0.601470` to `0.603781` primary score. A subsequent controlled extension added a within-user BPR executor and verified a pointwise/pairwise blend at **`0.605366` primary** (`+0.003897` over the reproduced baseline), with `0.672471` GAUC and `0.538262` nDCG@5.
+On 29 August 2026, KuaiLab completed a GPT-5.6 Sol campaign against the supplied KuaiRand-Pure validation split. It first improved the retained FM champion from `0.601470` to `0.603781` primary score, then added a within-user BPR executor and reached `0.605366`. A final controlled extension verified a compact three-way ensemble at **`0.605809` primary** (`+0.004340`, or about `+0.72%` relative, over the reproduced baseline), with `0.672898` GAUC and `0.538721` nDCG@5.
 
-The retained blend averages positive-weighted pointwise FMs from seeds 0 and 2, then mixes in a seed-1 BPR FM at weight `0.44`. Its clean executor run took `36.543` seconds, used `0.010146` CPU-hours, peaked at `604.359` MB RAM, and used no GPU. The method is now a typed `fm_pairwise_blend` option available to the autonomous planner rather than a one-off analysis script.
+The retained blend averages positive-weighted pointwise FMs from seeds 0 and 2, mixes in a seed-1 BPR FM at weight `0.455`, then mixes a seed-0 DeepFM into that score at weight `0.23`. Its clean executor run took `45.674` seconds, used `0.014031` CPU-hours, peaked at `892.312` MB RAM, and used no GPU. The method is now a typed `fm_deep_blend` option available to the autonomous planner rather than a one-off analysis script.
 
 One ensemble attempt was deliberately invalidated after its runner process was terminated: inspection showed that the ensemble path would have ignored the proposed positive-example weight. The result was not scored or promoted, and the runner was corrected before the campaign continued. The hidden test was never accessed.
 
-The original campaign evidence is in [`results/run-9ecfd2aa09`](results/run-9ecfd2aa09), and the compact pairwise-blend verification is in [`results/verified-pairwise-blend`](results/verified-pairwise-blend). Checkpoints, raw runner requests, logs containing local paths, and the dataset are excluded from Git.
+The original campaign evidence is in [`results/run-9ecfd2aa09`](results/run-9ecfd2aa09), the pairwise milestone is in [`results/verified-pairwise-blend`](results/verified-pairwise-blend), and the retained DeepFM-blend verification is in [`results/verified-deep-blend`](results/verified-deep-blend). Checkpoints, raw runner requests, logs containing local paths, and the dataset are excluded from Git.
 
 ## Security first
 
@@ -39,7 +39,7 @@ Do not put a real key in `.env.example`, source control, proposals, runner logs,
 
 ## Start locally
 
-Requirements: Python 3.11+, Node 22.13+, and npm.
+Requirements: Python 3.11+, Node 22.13+, and npm. Install the core Python dependency with `python3 -m pip install -r requirements.txt`. The `fm_deep_blend` executor additionally needs PyTorch from `python3 -m pip install -r requirements-deep.txt`; all other executors remain NumPy-only.
 
 ```bash
 npm install
@@ -120,6 +120,12 @@ results/run-9ecfd2aa09/
   ...
 
 results/verified-pairwise-blend/
+  summary.json
+  proposal.json
+  metrics.json
+  resource-usage.json
+
+results/verified-deep-blend/
   summary.json
   proposal.json
   metrics.json

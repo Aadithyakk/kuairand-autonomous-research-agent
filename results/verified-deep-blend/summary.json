@@ -1,0 +1,46 @@
+{
+  "date": "2026-08-29",
+  "target": "long_view",
+  "split": "validation",
+  "hidden_test_accessed": false,
+  "baseline": {
+    "primary": 0.6014695167541504,
+    "gauc": 0.6671333909034729,
+    "ndcg5": 0.5358057022094727
+  },
+  "previous_champion": {
+    "primary": 0.6053662300109863,
+    "gauc": 0.6724708080291748,
+    "ndcg5": 0.5382616519927979
+  },
+  "champion": {
+    "primary": 0.605809211730957,
+    "gauc": 0.6728978753089905,
+    "ndcg5": 0.5387206077575684,
+    "gain_over_baseline": 0.0043396949768066,
+    "gain_over_previous_champion": 0.0004429817199707
+  },
+  "method": {
+    "experiment_type": "fm_deep_blend",
+    "pointwise_objective": "positive-weighted binary cross-entropy",
+    "pointwise_seeds": [0, 2],
+    "positive_weight": 2.75,
+    "pairwise_objective": "within-user Bayesian Personalized Ranking",
+    "pairwise_seed": 1,
+    "pairwise_negative_sampling": "one negative logged impression from the same user per positive and epoch",
+    "pointwise_pairwise_blend_weight": 0.455,
+    "deep_objective": "positive-weighted DeepFM binary cross-entropy",
+    "deep_seed": 0,
+    "deep_blend_weight": 0.23
+  },
+  "resource_usage": {
+    "wall_seconds": 45.674,
+    "train_seconds": 43.74,
+    "cpu_seconds": 50.51,
+    "cpu_hours": 0.014031,
+    "peak_rss_mb": 892.312,
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "device": "cpu"
+  }
+}

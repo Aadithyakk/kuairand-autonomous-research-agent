@@ -215,17 +215,18 @@ def train_fm(splits: dict, output_dir: Path, proposal: dict) -> dict:
     parameters = proposal.get("parameters", {})
     experiment_type = proposal.get("experiment_type", "fm_config")
     seed = int(parameters.get("seed", 0))
-    seeds = parameters.get("ensemble_seeds", [seed]) if experiment_type in {"fm_ensemble", "fm_pairwise_blend"} else [seed]
+    ensemble_types = {"fm_ensemble", "fm_pairwise_blend", "fm_deep_blend"}
+    seeds = parameters.get("ensemble_seeds", [seed]) if experiment_type in ensemble_types else [seed]
     seeds = [int(value) for value in seeds[:3]]
     positive_weight = float(parameters.get("positive_weight", 1.0))
     positive_weight = max(1.0, min(positive_weight, 10.0))
-    predictions, histories, pairwise_histories = [], [], []
+    predictions, histories, pairwise_histories, deep_histories = [], [], [], []
     if experiment_type != "fm_pairwise":
         for model_seed in seeds:
             scores, history = train_one(train_x, train_y, valid_x, valid_y, valid_users, dimension, output_dir, parameters, model_seed, positive_weight)
             predictions.append(scores)
             histories.append(history)
-    if experiment_type in {"fm_pairwise", "fm_pairwise_blend"}:
+    if experiment_type in {"fm_pairwise", "fm_pairwise_blend", "fm_deep_blend"}:
         pairwise_scores, pairwise_history = train_pairwise(
             train_x, train_y, train_users, valid_x, valid_y, valid_users,
             dimension, output_dir, parameters,
@@ -234,18 +235,32 @@ def train_fm(splits: dict, output_dir: Path, proposal: dict) -> dict:
         if experiment_type == "fm_pairwise":
             best_scores = pairwise_scores
         else:
-            blend_weight = max(0.0, min(float(parameters.get("blend_weight", 0.4)), 1.0))
+            blend_weight = max(0.0, min(float(parameters.get("blend_weight", 0.455)), 1.0))
             pointwise_scores = np.mean(np.stack(predictions), axis=0)
             best_scores = (1.0 - blend_weight) * pointwise_scores + blend_weight * pairwise_scores
     else:
         blend_weight = 0.0
         best_scores = np.mean(np.stack(predictions), axis=0)
+    if experiment_type == "fm_deep_blend":
+        from backend.kuailab.deepfm import train_deepfm
+
+        deep_scores, deep_history = train_deepfm(
+            train_x, train_y, valid_x, valid_y, valid_users,
+            dimension, output_dir, parameters, evaluate_module.evaluate,
+        )
+        deep_histories.append(deep_history)
+        deep_blend_weight = max(0.0, min(float(parameters.get("deep_blend_weight", 0.23)), 1.0))
+        best_scores = (1.0 - deep_blend_weight) * best_scores + deep_blend_weight * deep_scores
+    else:
+        deep_blend_weight = 0.0
     final = evaluate_module.evaluate(valid_users, valid_y, best_scores)
     (output_dir / "training-history.json").write_text(json.dumps({
         "experiment_type": experiment_type,
-        "blend_weight": blend_weight if experiment_type == "fm_pairwise_blend" else None,
+        "blend_weight": blend_weight if experiment_type in {"fm_pairwise_blend", "fm_deep_blend"} else None,
+        "deep_blend_weight": deep_blend_weight if experiment_type == "fm_deep_blend" else None,
         "runs": histories,
         "pairwise_runs": pairwise_histories,
+        "deep_runs": deep_histories,
     }, indent=2), encoding="utf-8")
     return {"primary": float(final["primary"]), "gauc": float(final["GAUC"]), "ndcg5": float(final["nDCG@5"])}
 

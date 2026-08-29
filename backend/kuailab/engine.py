@@ -225,13 +225,17 @@ class CampaignEngine:
                                 "fm_positive_weight": "FM logistic loss with the supplied positive_weight in [1,10]",
                                 "fm_ensemble": "Mean validation logits from 1-3 independently trained FM seeds",
                                 "fm_pairwise": "One FM trained with within-user BPR pairs sampled from logged impressions",
-                                "fm_pairwise_blend": "Blend a 1-3 seed weighted-FM ensemble with one independently trained BPR FM"
+                                "fm_pairwise_blend": "Blend a 1-3 seed weighted-FM ensemble with one independently trained BPR FM",
+                                "fm_deep_blend": "Blend weighted FM, BPR FM, and a nonlinear DeepFM trained with weighted BCE"
                             },
                             "defaults": {
                                 "k": 16, "lr": 0.001, "epochs": 40, "batch_size": 8192, "patience": 4,
                                 "seed": 0, "ensemble_seeds": [0, 1, 2], "positive_weight": 1.0,
                                 "pairwise_lr": 0.002, "pairwise_epochs": 12, "pairwise_patience": 4,
-                                "pairwise_seed": 0, "blend_weight": 0.4,
+                                "pairwise_seed": 0, "blend_weight": 0.455,
+                                "deep_lr": 0.001, "deep_epochs": 15, "deep_patience": 4,
+                                "deep_seed": 0, "deep_hidden": 64, "deep_dropout": 0.05,
+                                "deep_threads": 6, "deep_blend_weight": 0.23,
                             },
                             "rule": "Select exactly one supported experiment_type and populate every typed parameter. Generated code is evidence; the trusted executor applies the typed change."
                         },
