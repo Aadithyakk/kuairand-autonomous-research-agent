@@ -8,18 +8,18 @@
   "accepted_slate_correction": {
     "model_training_required": false,
     "focused_selection_audit": {
-      "wall_seconds": 29.123,
-      "cpu_seconds": 29.107,
-      "cpu_hours": 0.008085,
-      "peak_rss_mb": 605.859,
+      "wall_seconds": 34.198,
+      "cpu_seconds": 34.528,
+      "cpu_hours": 0.009591,
+      "peak_rss_mb": 799.188,
       "gpu_hours": 0.0
     },
     "tracked_verification": {
-      "wall_seconds": 7.376,
-      "cpu_seconds": 7.373,
-      "cpu_hours": 0.002048,
+      "wall_seconds": 8.293,
+      "cpu_seconds": 8.29,
+      "cpu_hours": 0.002303,
       "cpu_utilization_percent": 99.97,
-      "peak_rss_mb": 536.938,
+      "peak_rss_mb": 698.094,
       "gpu_hours": 0.0,
       "peak_gpu_memory_mb": 0.0
     }
@@ -54,6 +54,15 @@
       "cpu_seconds": 92.398,
       "cpu_hours": 0.025666,
       "peak_rss_mb": 15890.906
+    },
+    "supervised_slate_catboost": {
+      "wall_seconds": 412.306,
+      "cpu_seconds": 2922.563,
+      "cpu_hours": 0.811823,
+      "cpu_utilization_percent": 708.83,
+      "peak_rss_mb": 9382.891,
+      "standalone_primary": 0.6047368,
+      "cross_fitted_ensemble_primary": 0.6112029
     }
   }
 }

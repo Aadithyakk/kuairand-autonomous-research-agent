@@ -14,7 +14,10 @@
   "features": {
     "token_personal_mean": "Within-user standardized mean across an item's tag tokens of log1p(user-slate token count) - 0.25 * log1p(global-slate token count).",
     "repeated_video": "Within-user standardized indicator that the exact video occurs more than once in the supplied evaluation slate.",
-    "author_frequency": "Within-user standardized log1p count of the author in the supplied evaluation slate."
+    "author_frequency": "Within-user standardized log1p count of the author in the supplied evaluation slate.",
+    "music_unique_videos": "Within-user standardized number of distinct videos using the same music.",
+    "author_repeat_per_video": "Within-user standardized log1p ratio of author exposures to distinct videos for that author.",
+    "token_videos_per_author_mean": "Within-user standardized mean across tag tokens of log1p(distinct token videos / distinct token authors)."
   },
   "selection_evidence": [
     {
@@ -37,11 +40,32 @@
       "fixed_weight": 0.145,
       "oof_primary": 0.61135924,
       "fixed_primary": 0.6113628149032593
+    },
+    {
+      "stage": "music_unique_videos",
+      "fold_weights": [0.19, 0.19],
+      "fixed_weight": 0.19,
+      "oof_primary": 0.611478328704834,
+      "fixed_primary": 0.611478328704834
+    },
+    {
+      "stage": "author_repeat_per_video",
+      "fold_weights": [-0.16, -0.2],
+      "fixed_weight": -0.18,
+      "oof_primary": 0.6115173101425171,
+      "fixed_primary": 0.6115188598632812
+    },
+    {
+      "stage": "token_videos_per_author_mean",
+      "fold_weights": [-0.06, -0.09],
+      "fixed_weight": -0.075,
+      "oof_primary": 0.6115425825119019,
+      "fixed_primary": 0.611541748046875
     }
   ],
   "rejected_followup": {
     "feature": "video-type concentration",
-    "reason": "Its fixed full-validation score rose to 0.61145884, but its cross-fitted primary fell to 0.61134475 versus 0.61135924 before the feature. It was excluded."
+    "reason": "Its fixed full-validation score rose to 0.61145884, but its cross-fitted primary fell to 0.61134475 versus 0.61135924 before the feature. It was excluded. A supervised weekly-slate CatBoost was also rejected after scoring 0.6047368 standalone and 0.6112029 cross-fitted in the ensemble."
   },
   "acceptance": "Accept only stages whose disjoint-user weights agree in sign and whose cross-fitted primary improves over the preceding stage.",
   "accepted": true
