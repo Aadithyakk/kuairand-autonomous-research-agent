@@ -285,17 +285,79 @@
       "peak_rss_mb": 1508.781,
       "gpu_hours": 0.0
     },
-    "tracked_verification": {
-      "wall_seconds": 15.386,
-      "cpu_seconds": 15.383,
-      "cpu_hours": 0.004273,
+    "user_neighbor_cf_temporal_search": {
+      "neighbor_counts": [30, 60, 120],
+      "profiles": ["exposure", "exposure_tfidf", "signed"],
+      "aggregate_run_wall_seconds": 98.827,
+      "aggregate_cpu_seconds": 110.424,
+      "aggregate_cpu_hours": 0.030674,
+      "peak_rss_mb": 4427.641,
+      "gpu_hours": 0.0,
+      "selected_neighbors": 60,
+      "selected_profile_artifact_key": "positive_p2.0_s8.0"
+    },
+    "user_neighbor_cf_training": {
+      "wall_seconds": 6.943,
+      "cpu_seconds": 8.079,
+      "cpu_hours": 0.002244,
+      "cpu_utilization_percent": 116.37,
+      "peak_rss_mb": 4239.0,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.58131
+    },
+    "user_neighbor_cf_selection_audit": {
+      "wall_seconds": 17.623,
+      "cpu_seconds": 17.62,
+      "cpu_hours": 0.004894,
       "cpu_utilization_percent": 99.98,
-      "peak_rss_mb": 1091.906,
+      "peak_rss_mb": 1217.516,
+      "gpu_hours": 0.0,
+      "fold_weights": [0.002, 0.002, 0.002, 0.002],
+      "heldout_fold_primary_gains": [0.0000380278, 0.0000196099, 0.0000212789, 0.0000163913],
+      "fixed_primary": 0.612804651260376,
+      "fixed_gauc": 0.6822999715805054,
+      "fixed_ndcg5": 0.5433093309402466
+    },
+    "current_cycle_totals": {
+      "successful_tracked_run_wall_seconds_sum": 784.497,
+      "cpu_seconds": 2133.987,
+      "cpu_hours": 0.592774,
+      "peak_rss_mb": 4427.641,
+      "gpu_hours": 0.0,
+      "additional_untracked_wall_seconds": 141.515,
+      "note": "The untracked wall time is a raw-feature audit plus a PairLogit run that raised after training before the tracker finalized; it is excluded from CPU-hour totals. Per-run wall seconds are summed even when audits ran concurrently."
+    },
+    "tracked_verification": {
+      "wall_seconds": 15.561,
+      "cpu_seconds": 15.56,
+      "cpu_hours": 0.004322,
+      "cpu_utilization_percent": 99.99,
+      "peak_rss_mb": 1092.594,
       "gpu_hours": 0.0,
       "peak_gpu_memory_mb": 0.0
     }
   },
   "rejected_experiments": {
+    "whole_user_residual_rankers": {
+      "pair_logit_pairwise": {
+        "wall_seconds": 141.254,
+        "cpu_seconds": 943.041,
+        "cpu_hours": 0.261956,
+        "peak_rss_mb": 3400.438,
+        "standalone_primary": 0.6118788719177246,
+        "cross_fitted_primary": 0.6127787828445435
+      },
+      "query_softmax": {
+        "wall_seconds": 96.152,
+        "cpu_seconds": 626.916,
+        "cpu_hours": 0.174143,
+        "peak_rss_mb": 3538.031,
+        "standalone_primary": 0.6112478971481323,
+        "cross_fitted_primary": 0.6127710342407227
+      },
+      "gpu_hours": 0.0,
+      "reason": "Both residual rankers improved their April 20-21 CatBoost ranking objective but failed the final four-fold user-disjoint residual gate."
+    },
     "training_coverage_followup_rejections": {
       "model_training_required": false,
       "gpu_hours": 0.0,

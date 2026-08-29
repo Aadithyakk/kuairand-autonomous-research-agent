@@ -8,19 +8,19 @@
     "hidden_test_accessed": false
   },
   "champion": {
-    "primary": 0.6127808094024658,
-    "gauc": 0.6822733879089355,
-    "ndcg5": 0.5432882308959961,
+    "primary": 0.612804651260376,
+    "gauc": 0.6822999715805054,
+    "ndcg5": 0.5433093309402466,
     "users": 22377,
     "rows": 124909
   },
   "baseline_primary": 0.6014695167541504,
-  "previous_verified_primary": 0.6126559972763062,
-  "gain_over_previous_verified": 0.00012481212615966797,
-  "gain_over_baseline": 0.01131129264831543,
-  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + two confidence gates + active-day/slate-size expert routing + two training-coverage expert gates",
-  "selection_evidence": "The two new training-coverage corrections were selected after four-fold user-modulo cross-fitting. Low smoothed training long-view-rate users selected watch-model residual weights [0.13, 0.14, 0.13, 0.14] and fixed weight 0.135; users whose validation slate contains a video previously seen in training selected batch-model extrapolation weights [-0.04, -0.03, -0.03, -0.02] and fixed weight -0.03. The final recipe reproduces 0.61278081 primary with both GAUC and nDCG@5 above the 0.6126560 prior champion.",
-  "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. Outcome priors and coverage membership use only the April 8-21 training block; the validation slate contributes identifiers but no outcomes. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit before April 22-28 inference. The final gates use frozen model ranks, training-only aggregates, and label-free validation identifiers. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
+  "previous_verified_primary": 0.6127808094024658,
+  "gain_over_previous_verified": 0.00002384185791015625,
+  "gain_over_baseline": 0.011335134506225586,
+  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + two confidence gates + active-day/slate-size expert routing + two training-coverage expert gates + training-only user-neighbor collaborative correction",
+  "selection_evidence": "The final user-neighbor correction was selected from a temporally screened family. An April 8-18 exposure graph ranked April 19-21 candidates from other users' prior outcomes; the frozen 60-neighbor, squared-similarity, smoothing-8 candidate then selected weight 0.002 on every one of four disjoint validation-user folds. Its held-out primary gains were [0.00003803, 0.00001961, 0.00002128, 0.00001639]. The final recipe reproduces 0.61280465 primary with both GAUC and nDCG@5 above the 0.61278081 prior champion.",
+  "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. Outcome priors, coverage membership, and the user-neighbor graph use only the April 8-21 training block; the validation slate contributes identifiers but no outcomes. The neighbor graph uses training exposure overlap for similarity and other users' training outcomes for candidate estimates. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit before April 22-28 inference. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
   "rejected_ablations": [
     "Monte Carlo dropout LCB: fold correction signs disagreed and OOF primary regressed.",
     "Continuous watch-ratio margin: widened cross-fitted primary regressed to 0.61106056.",
@@ -52,10 +52,12 @@
     "Localized top-k reranking across 20 diverse experts regressed to 0.61234045 nested OOF primary.",
     "Censored mixture-of-lognormals survival ranking reached 0.59077823 standalone and selected a nonzero residual in only one fold.",
     "Kaplan-Meier-style threshold survival priors produced apparent fixed micro-gains but retained held-out regressions, including the 0.61282837 type-at-risk candidate.",
-    "Three-seed duration-regime experts reached 0.60820252 standalone and 0.61280549 fixed, but fold 1 regressed; coverage gating and independent regime biases did not stabilize the gain."
+    "Three-seed duration-regime experts reached 0.60820252 standalone and 0.61280549 fixed, but fold 1 regressed; coverage gating and independent regime biases did not stabilize the gain.",
+    "Whole-user residual CatBoost rankers reached 0.61187887 (PairLogitPairwise) and 0.61124790 (QuerySoftMax) standalone, but their cross-fitted corrections regressed and were excluded."
   ],
   "latest_rejected_cycle": "rejected-cycle-2026-08-30-survival-duration.json",
+  "latest_accepted_cycle": "accepted-cycle-2026-08-30-user-neighbor.json",
   "target_primary": 0.7,
   "target_reached": false,
-  "remaining_gap": 0.08721919059753414
+  "remaining_gap": 0.08719534873962398
 }

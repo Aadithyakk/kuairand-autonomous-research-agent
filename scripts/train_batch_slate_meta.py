@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import contextlib
 import io
 import os
@@ -15,15 +16,30 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "runtime" / "catboost-venv"))
 
-from catboost import CatBoostClassifier, Pool
+from catboost import CatBoostClassifier, CatBoostRanker, Pool
 from sklearn.linear_model import LogisticRegression
 
 from backend.kuailab.resources import ProcessResourceTracker
 from scripts import kuairand_runner as runner
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--residual-baseline", action="store_true")
+parser.add_argument(
+    "--ranker-objective",
+    choices=("PairLogitPairwise", "QuerySoftMax", "YetiRankPairwise"),
+    default="",
+)
+parser.add_argument("--ranker-iterations", type=int, default=500)
+parser.add_argument("--ranker-depth", type=int, default=8)
+parser.add_argument("--ranker-learning-rate", type=float, default=0.04)
+parser.add_argument("--ranker-l2", type=float, default=12.0)
+parser.add_argument("--ranker-seed", type=int, default=769)
+args = parser.parse_args()
+
 tracker = ProcessResourceTracker()
-residual_mode = "--residual-baseline" in sys.argv
+residual_mode = args.residual_baseline
+ranker_mode = bool(args.ranker_objective)
 os.environ["KUAI_SKIP_BATCH_SLATE"] = "1"
 with contextlib.redirect_stdout(io.StringIO()):
     from scripts import verify_slate_consensus as champion
@@ -266,26 +282,55 @@ base_calibrator = LogisticRegression(C=100.0, max_iter=200, random_state=751)
 base_calibrator.fit(base_fraction[fit, None], y[fit])
 base_logit = base_calibrator.decision_function(base_fraction[:, None]).astype(np.float64)
 
-parameters = dict(
-    loss_function="Logloss", eval_metric="AUC", iterations=500, depth=8,
-    learning_rate=0.06, l2_leaf_reg=8.0, random_seed=751, thread_count=8,
-    random_strength=0.5, bootstrap_type="Bernoulli", subsample=0.85,
-    od_type="Iter", od_wait=50, allow_writing_files=False, verbose=25,
-)
-fit_pool = Pool(
-    features.iloc[fit], label=y[fit], cat_features=categorical,
-    feature_names=list(features.columns),
-    baseline=base_logit[fit] if residual_mode else None,
-)
-holdout_pool = Pool(
-    features.iloc[holdout], label=y[holdout], cat_features=categorical,
-    feature_names=list(features.columns),
-    baseline=base_logit[holdout] if residual_mode else None,
-)
-model = CatBoostClassifier(**parameters)
+if ranker_mode:
+    parameters = dict(
+        loss_function=args.ranker_objective, eval_metric="NDCG:top=5",
+        iterations=args.ranker_iterations, depth=args.ranker_depth,
+        learning_rate=args.ranker_learning_rate, l2_leaf_reg=args.ranker_l2,
+        random_seed=args.ranker_seed, thread_count=8, random_strength=0.25,
+        od_type="Iter", od_wait=50, allow_writing_files=False, verbose=25,
+    )
+
+    def query_order(indices: np.ndarray) -> np.ndarray:
+        return indices[np.argsort(users[indices], kind="stable")]
+
+    fit = query_order(fit)
+    holdout = query_order(holdout)
+    fit_pool = Pool(
+        features.iloc[fit], label=y[fit], cat_features=categorical,
+        feature_names=list(features.columns), group_id=users[fit],
+        baseline=base_logit[fit],
+    )
+    holdout_pool = Pool(
+        features.iloc[holdout], label=y[holdout], cat_features=categorical,
+        feature_names=list(features.columns), group_id=users[holdout],
+        baseline=base_logit[holdout],
+    )
+    model = CatBoostRanker(**parameters)
+else:
+    parameters = dict(
+        loss_function="Logloss", eval_metric="AUC", iterations=500, depth=8,
+        learning_rate=0.06, l2_leaf_reg=8.0, random_seed=751, thread_count=8,
+        random_strength=0.5, bootstrap_type="Bernoulli", subsample=0.85,
+        od_type="Iter", od_wait=50, allow_writing_files=False, verbose=25,
+    )
+    fit_pool = Pool(
+        features.iloc[fit], label=y[fit], cat_features=categorical,
+        feature_names=list(features.columns),
+        baseline=base_logit[fit] if residual_mode else None,
+    )
+    holdout_pool = Pool(
+        features.iloc[holdout], label=y[holdout], cat_features=categorical,
+        feature_names=list(features.columns),
+        baseline=base_logit[holdout] if residual_mode else None,
+    )
+    model = CatBoostClassifier(**parameters)
 model.fit(fit_pool, eval_set=holdout_pool, use_best_model=True)
 trees = max(model.tree_count_, 1)
-holdout_scores = model.predict(holdout_pool, prediction_type="RawFormulaVal")
+holdout_scores = (
+    model.predict(holdout_pool)
+    if ranker_mode else model.predict(holdout_pool, prediction_type="RawFormulaVal")
+)
 holdout_metrics = runner.evaluate_module.evaluate(
     users[holdout].tolist(), y[holdout], holdout_scores,
 )
@@ -300,28 +345,49 @@ print("HOLDOUT", holdout_metrics, "BLEND", holdout_best, "TREES", trees, flush=T
 
 final_parameters = dict(parameters)
 final_parameters.update({"iterations": trees, "od_type": None, "od_wait": None, "verbose": 0})
-final = CatBoostClassifier(**final_parameters)
+final = CatBoostRanker(**final_parameters) if ranker_mode else CatBoostClassifier(
+    **final_parameters
+)
+final_indices = query_order(meta_indices) if ranker_mode else meta_indices
 final.fit(Pool(
-    features.iloc[meta_indices], label=y[meta_indices], cat_features=categorical,
-    feature_names=list(features.columns),
-    baseline=base_logit[meta_indices] if residual_mode else None,
+    features.iloc[final_indices], label=y[final_indices],
+    cat_features=categorical, feature_names=list(features.columns),
+    group_id=users[final_indices] if ranker_mode else None,
+    baseline=(
+        base_logit[final_indices]
+        if ranker_mode or residual_mode else None
+    ),
 ))
 valid_pool = Pool(
     features.iloc[valid_indices], cat_features=categorical,
     feature_names=list(features.columns),
-    baseline=base_logit[valid_indices] if residual_mode else None,
+    baseline=(
+        base_logit[valid_indices]
+        if ranker_mode or residual_mode else None
+    ),
 )
-scores = final.predict(valid_pool, prediction_type="RawFormulaVal").astype(np.float32)
+scores = (
+    final.predict(valid_pool)
+    if ranker_mode else final.predict(valid_pool, prediction_type="RawFormulaVal")
+).astype(np.float32)
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 np.savez_compressed(
     ROOT / "runtime" / (
-        "batch-slate-meta-catboost-residual-s751.npz"
-        if residual_mode else "batch-slate-meta-catboost-s751.npz"
+        f"batch-slate-meta-catboost-ranker-{args.ranker_objective}-"
+        f"s{args.ranker_seed}.npz"
+        if ranker_mode else (
+            "batch-slate-meta-catboost-residual-s751.npz"
+            if residual_mode else "batch-slate-meta-catboost-s751.npz"
+        )
     ), scores=scores,
     holdout_scores=holdout_scores, holdout_alpha=holdout_best[1], trees=trees,
 )
 final.save_model(ROOT / "runtime" / (
-    "batch-slate-meta-catboost-residual-s751.cbm"
-    if residual_mode else "batch-slate-meta-catboost-s751.cbm"
+    f"batch-slate-meta-catboost-ranker-{args.ranker_objective}-"
+    f"s{args.ranker_seed}.cbm"
+    if ranker_mode else (
+        "batch-slate-meta-catboost-residual-s751.cbm"
+        if residual_mode else "batch-slate-meta-catboost-s751.cbm"
+    )
 ))
 print("VALID", metrics, "RESOURCE_USAGE", tracker.finish(), flush=True)

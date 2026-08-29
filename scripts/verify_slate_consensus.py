@@ -75,6 +75,19 @@ def load_scores(name: str) -> np.ndarray:
     return user_rank(np.load(path)["scores"])
 
 
+def load_named_scores(name: str, key: str) -> np.ndarray:
+    path = ROOT / "runtime" / name
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Missing retained experiment artifact: {path}. "
+            "Run the documented base-model experiments before verification."
+        )
+    with np.load(path, allow_pickle=False) as archive:
+        if key not in archive.files:
+            raise KeyError(f"Missing {key!r} in retained artifact: {path}")
+        return user_rank(np.asarray(archive[key]).reshape(-1))
+
+
 def load_fractional_ranks(name: str) -> np.ndarray:
     path = ROOT / "runtime" / name
     if not path.exists():
@@ -117,6 +130,7 @@ tree = load_scores(
 )
 base = user_rank(0.765 * base + 0.235 * tree)
 skip_batch_slate = os.getenv("KUAI_SKIP_BATCH_SLATE") == "1"
+skip_user_neighbor = os.getenv("KUAI_SKIP_USER_NEIGHBOR") == "1"
 batch_slate_tree = (
     None if skip_batch_slate
     else load_scores("batch-slate-meta-catboost-s751.npz")
@@ -586,6 +600,17 @@ if batch_slate_tree is not None:
     scores = scores - 0.03 * prior_video_gate * (
         batch_slate_tree - user_rank(scores)
     )
+
+    # A sparse user-neighbor model is fit only on April 8-21 interactions. Its
+    # exposure-history cosine graph predicts each evaluation item from other
+    # users' training outcomes, with no evaluation outcome in either the graph
+    # or the target estimate. All four disjoint user folds selected the same
+    # tiny correction weight.
+    if not skip_user_neighbor:
+        user_neighbor = load_named_scores(
+            "user-neighbor-cf-n60.npz", "positive_p2.0_s8.0"
+        )
+        scores = scores + 0.002 * user_neighbor
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -643,6 +668,9 @@ print(json.dumps({
             "medium_slate_batch_consensus": 0.01,
             "low_training_rate_watch_consensus": 0.135,
             "prior_video_batch_extrapolation": -0.03,
+            **({
+                "training_user_neighbor_positive_cf": 0.002,
+            } if not skip_user_neighbor else {}),
         } if not skip_batch_slate else {}),
     },
     "feature_scope": "training-only outcome priors plus label-free full evaluation slate",
