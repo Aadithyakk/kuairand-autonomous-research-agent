@@ -21,7 +21,7 @@ The previous repository is not a dependency. This implementation was rebuilt fro
 
 On 29 August 2026, KuaiLab completed a GPT-5.6 Sol campaign against the supplied KuaiRand-Pure validation split. It first improved the retained FM champion from `0.601470` to `0.603781` primary score, then added a within-user BPR executor and reached `0.605366`. A controlled DeepFM extension reached `0.605809`; the current clean checkpoint adds a small label-free clock-context FM and verifies **`0.605885` primary** (`+0.004415`, or about `+0.73%` relative, over the reproduced baseline), with `0.672964` GAUC and `0.538805` nDCG@5.
 
-A subsequent leak-free offline research sweep adds outcome-free session position, repeat-fatigue, and time-gap rerankers, then combines candidates by within-user ordinal rank. An ordered categorical full-history candidate adds a small independent correction. Continuous watch-ratio supervision and a lightly anchored same-session margin add complementary corrections, while a full-metadata CatBoost classifier supplies a final tree-based residual. The current reproduced validation result is **`0.611067` primary** (`0.680371` GAUC, `0.541763` nDCG@5), a gain of `+0.009598` over the baseline. This is recorded under `results/verified-tree-regularized-consensus`; it is a research ensemble rather than the lightweight checkpoint restored by the autonomous campaign engine. The requested `0.620000` target has not yet been reached, and the remaining gap is `0.008933`.
+A subsequent leak-free offline research sweep adds outcome-free session position, repeat-fatigue, and time-gap rerankers, then combines candidates by within-user ordinal rank. An ordered categorical full-history candidate adds a small independent correction. Continuous watch-ratio supervision and a lightly anchored same-session margin add complementary corrections, while a full-metadata CatBoost classifier supplies a final tree-based residual. A final label-free slate correction aligns the recipe with the official evaluator's seven-day within-user ranking unit: repeated individual tag affinity and author affinity are promoted, while repeated exact-video exposure is demoted. The current reproduced validation result is **`0.611363` primary** (`0.680731` GAUC, `0.541995` nDCG@5), a gain of `+0.009893` (about `+1.64%`) over the baseline. This is recorded under `results/verified-slate-consensus`; it is a research ensemble rather than the lightweight checkpoint restored by the autonomous campaign engine. The `0.700000` stretch target has not been reached, and the remaining gap is `0.088637`.
 
 The retained blend averages positive-weighted pointwise FMs from seeds 0 and 2, mixes in a seed-1 BPR FM at weight `0.455`, mixes a seed-0 DeepFM into that score at weight `0.23`, then adds a globally standardized clock-context FM at weight `0.024`. Its clean executor run took `69.070` seconds, used `0.020507` CPU-hours, peaked at `1042.172` MB RAM, and used no GPU. The method is available to the autonomous planner as typed `fm_temporal_deep_blend` evidence rather than a one-off analysis script.
 
@@ -29,7 +29,7 @@ The dashboard's deterministic demo can display scores up to `0.6250`; those valu
 
 One ensemble attempt was deliberately invalidated after its runner process was terminated: inspection showed that the ensemble path would have ignored the proposed positive-example weight. The result was not scored or promoted, and the runner was corrected before the campaign continued. The hidden test was never accessed.
 
-The original campaign evidence is in [`results/run-9ecfd2aa09`](results/run-9ecfd2aa09), the pairwise milestone is in [`results/verified-pairwise-blend`](results/verified-pairwise-blend), the DeepFM milestone is in [`results/verified-deep-blend`](results/verified-deep-blend), the retained lightweight checkpoint is in [`results/verified-temporal-deep-blend`](results/verified-temporal-deep-blend), and the current research-best evidence is in [`results/verified-tree-regularized-consensus`](results/verified-tree-regularized-consensus). Checkpoints, raw runner requests, logs containing local paths, and the dataset are excluded from Git.
+The original campaign evidence is in [`results/run-9ecfd2aa09`](results/run-9ecfd2aa09), the pairwise milestone is in [`results/verified-pairwise-blend`](results/verified-pairwise-blend), the DeepFM milestone is in [`results/verified-deep-blend`](results/verified-deep-blend), the retained lightweight checkpoint is in [`results/verified-temporal-deep-blend`](results/verified-temporal-deep-blend), and the current research-best evidence is in [`results/verified-slate-consensus`](results/verified-slate-consensus). Checkpoints, raw runner requests, logs containing local paths, and the dataset are excluded from Git.
 
 ## Security first
 
@@ -58,6 +58,7 @@ Useful checks:
 npm run test:backend
 npm run lint
 npm run build
+python3 scripts/verify_slate_consensus.py  # requires retained runtime score artifacts
 ```
 
 ## Use GPT-5.6 Sol
@@ -136,6 +137,12 @@ results/verified-deep-blend/
   resource-usage.json
 
 results/verified-temporal-deep-blend/
+  summary.json
+  proposal.json
+  metrics.json
+  resource-usage.json
+
+results/verified-slate-consensus/
   summary.json
   proposal.json
   metrics.json

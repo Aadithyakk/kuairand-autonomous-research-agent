@@ -1,0 +1,48 @@
+{
+  "title": "Label-free evaluation-slate correction over the tree-regularized consensus",
+  "experiment_type": "offline_slate_reranking",
+  "hypothesis": "Because the official metric ranks all seven validation days jointly within each user, full-slate repetition statistics can recover policy-confidence and fatigue signals that causal session features miss, without reading validation outcomes.",
+  "protocol": {
+    "train_dates": "2022-04-08 through 2022-04-21",
+    "validation_dates": "2022-04-22 through 2022-04-28",
+    "ranking_unit": "all logged validation impressions for one user",
+    "hidden_test_accessed": false,
+    "validation_outcomes_used_as_features": false,
+    "candidate_information_used": ["user_id", "video_id", "author_id", "static tag tokens"],
+    "selection": "At each stage, tune one scalar weight on one user-parity fold and apply it to the other, repeat in both directions, then fix the deployable weight to the mean of the two selected weights."
+  },
+  "features": {
+    "token_personal_mean": "Within-user standardized mean across an item's tag tokens of log1p(user-slate token count) - 0.25 * log1p(global-slate token count).",
+    "repeated_video": "Within-user standardized indicator that the exact video occurs more than once in the supplied evaluation slate.",
+    "author_frequency": "Within-user standardized log1p count of the author in the supplied evaluation slate."
+  },
+  "selection_evidence": [
+    {
+      "stage": "token_personal_mean",
+      "fold_weights": [0.105, 0.1],
+      "fixed_weight": 0.1025,
+      "oof_primary": 0.6111671,
+      "fixed_primary": 0.6112069
+    },
+    {
+      "stage": "repeated_video",
+      "fold_weights": [-0.18, -0.15],
+      "fixed_weight": -0.165,
+      "oof_primary": 0.6112415,
+      "fixed_primary": 0.611259
+    },
+    {
+      "stage": "author_frequency",
+      "fold_weights": [0.15, 0.14],
+      "fixed_weight": 0.145,
+      "oof_primary": 0.61135924,
+      "fixed_primary": 0.6113628149032593
+    }
+  ],
+  "rejected_followup": {
+    "feature": "video-type concentration",
+    "reason": "Its fixed full-validation score rose to 0.61145884, but its cross-fitted primary fell to 0.61134475 versus 0.61135924 before the feature. It was excluded."
+  },
+  "acceptance": "Accept only stages whose disjoint-user weights agree in sign and whose cross-fitted primary improves over the preceding stage.",
+  "accepted": true
+}

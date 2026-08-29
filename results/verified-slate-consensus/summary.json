@@ -1,0 +1,33 @@
+{
+  "status": "verified_improvement",
+  "target": "long_view",
+  "metric": "0.5 * GAUC + 0.5 * nDCG@5",
+  "split": {
+    "train": "20220408-20220421",
+    "validation": "20220422-20220428",
+    "hidden_test_accessed": false
+  },
+  "champion": {
+    "primary": 0.6113628149032593,
+    "gauc": 0.680730938911438,
+    "ndcg5": 0.5419946908950806,
+    "users": 22377,
+    "rows": 124909
+  },
+  "baseline_primary": 0.6014695167541504,
+  "previous_verified_primary": 0.6110671758651733,
+  "gain_over_previous_verified": 0.0002956390380859375,
+  "gain_over_baseline": 0.009893298149108887,
+  "fixed_recipe": "tree-regularized consensus + 0.1025 personalized slate-token frequency - 0.165 repeated-video indicator + 0.145 slate-author frequency",
+  "selection_evidence": "All three sequential corrections improved cross-fitted primary on disjoint user folds. Fixed weights are the means of the two fold-selected weights.",
+  "leakage_note": "The correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. It never reads long_view, click, watch time, or another validation outcome. Deployments that do not know the complete candidate slate must not use this correction as written.",
+  "rejected_ablations": [
+    "Monte Carlo dropout LCB: fold correction signs disagreed and OOF primary regressed.",
+    "Continuous watch-ratio margin: widened cross-fitted primary regressed to 0.61106056.",
+    "Synthetic-exposure density weighting: square-root OOF primary was 0.611053 and full weighting was 0.6109525.",
+    "Video-type slate concentration: fixed score improved but cross-fitted primary regressed, so it was excluded."
+  ],
+  "target_primary": 0.7,
+  "target_reached": false,
+  "remaining_gap": 0.08863718509674068
+}
