@@ -86,17 +86,18 @@ base = user_rank(0.765 * base + 0.235 * tree)
 
 # Build evaluation-slate features from candidate IDs and static video metadata.
 # No long_view, click, play-time, or other validation outcome is read here.
-video_metadata: dict[str, tuple[str, str, tuple[str, ...]]] = {}
+video_metadata: dict[str, tuple[str, str, str, tuple[str, ...]]] = {}
 with (data_dir / "video_features_basic_pure.csv").open(encoding="utf-8") as stream:
     for row in csv.DictReader(stream):
         tag = row.get("tag") or "UNK"
         video_metadata[row["video_id"]] = (
             row.get("author_id") or "UNK",
             row.get("music_id") or "UNK",
+            row.get("video_type") or "UNK",
             tuple(tag.split(",")),
         )
 
-rows: list[tuple[str, str, str, str, tuple[str, ...], int]] = []
+rows: list[tuple[str, str, str, str, str, tuple[str, ...], int]] = []
 with (data_dir / "log_standard_4_22_to_5_08_pure.csv").open(
     encoding="utf-8"
 ) as stream:
@@ -104,11 +105,12 @@ with (data_dir / "log_standard_4_22_to_5_08_pure.csv").open(
         date = int(row["date"])
         if date > 20220428:
             continue
-        author, music, tags = video_metadata.get(
-            row["video_id"], ("UNK", "UNK", ("UNK",))
+        author, music, video_type, tags = video_metadata.get(
+            row["video_id"], ("UNK", "UNK", "UNK", ("UNK",))
         )
         rows.append((
-            row["user_id"], row["video_id"], author, music, tags, date
+            row["user_id"], row["video_id"], author, music, video_type,
+            tags, date
         ))
 
 if len(rows) != len(valid_y):
@@ -124,7 +126,7 @@ user_music_videos: dict[tuple[str, str], set[str]] = defaultdict(set)
 user_author_videos: dict[tuple[str, str], set[str]] = defaultdict(set)
 user_token_videos: dict[tuple[str, str], set[str]] = defaultdict(set)
 user_token_authors: dict[tuple[str, str], set[str]] = defaultdict(set)
-for user, video, author, music, tags, _ in rows:
+for user, video, author, music, _, tags, _ in rows:
     user_video_counts[(user, video)] += 1
     user_author_counts[(user, author)] += 1
     user_music_videos[(user, music)].add(video)
@@ -142,7 +144,7 @@ music_unique_videos = np.empty(len(rows), dtype=np.float64)
 author_repeat_per_video = np.empty(len(rows), dtype=np.float64)
 token_videos_per_author_mean = np.empty(len(rows), dtype=np.float64)
 dates = np.empty(len(rows), dtype=np.int32)
-for index, (user, video, author, music, tags, date) in enumerate(rows):
+for index, (user, video, author, music, _, tags, date) in enumerate(rows):
     token_personal_mean[index] = sum(
         math.log1p(user_token_counts[(user, token)])
         - 0.25 * math.log1p(global_token_counts[token])
@@ -181,6 +183,34 @@ scores = (
     - 0.18 * author_repeat_per_video
     - 0.075 * token_videos_per_author_mean
 )
+
+# Smooth the accepted score over two label-free within-user content graphs.
+# The leave-one-out value excludes the current row, so a candidate cannot
+# reinforce itself. Singleton groups retain their own score.
+type_sums: dict[tuple[str, str], float] = defaultdict(float)
+type_counts: Counter[tuple[str, str]] = Counter()
+author_score_sums: dict[tuple[str, str], float] = defaultdict(float)
+for index, (user, _, author, _, video_type, _, _) in enumerate(rows):
+    type_sums[(user, video_type)] += float(scores[index])
+    type_counts[(user, video_type)] += 1
+    author_score_sums[(user, author)] += float(scores[index])
+
+type_loo = np.empty(len(rows), dtype=np.float64)
+author_loo = np.empty(len(rows), dtype=np.float64)
+for index, (user, _, author, _, video_type, _, _) in enumerate(rows):
+    type_count = type_counts[(user, video_type)]
+    type_loo[index] = (
+        (type_sums[(user, video_type)] - scores[index]) / (type_count - 1)
+        if type_count > 1 else scores[index]
+    )
+    author_count = user_author_counts[(user, author)]
+    author_loo[index] = (
+        (author_score_sums[(user, author)] - scores[index]) / (author_count - 1)
+        if author_count > 1 else scores[index]
+    )
+type_loo = user_standardize(type_loo)
+author_loo = user_standardize(author_loo)
+scores = scores + 0.135 * type_loo - 0.02 * author_loo
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -214,6 +244,8 @@ print(json.dumps({
         "music_unique_videos": 0.19,
         "author_repeat_per_video": -0.18,
         "token_videos_per_author_mean": -0.075,
+        "type_leave_one_out_score": 0.135,
+        "author_leave_one_out_score": -0.02,
     },
     "feature_scope": "label-free full evaluation slate",
     "verification_resource_usage": tracker.finish(),

@@ -8,18 +8,18 @@
     "hidden_test_accessed": false
   },
   "champion": {
-    "primary": 0.611541748046875,
-    "gauc": 0.6807882785797119,
-    "ndcg5": 0.5422952175140381,
+    "primary": 0.6116783618927002,
+    "gauc": 0.6808556914329529,
+    "ndcg5": 0.5425010323524475,
     "users": 22377,
     "rows": 124909
   },
   "baseline_primary": 0.6014695167541504,
-  "previous_verified_primary": 0.6113628149032593,
-  "gain_over_previous_verified": 0.00017893314361572266,
-  "gain_over_baseline": 0.01007223129272461,
-  "fixed_recipe": "tree-regularized consensus + 0.1025 personalized slate-token frequency - 0.165 repeated-video indicator + 0.145 slate-author frequency + 0.19 music video breadth - 0.18 author repeat concentration - 0.075 tag-token videos-per-author concentration",
-  "selection_evidence": "All six sequential corrections improved cross-fitted primary on disjoint user folds. Fixed weights are the means of the two fold-selected weights.",
+  "previous_verified_primary": 0.611541748046875,
+  "gain_over_previous_verified": 0.0001366138458251953,
+  "gain_over_baseline": 0.010208845138549805,
+  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + 0.135 leave-one-out video-type score consensus - 0.02 leave-one-out author score consensus",
+  "selection_evidence": "All eight sequential corrections improved cross-fitted primary on disjoint user folds. Fixed weights are the means of the two fold-selected weights.",
   "leakage_note": "The correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. It never reads long_view, click, watch time, or another validation outcome. Deployments that do not know the complete candidate slate must not use this correction as written.",
   "rejected_ablations": [
     "Monte Carlo dropout LCB: fold correction signs disagreed and OOF primary regressed.",
@@ -30,5 +30,5 @@
   ],
   "target_primary": 0.7,
   "target_reached": false,
-  "remaining_gap": 0.08845825195312496
+  "remaining_gap": 0.08832163810729976
 }

@@ -17,7 +17,9 @@
     "author_frequency": "Within-user standardized log1p count of the author in the supplied evaluation slate.",
     "music_unique_videos": "Within-user standardized number of distinct videos using the same music.",
     "author_repeat_per_video": "Within-user standardized log1p ratio of author exposures to distinct videos for that author.",
-    "token_videos_per_author_mean": "Within-user standardized mean across tag tokens of log1p(distinct token videos / distinct token authors)."
+    "token_videos_per_author_mean": "Within-user standardized mean across tag tokens of log1p(distinct token videos / distinct token authors).",
+    "type_leave_one_out_score": "Within-user standardized mean accepted score of the other slate rows with the same video type; singleton groups retain their own score.",
+    "author_leave_one_out_score": "Within-user standardized mean accepted score of the other slate rows with the same author; singleton groups retain their own score."
   },
   "selection_evidence": [
     {
@@ -61,6 +63,20 @@
       "fixed_weight": -0.075,
       "oof_primary": 0.6115425825119019,
       "fixed_primary": 0.611541748046875
+    },
+    {
+      "stage": "type_leave_one_out_score",
+      "fold_weights": [0.14, 0.13],
+      "fixed_weight": 0.135,
+      "oof_primary": 0.6116197109222412,
+      "fixed_primary": 0.6116253137588501
+    },
+    {
+      "stage": "author_leave_one_out_score",
+      "fold_weights": [-0.02, -0.02],
+      "fixed_weight": -0.02,
+      "oof_primary": 0.6116783618927002,
+      "fixed_primary": 0.6116783618927002
     }
   ],
   "rejected_followup": {

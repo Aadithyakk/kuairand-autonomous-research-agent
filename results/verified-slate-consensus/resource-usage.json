@@ -7,19 +7,26 @@
   },
   "accepted_slate_correction": {
     "model_training_required": false,
-    "focused_selection_audit": {
+    "diversity_selection_audit": {
       "wall_seconds": 34.198,
       "cpu_seconds": 34.528,
       "cpu_hours": 0.009591,
       "peak_rss_mb": 799.188,
       "gpu_hours": 0.0
     },
+    "graph_selection_audit": {
+      "wall_seconds": 30.051,
+      "cpu_seconds": 30.442,
+      "cpu_hours": 0.008456,
+      "peak_rss_mb": 809.625,
+      "gpu_hours": 0.0
+    },
     "tracked_verification": {
-      "wall_seconds": 8.293,
-      "cpu_seconds": 8.29,
-      "cpu_hours": 0.002303,
-      "cpu_utilization_percent": 99.97,
-      "peak_rss_mb": 698.094,
+      "wall_seconds": 8.552,
+      "cpu_seconds": 8.549,
+      "cpu_hours": 0.002375,
+      "cpu_utilization_percent": 99.96,
+      "peak_rss_mb": 724.281,
       "gpu_hours": 0.0,
       "peak_gpu_memory_mb": 0.0
     }
