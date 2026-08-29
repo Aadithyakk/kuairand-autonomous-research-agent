@@ -1,0 +1,43 @@
+{
+  "date": "2026-08-29",
+  "target": "long_view",
+  "split": "validation",
+  "hidden_test_accessed": false,
+  "baseline": {
+    "primary": 0.6014695167541504,
+    "gauc": 0.6671333909034729,
+    "ndcg5": 0.5358057022094727
+  },
+  "previous_verified_champion": {
+    "primary": 0.6058847904205322,
+    "gauc": 0.6729640364646912,
+    "ndcg5": 0.5388054847717285
+  },
+  "research_best": {
+    "primary": 0.6098535060882568,
+    "gauc": 0.6786061525344849,
+    "ndcg5": 0.5411008596420288,
+    "gain_over_baseline": 0.0083839893341064,
+    "relative_gain_over_baseline_percent": 1.39392771195916,
+    "gain_over_previous_verified_champion": 0.0039687156677246
+  },
+  "requested_target": 0.62,
+  "gap_to_requested_target": 0.0101464939117432,
+  "status": "improved_but_target_not_reached",
+  "method": {
+    "name": "session-context rank consensus",
+    "label_safe_features": true,
+    "out_of_time_reranker_validation": true,
+    "normalization": "within-user ordinal rank",
+    "final_within_session_correction_weight": 0.15
+  },
+  "resource_usage": {
+    "verification_wall_seconds": 7.318,
+    "verification_cpu_seconds": 7.302,
+    "verification_peak_rss_mb": 473.094,
+    "retained_session_candidate_wall_seconds": 118.587,
+    "gpu_count": 0,
+    "device": "cpu",
+    "candidate_search_complete_tracking": false
+  }
+}

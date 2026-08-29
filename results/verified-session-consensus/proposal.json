@@ -1,0 +1,47 @@
+{
+  "title": "Leak-free session-context rank consensus",
+  "experiment_type": "offline_session_rank_consensus",
+  "hypothesis": "Outcome-free session position, repeat fatigue, and time-gap features can correct context-dependent errors shared by the retained FM/BPR/DeepFM champion.",
+  "split_protocol": {
+    "base_training_end": 20220413,
+    "reranker_training_dates": [20220414, 20220419],
+    "reranker_early_stop_dates": [20220420, 20220421],
+    "validation_dates": [20220422, 20220428],
+    "validation_labels_used_as_features": false,
+    "hidden_test_accessed": false
+  },
+  "session_features": [
+    "time since previous exposure",
+    "time since same video, author, tag, music, type, duration bucket, and tab",
+    "cumulative and within-session repeat counts",
+    "session depth and elapsed time",
+    "daily sequence index",
+    "cyclical minute-of-day"
+  ],
+  "ranker": {
+    "linear_objective": "within-user BPR",
+    "tree_objective": "LightGBM rank_xendcg",
+    "tree_num_leaves": 31,
+    "tree_learning_rate": 0.03,
+    "tree_min_data_in_leaf": 100
+  },
+  "consensus": {
+    "normalization": "within-user standardized ordinal rank",
+    "stage_1": {
+      "prior_rank_consensus": 0.53,
+      "session_tree": 0.375,
+      "session_linear": 0.095
+    },
+    "stage_2": {
+      "stage_1": 0.59,
+      "extended_session_linear": 0.35,
+      "extended_session_tree": 0.06
+    },
+    "stage_3": {
+      "stage_2": 0.85,
+      "within_session_tree": 0.15
+    }
+  },
+  "acceptance": "Promote only when the official validation primary score improves and every feature is available without validation outcomes.",
+  "result": "accepted_as_research_best_target_not_reached"
+}

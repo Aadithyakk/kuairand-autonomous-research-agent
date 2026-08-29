@@ -21,6 +21,8 @@ The previous repository is not a dependency. This implementation was rebuilt fro
 
 On 29 August 2026, KuaiLab completed a GPT-5.6 Sol campaign against the supplied KuaiRand-Pure validation split. It first improved the retained FM champion from `0.601470` to `0.603781` primary score, then added a within-user BPR executor and reached `0.605366`. A controlled DeepFM extension reached `0.605809`; the current clean checkpoint adds a small label-free clock-context FM and verifies **`0.605885` primary** (`+0.004415`, or about `+0.73%` relative, over the reproduced baseline), with `0.672964` GAUC and `0.538805` nDCG@5.
 
+A subsequent leak-free offline research sweep adds outcome-free session position, repeat-fatigue, and time-gap rerankers, then combines candidates by within-user ordinal rank. Its best reproduced validation result is **`0.609854` primary** (`0.678606` GAUC, `0.541101` nDCG@5), a gain of `+0.008384` over the baseline. This is recorded under `results/verified-session-consensus`; it is a research ensemble rather than the lightweight checkpoint restored by the autonomous campaign engine. The requested `0.620000` target has not yet been reached, and the remaining gap is `0.010146`.
+
 The retained blend averages positive-weighted pointwise FMs from seeds 0 and 2, mixes in a seed-1 BPR FM at weight `0.455`, mixes a seed-0 DeepFM into that score at weight `0.23`, then adds a globally standardized clock-context FM at weight `0.024`. Its clean executor run took `69.070` seconds, used `0.020507` CPU-hours, peaked at `1042.172` MB RAM, and used no GPU. The method is available to the autonomous planner as typed `fm_temporal_deep_blend` evidence rather than a one-off analysis script.
 
 The dashboard's deterministic demo can display scores up to `0.6250`; those values are synthetic workflow checks, not model-training evidence. The UI labels the entire demo campaign accordingly. Only results under `results/verified-*` are claimed as reproduced validation scores.
@@ -134,6 +136,12 @@ results/verified-deep-blend/
   resource-usage.json
 
 results/verified-temporal-deep-blend/
+  summary.json
+  proposal.json
+  metrics.json
+  resource-usage.json
+
+results/verified-session-consensus/
   summary.json
   proposal.json
   metrics.json
