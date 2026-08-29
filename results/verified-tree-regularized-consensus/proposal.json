@@ -1,0 +1,38 @@
+{
+  "title": "Full-metadata CatBoost correction over regularized ordinal consensus",
+  "experiment_type": "offline_rank_consensus",
+  "hypothesis": "A pointwise tree classifier trained on dense metadata and causal cross-session aggregates supplies hard nonlinear partitions that remain complementary to the watch-ratio and same-session-margin DeepFM candidates.",
+  "protocol": {
+    "train_dates": "2022-04-08 through 2022-04-21",
+    "validation_dates": "2022-04-22 through 2022-04-28",
+    "hidden_test_accessed": false,
+    "validation_labels_used_as_training_features": false,
+    "selection": "Tune only the final CatBoost blend weight on one user-parity fold and apply it to the other; repeat in both directions, then fix the deployable weight to the mean of the two selected weights."
+  },
+  "recipe": [
+    "Reconstruct the verified ordered categorical consensus.",
+    "watch_stage = user_rank(0.635 * ordered_consensus + 0.365 * watch_ratio_auxiliary_DeepFM)",
+    "margin_stage = user_rank(0.73 * watch_stage + 0.27 * same_session_margin_DeepFM)",
+    "final = user_rank(0.765 * margin_stage + 0.235 * full_metadata_CatBoost_classifier)"
+  ],
+  "catboost": {
+    "objective": "Logloss",
+    "selection_metric": "temporal holdout AUC",
+    "iterations_requested": 500,
+    "trees_refit": 430,
+    "depth": 8,
+    "learning_rate": 0.08,
+    "l2_leaf_reg": 5.0,
+    "seed": 257,
+    "standalone_validation_primary": 0.6067631
+  },
+  "disjoint_user_selection": {
+    "fold_0_selected_weight": 0.23,
+    "fold_1_selected_weight": 0.24,
+    "fixed_weight": 0.235,
+    "oof_primary": 0.6110608577728271,
+    "fixed_primary": 0.6110671758651733
+  },
+  "acceptance": "Both disjoint folds must select a positive, similar CatBoost weight and the fixed mean must beat the previous verified primary.",
+  "accepted": true
+}

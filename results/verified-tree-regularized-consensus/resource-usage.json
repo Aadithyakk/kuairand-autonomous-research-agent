@@ -1,0 +1,56 @@
+{
+  "device": "cpu",
+  "hardware": {
+    "logical_cpu_count": 16,
+    "architecture": "arm64",
+    "processor": "arm"
+  },
+  "gpu_count": 0,
+  "accepted_incremental_training": {
+    "watch_ratio_deepfm": {
+      "wall_seconds": 38.151,
+      "cpu_seconds": 115.172,
+      "cpu_hours": 0.031992,
+      "peak_rss_mb": 15686.688
+    },
+    "session_margin_deepfm": {
+      "wall_seconds": 34.427,
+      "cpu_seconds": 100.7,
+      "cpu_hours": 0.027972,
+      "peak_rss_mb": 15898.125
+    },
+    "full_metadata_catboost": {
+      "wall_seconds": 348.115,
+      "cpu_seconds": 2219.448,
+      "cpu_hours": 0.616513,
+      "cpu_utilization_percent": 637.56,
+      "peak_rss_mb": 19059.0,
+      "trees": 430
+    },
+    "sequential_total": {
+      "wall_seconds": 420.693,
+      "cpu_seconds": 2435.32,
+      "cpu_hours": 0.676478,
+      "peak_rss_mb": 19059.0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0
+    }
+  },
+  "verification": {
+    "wall_seconds": 8.748,
+    "cpu_seconds": 8.74,
+    "cpu_hours": 0.002428,
+    "cpu_utilization_percent": 99.91,
+    "peak_rss_mb": 480.234,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0
+  },
+  "rejected_shallow_catboost": {
+    "wall_seconds": 452.71,
+    "cpu_seconds": 2954.435,
+    "cpu_hours": 0.820676,
+    "peak_rss_mb": 17014.078,
+    "primary": 0.6070325,
+    "reason": "More expensive and reduced the cross-validated ensemble score."
+  }
+}
