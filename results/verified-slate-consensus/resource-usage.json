@@ -689,6 +689,53 @@
       "cpu_hours": 0.005279,
       "peak_rss_mb": 1218.156,
       "gpu_hours": 0.0
+    },
+    "counterfactual_watch_model": {
+      "wall_seconds": 31.557,
+      "cpu_seconds": 98.424,
+      "cpu_hours": 0.02734,
+      "peak_rss_mb": 15705.5,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.56198001,
+      "accepted": false
+    },
+    "counterfactual_watch_bce_anchor": {
+      "wall_seconds": 32.451,
+      "cpu_seconds": 101.955,
+      "cpu_hours": 0.028321,
+      "peak_rss_mb": 15739.125,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.60583085,
+      "fixed_primary": 0.61280859,
+      "accepted": false
+    },
+    "counterfactual_watch_audits": {
+      "wall_seconds": 77.393,
+      "cpu_seconds": 77.301,
+      "cpu_hours": 0.021472,
+      "peak_rss_mb": 1217.859,
+      "gpu_hours": 0.0,
+      "best_threshold_standalone_primary": 0.58638322,
+      "accepted": false
+    },
+    "xdeepfm_compressed_interactions": {
+      "wall_seconds": 528.888,
+      "cpu_seconds": 2080.2,
+      "cpu_hours": 0.577833,
+      "peak_rss_mb": 16119.297,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.60725051,
+      "standalone_gauc": 0.6752702,
+      "standalone_ndcg5": 0.53923082,
+      "accepted": false
+    },
+    "xdeepfm_residual_audit": {
+      "wall_seconds": 19.04,
+      "cpu_seconds": 18.953,
+      "cpu_hours": 0.005265,
+      "peak_rss_mb": 1207.531,
+      "gpu_hours": 0.0,
+      "selected_weight": 0.0
     }
   }
 }
