@@ -8,19 +8,19 @@
     "hidden_test_accessed": false
   },
   "champion": {
-    "primary": 0.6126559972763062,
-    "gauc": 0.6821738481521606,
-    "ndcg5": 0.5431381464004517,
+    "primary": 0.6127808094024658,
+    "gauc": 0.6822733879089355,
+    "ndcg5": 0.5432882308959961,
     "users": 22377,
     "rows": 124909
   },
   "baseline_primary": 0.6014695167541504,
-  "previous_verified_primary": 0.6124310493469238,
-  "gain_over_previous_verified": 0.00022494792938232422,
-  "gain_over_baseline": 0.011186480522155762,
-  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + two confidence gates + active-day expert routing + medium-slate batch consensus",
-  "selection_evidence": "All twenty-three sequential corrections improved cross-fitted primary on disjoint user folds. The new two-day ordered, three/four-day watch, and size 6-10 batch gates selected consistent fold directions; the final recipe reproduces 0.6126560 primary with both GAUC and nDCG@5 above the prior champion.",
-  "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. The three priors use outcomes only from the April 8-21 training block. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit before April 22-28 inference. The final gates use only the frozen champion's normalized within-user top margin and frozen model ranks. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
+  "previous_verified_primary": 0.6126559972763062,
+  "gain_over_previous_verified": 0.00012481212615966797,
+  "gain_over_baseline": 0.01131129264831543,
+  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + two confidence gates + active-day/slate-size expert routing + two training-coverage expert gates",
+  "selection_evidence": "The two new training-coverage corrections were selected after four-fold user-modulo cross-fitting. Low smoothed training long-view-rate users selected watch-model residual weights [0.13, 0.14, 0.13, 0.14] and fixed weight 0.135; users whose validation slate contains a video previously seen in training selected batch-model extrapolation weights [-0.04, -0.03, -0.03, -0.02] and fixed weight -0.03. The final recipe reproduces 0.61278081 primary with both GAUC and nDCG@5 above the 0.6126560 prior champion.",
+  "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. Outcome priors and coverage membership use only the April 8-21 training block; the validation slate contributes identifiers but no outcomes. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit before April 22-28 inference. The final gates use frozen model ranks, training-only aggregates, and label-free validation identifiers. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
   "rejected_ablations": [
     "Monte Carlo dropout LCB: fold correction signs disagreed and OOF primary regressed.",
     "Continuous watch-ratio margin: widened cross-fitted primary regressed to 0.61106056.",
@@ -41,9 +41,12 @@
     "Contrastively separated long/short sequence encoder: temporal selection chose epoch 3, then the leak-free refit reached 0.6030859 standalone; additive OOF regressed to 0.6122197 and reranked fold signs disagreed.",
     "Third-pass top-decile trimmed-consensus residual: aggregate fixed primary reached 0.6124525, but held-out folds 0 and 1 regressed, so the 0.0000215 apparent gain was rejected.",
     "Repeated-video batch residual: fixed primary reached 0.6126777, but nDCG@5 fell and held-out fold 0 regressed after changing 3,699 pair orderings.",
-    "Session-count and size 11-20 residuals: both had mixed held-out fold effects after active-day routing and were rejected."
+    "Session-count and size 11-20 residuals: both had mixed held-out fold effects after active-day routing and were rejected.",
+    "Third-history-quartile mean residual: fixed primary reached 0.61281383 and GAUC improved, but nDCG@5 fell to 0.54328007 and two held-out folds regressed.",
+    "Fourth-history-quartile median residual: both aggregate metrics improved, but one fold lost 0.00002295—more than the 0.00002098 aggregate primary gain.",
+    "Recent high-coverage watch residual: fixed primary reached 0.61279941, but one fold lost 0.00001168 relative to its 0.00001860 aggregate gain."
   ],
   "target_primary": 0.7,
   "target_reached": false,
-  "remaining_gap": 0.0873440027236938
+  "remaining_gap": 0.08721919059753414
 }

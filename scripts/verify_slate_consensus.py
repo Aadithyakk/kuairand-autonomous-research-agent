@@ -374,12 +374,20 @@ recent7_tab_sum: Counter[int] = Counter()
 recent7_tab_count: Counter[int] = Counter()
 user_author_completion_sum: Counter[tuple[str, str]] = Counter()
 user_author_completion_count: Counter[tuple[str, str]] = Counter()
+user_long_sum: Counter[str] = Counter()
+user_long_count: Counter[str] = Counter()
+validation_user_video_pairs = {
+    (user, video) for user, video, _, _, _, _, _, _, _, _ in rows
+}
+users_with_seen_validation_video: set[str] = set()
 recent3_total = 0
 recent3_positive = 0
 recent7_total = 0
 recent7_positive = 0
 completion_total = 0
 completion_positive = 0
+all_long_total = 0
+all_long_positive = 0
 with (data_dir / "log_standard_4_08_to_4_21_pure.csv").open(
     encoding="utf-8"
 ) as stream:
@@ -395,6 +403,12 @@ with (data_dir / "log_standard_4_08_to_4_21_pure.csv").open(
         )
         long_view = int(row["long_view"] != "0")
         completion = int(float(row["play_time_ms"]) >= 0.95 * duration)
+        user_long_sum[user] += long_view
+        user_long_count[user] += 1
+        if (user, row["video_id"]) in validation_user_video_pairs:
+            users_with_seen_validation_video.add(user)
+        all_long_total += 1
+        all_long_positive += long_view
         if date >= 20220419:
             key = (user, threshold_bucket)
             recent3_long_sum[key] += long_view
@@ -416,9 +430,11 @@ with (data_dir / "log_standard_4_08_to_4_21_pure.csv").open(
 recent3_prior = recent3_positive / recent3_total
 recent7_prior = recent7_positive / recent7_total
 completion_prior = completion_positive / completion_total
+all_long_prior = all_long_positive / all_long_total
 recent3_user_threshold_rate = np.empty(len(rows), dtype=np.float64)
 recent7_tab_rate = np.empty(len(rows), dtype=np.float64)
 user_author_completion_rate = np.empty(len(rows), dtype=np.float64)
+training_user_long_rate = np.empty(len(rows), dtype=np.float64)
 for index, (user, _, author, _, _, _, _, _, _, tab) in enumerate(rows):
     threshold_key = (user, threshold_duration_buckets[index])
     threshold_count = recent3_long_count[threshold_key]
@@ -434,6 +450,10 @@ for index, (user, _, author, _, _, _, _, _, _, tab) in enumerate(rows):
     user_author_completion_rate[index] = (
         user_author_completion_sum[author_key] + 6.0 * completion_prior
     ) / (author_count + 6.0)
+    user_count = user_long_count[user]
+    training_user_long_rate[index] = (
+        user_long_sum[user] + 10.0 * all_long_prior
+    ) / (user_count + 10.0)
 
 recent3_user_threshold_rate = user_standardize(recent3_user_threshold_rate)
 recent7_tab_rate = user_standardize(recent7_tab_rate)
@@ -550,6 +570,22 @@ if batch_slate_tree is not None:
     scores = scores + 0.01 * medium_slate_gate * (
         batch_slate_tree - user_rank(scores)
     )
+
+    low_rate_threshold = float(np.quantile(training_user_long_rate, 0.25))
+    low_training_rate_gate = (
+        training_user_long_rate <= low_rate_threshold
+    ).astype(np.float64)
+    scores = scores + 0.135 * low_training_rate_gate * (
+        watch - user_rank(scores)
+    )
+
+    prior_video_gate = np.asarray([
+        float(user in users_with_seen_validation_video)
+        for user in valid_users
+    ], dtype=np.float64)
+    scores = scores - 0.03 * prior_video_gate * (
+        batch_slate_tree - user_rank(scores)
+    )
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -605,6 +641,8 @@ print(json.dumps({
             "two_active_days_ordered_extrapolation": -0.5225,
             "three_four_active_days_watch_extrapolation": -0.175,
             "medium_slate_batch_consensus": 0.01,
+            "low_training_rate_watch_consensus": 0.135,
+            "prior_video_batch_extrapolation": -0.03,
         } if not skip_batch_slate else {}),
     },
     "feature_scope": "training-only outcome priors plus label-free full evaluation slate",

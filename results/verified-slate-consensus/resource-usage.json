@@ -224,17 +224,96 @@
       "unchanged_heldout_user_folds": 1,
       "changed_pair_orderings": 35
     },
-    "tracked_verification": {
-      "wall_seconds": 14.817,
-      "cpu_seconds": 14.814,
-      "cpu_hours": 0.004115,
+    "training_coverage_discovery_audit": {
+      "model_training_required": false,
+      "source_models": 20,
+      "candidate_corrections": 128,
+      "wall_seconds": 170.186,
+      "cpu_seconds": 170.159,
+      "cpu_hours": 0.047266,
       "cpu_utilization_percent": 99.98,
-      "peak_rss_mb": 1081.156,
+      "peak_rss_mb": 1514.375,
+      "gpu_hours": 0.0
+    },
+    "low_training_rate_watch_gate": {
+      "slice_wall_seconds": 16.276,
+      "slice_cpu_seconds": 16.272,
+      "slice_cpu_hours": 0.00452,
+      "slice_peak_rss_mb": 1089.172,
+      "gpu_hours": 0.0,
+      "fold_weights": [0.13, 0.14, 0.13, 0.14],
+      "oof_primary": 0.6127263307571411,
+      "fixed_primary": 0.6127434968948364,
+      "fixed_gauc": 0.6822268962860107,
+      "fixed_ndcg5": 0.5432600378990173,
+      "positive_heldout_user_folds": 4,
+      "changed_pair_orderings": 1424
+    },
+    "training_coverage_residual_rescan": {
+      "candidate_corrections": 128,
+      "wall_seconds": 172.467,
+      "cpu_seconds": 172.446,
+      "cpu_hours": 0.047902,
+      "peak_rss_mb": 1502.422,
+      "gpu_hours": 0.0
+    },
+    "prior_video_batch_gate": {
+      "scan_wall_seconds": 21.388,
+      "scan_cpu_seconds": 21.382,
+      "scan_cpu_hours": 0.005939,
+      "scan_peak_rss_mb": 1494.844,
+      "slice_wall_seconds": 16.624,
+      "slice_cpu_seconds": 16.618,
+      "slice_cpu_hours": 0.004616,
+      "slice_peak_rss_mb": 1095.031,
+      "gpu_hours": 0.0,
+      "fold_weights": [-0.04, -0.03, -0.03, -0.02],
+      "oof_primary": 0.612764835357666,
+      "fixed_primary": 0.6127808094024658,
+      "fixed_gauc": 0.6822733879089355,
+      "fixed_ndcg5": 0.5432882308959961,
+      "positive_heldout_user_folds": 3,
+      "effectively_unchanged_heldout_user_folds": 1,
+      "changed_pair_orderings": 203
+    },
+    "final_training_coverage_residual_rescan": {
+      "candidate_corrections": 128,
+      "wall_seconds": 172.302,
+      "cpu_seconds": 172.27,
+      "cpu_hours": 0.047853,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1508.781,
+      "gpu_hours": 0.0
+    },
+    "tracked_verification": {
+      "wall_seconds": 15.386,
+      "cpu_seconds": 15.383,
+      "cpu_hours": 0.004273,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1091.906,
       "gpu_hours": 0.0,
       "peak_gpu_memory_mb": 0.0
     }
   },
   "rejected_experiments": {
+    "training_coverage_followup_rejections": {
+      "model_training_required": false,
+      "gpu_hours": 0.0,
+      "peak_rss_mb": 1506.531,
+      "candidates": [
+        "coverage_video_some_mean_gap",
+        "coverage_trend_high_watch_gap",
+        "coverage_history_q3_mean_gap",
+        "coverage_history_q4_median_gap",
+        "coverage_recent_high_watch_gap"
+      ],
+      "targeted_scan_wall_seconds": 84.868,
+      "targeted_scan_cpu_hours": 0.023562,
+      "slice_verification_runs": 4,
+      "slice_verification_wall_seconds": 67.625,
+      "slice_verification_cpu_hours": 0.01878,
+      "reason": "Rejected for mixed held-out fold direction, aggregate nDCG@5 regression, or a held-out fold loss too large relative to the tiny aggregate gain. The third-history-quartile candidate was independently sliced after each accepted coverage gate."
+    },
     "structural_gate_followup_rejections": {
       "wall_seconds": 125.377,
       "cpu_hours": 0.034808,

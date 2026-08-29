@@ -1,7 +1,7 @@
 {
-  "title": "Confidence-gated temporal batch-slate correction over the tree-regularized consensus",
+  "title": "Training-coverage expert routing over the confidence-gated slate consensus",
   "experiment_type": "offline_slate_reranking",
-  "hypothesis": "Because the official metric ranks all seven validation days jointly within each user, full-slate repetition statistics can recover policy-confidence and fatigue signals that causal session features miss. Gated model consensus can correct sparse errors, while label-free active-day and slate-size regimes can route users toward different frozen experts without reading validation outcomes.",
+  "hypothesis": "Because the official metric ranks all seven validation days jointly within each user, full-slate repetition statistics can recover policy-confidence and fatigue signals that causal session features miss. Frozen experts have complementary errors for users with weak training outcomes and for users whose evaluation candidates overlap their training exposure, so training-only coverage gates can route those regimes without reading validation outcomes.",
   "protocol": {
     "train_dates": "2022-04-08 through 2022-04-21",
     "validation_dates": "2022-04-22 through 2022-04-28",
@@ -9,7 +9,8 @@
     "hidden_test_accessed": false,
     "validation_outcomes_used_as_features": false,
     "candidate_information_used": ["user_id", "video_id", "author_id", "music_id", "video_type", "hourmin", "time_ms", "tab", "static tag tokens and item statistics", "training-only long_view and play_time_ms aggregates", "outcome-free full-slate score neighborhoods"],
-    "selection": "Tune each scalar only on disjoint user folds. The first eight stages use two user-parity folds; the remaining conditional, temporal, training-prior, confidence-gated, and structural-routing stages use four user-id-modulo folds. Train the batch-slate tree on April 14-19, early-stop on April 20-21, refit on April 14-21, then select only its outer consensus scalar on the same four disjoint user folds. Gate final corrections using label-free normalized top margin, active date count, and user slate size. Fix every deployable weight to the mean of independently selected weights."
+    "selection": "Tune each scalar only on disjoint user folds. The first eight stages use two user-parity folds; the remaining conditional, temporal, training-prior, confidence-gated, structural-routing, and coverage-routing stages use four user-id-modulo folds. Train the batch-slate tree on April 14-19, early-stop on April 20-21, refit on April 14-21, then select only its outer consensus scalar on the same four disjoint user folds. Gate final corrections using label-free normalized top margin and slate structure, plus training-only smoothed user outcomes and identifier coverage. Fix every deployable weight to the mean of independently selected weights.",
+    "coverage_threshold_protocol": "Compute the low-rate threshold as the row-weighted first quartile of Bayesian-smoothed April 8-21 user long-view rates. Mark prior-video coverage when a validation user-video identifier pair occurred in April 8-21; validation labels are never accessed."
   },
   "features": {
     "token_personal_mean": "Within-user standardized mean across an item's tag tokens of log1p(user-slate token count) - 0.25 * log1p(global-slate token count).",
@@ -36,7 +37,9 @@
     "median_margin_model_mean_consensus": "For rows at or above the row-weighted median normalized top-score margin, add 0.01 times the difference between the mean within-user fractional rank of 20 frozen model families and the preceding champion rank.",
     "two_active_days_ordered_extrapolation": "For users appearing on exactly two supplied validation dates, extrapolate 0.5225 away from the frozen temporally ordered CatBoost rank.",
     "three_four_active_days_watch_extrapolation": "For users appearing on three or four supplied validation dates, extrapolate 0.175 away from the frozen watch-ratio DeepFM rank.",
-    "medium_slate_batch_consensus": "For users with 6-10 supplied impressions, move 0.01 toward the frozen temporal batch-slate CatBoost rank."
+    "medium_slate_batch_consensus": "For users with 6-10 supplied impressions, move 0.01 toward the frozen temporal batch-slate CatBoost rank.",
+    "low_training_rate_watch_consensus": "For rows whose user is in the row-weighted lowest quartile of Bayesian-smoothed April 8-21 long-view rate, move 0.135 toward the frozen watch-ratio DeepFM rank.",
+    "prior_video_batch_extrapolation": "For validation users having at least one exact user-video pair seen in April 8-21 training, extrapolate 0.03 away from the frozen temporal batch-slate CatBoost rank. The gate checks identifiers only."
   },
   "selection_evidence": [
     {
@@ -218,12 +221,32 @@
       "fixed_gauc": 0.6821738481521606,
       "fixed_ndcg5": 0.5431381464004517,
       "heldout_fold_primary_gains": [0.0, 0.0000562668, 0.0000380874, 0.0000286102]
+    },
+    {
+      "stage": "low_training_rate_watch_consensus",
+      "fold_weights": [0.13, 0.14, 0.13, 0.14],
+      "fixed_weight": 0.135,
+      "oof_primary": 0.6127263307571411,
+      "fixed_primary": 0.6127434968948364,
+      "fixed_gauc": 0.6822268962860107,
+      "fixed_ndcg5": 0.5432600378990173,
+      "heldout_fold_primary_gains": [0.0001564026, 0.0000175834, 0.0001368523, 0.0000377893]
+    },
+    {
+      "stage": "prior_video_batch_extrapolation",
+      "fold_weights": [-0.04, -0.03, -0.03, -0.02],
+      "fixed_weight": -0.03,
+      "oof_primary": 0.612764835357666,
+      "fixed_primary": 0.6127808094024658,
+      "fixed_gauc": 0.6822733879089355,
+      "fixed_ndcg5": 0.5432882308959961,
+      "heldout_fold_primary_gains": [0.0000321865, 0.0000512004, -0.0000024438, 0.0000692010]
     }
   ],
   "rejected_followup": {
-    "feature": "video-type concentration",
-    "reason": "Its fixed full-validation score rose to 0.61145884, but its cross-fitted primary fell to 0.61134475 versus 0.61135924 before the feature. It was excluded. A supervised weekly-slate CatBoost was also rejected after scoring 0.6047368 standalone and 0.6112029 cross-fitted in the ensemble."
+    "feature": "remaining training-coverage residuals",
+    "reason": "The third-history-quartile mean residual reduced aggregate nDCG@5 and regressed two folds. The fourth-quartile median and recent-high-coverage watch residuals improved both aggregate metrics but each had a held-out fold loss too large relative to its tiny aggregate gain, so both were excluded."
   },
-  "acceptance": "Accept only stages whose disjoint-user weights agree in sign, whose stitched cross-fitted primary improves over the preceding stage, and whose fixed recipe does not reduce either aggregate metric. The final medium-slate correction selected weight 0.01 on all four training partitions; three held-out folds improved and one was unchanged.",
+  "acceptance": "Accept only stages whose disjoint-user weights agree in sign, whose stitched cross-fitted primary improves over the preceding stage, and whose fixed recipe does not reduce either aggregate metric. The low-rate gate improved all four held-out folds. The prior-video gate improved three folds and changed the fourth by only -0.00000244, while improving both aggregate metrics; more fragile follow-ups were rejected.",
   "accepted": true
 }
