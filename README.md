@@ -10,22 +10,24 @@ The previous repository is not a dependency. This implementation was rebuilt fro
 - GPT-5.6 Sol provider with high reasoning and strict JSON output.
 - Deterministic no-cost demo provider and synthetic benchmark for end-to-end smoke testing.
 - Real KuaiRand-Pure adapter built around the supplied organizer starter kit, plus a fail-closed external-adapter contract for alternative runners.
-- Typed pointwise, positive-weighted, multi-seed, BPR pairwise, pointwise/pairwise-blend, and DeepFM-blend experiment executors.
+- Typed pointwise, positive-weighted, multi-seed, BPR pairwise, pointwise/pairwise-blend, DeepFM-blend, and clock-context-blend experiment executors.
 - Atomic `state.json`, append-only `events.jsonl`, proposal source, unified diff, runner logs, metrics, failures, and recovery evidence.
-- Champion promotion, 50-iteration and six-hour budgets, and convergence after three gains below 0.002.
-- Live dashboard controls: start, pause, resume, stop, and steer the next hypothesis.
+- Champion promotion, configurable per-session experiment/time limits, and configurable small-gain convergence checks.
+- Live dashboard controls: start, continue from the retained champion, pause, resume, stop, and steer the next hypothesis.
 - Token accounting split into input, output, reasoning, and total tokens.
 - Per-run compute accounting: training and wall time, CPU time/hours, average CPU utilization, peak RAM, GPU-hours, and peak VRAM.
 
 ## Verified real runs
 
-On 29 August 2026, KuaiLab completed a GPT-5.6 Sol campaign against the supplied KuaiRand-Pure validation split. It first improved the retained FM champion from `0.601470` to `0.603781` primary score, then added a within-user BPR executor and reached `0.605366`. A final controlled extension verified a compact three-way ensemble at **`0.605809` primary** (`+0.004340`, or about `+0.72%` relative, over the reproduced baseline), with `0.672898` GAUC and `0.538721` nDCG@5.
+On 29 August 2026, KuaiLab completed a GPT-5.6 Sol campaign against the supplied KuaiRand-Pure validation split. It first improved the retained FM champion from `0.601470` to `0.603781` primary score, then added a within-user BPR executor and reached `0.605366`. A controlled DeepFM extension reached `0.605809`; the current clean checkpoint adds a small label-free clock-context FM and verifies **`0.605885` primary** (`+0.004415`, or about `+0.73%` relative, over the reproduced baseline), with `0.672964` GAUC and `0.538805` nDCG@5.
 
-The retained blend averages positive-weighted pointwise FMs from seeds 0 and 2, mixes in a seed-1 BPR FM at weight `0.455`, then mixes a seed-0 DeepFM into that score at weight `0.23`. Its clean executor run took `45.674` seconds, used `0.014031` CPU-hours, peaked at `892.312` MB RAM, and used no GPU. The method is now a typed `fm_deep_blend` option available to the autonomous planner rather than a one-off analysis script.
+The retained blend averages positive-weighted pointwise FMs from seeds 0 and 2, mixes in a seed-1 BPR FM at weight `0.455`, mixes a seed-0 DeepFM into that score at weight `0.23`, then adds a globally standardized clock-context FM at weight `0.024`. Its clean executor run took `69.070` seconds, used `0.020507` CPU-hours, peaked at `1042.172` MB RAM, and used no GPU. The method is available to the autonomous planner as typed `fm_temporal_deep_blend` evidence rather than a one-off analysis script.
+
+The dashboard's deterministic demo can display scores up to `0.6250`; those values are synthetic workflow checks, not model-training evidence. The UI labels the entire demo campaign accordingly. Only results under `results/verified-*` are claimed as reproduced validation scores.
 
 One ensemble attempt was deliberately invalidated after its runner process was terminated: inspection showed that the ensemble path would have ignored the proposed positive-example weight. The result was not scored or promoted, and the runner was corrected before the campaign continued. The hidden test was never accessed.
 
-The original campaign evidence is in [`results/run-9ecfd2aa09`](results/run-9ecfd2aa09), the pairwise milestone is in [`results/verified-pairwise-blend`](results/verified-pairwise-blend), and the retained DeepFM-blend verification is in [`results/verified-deep-blend`](results/verified-deep-blend). Checkpoints, raw runner requests, logs containing local paths, and the dataset are excluded from Git.
+The original campaign evidence is in [`results/run-9ecfd2aa09`](results/run-9ecfd2aa09), the pairwise milestone is in [`results/verified-pairwise-blend`](results/verified-pairwise-blend), the DeepFM milestone is in [`results/verified-deep-blend`](results/verified-deep-blend), and the retained checkpoint is in [`results/verified-temporal-deep-blend`](results/verified-temporal-deep-blend). Checkpoints, raw runner requests, logs containing local paths, and the dataset are excluded from Git.
 
 ## Security first
 
@@ -131,6 +133,12 @@ results/verified-deep-blend/
   metrics.json
   resource-usage.json
 
+results/verified-temporal-deep-blend/
+  summary.json
+  proposal.json
+  metrics.json
+  resource-usage.json
+
 runtime/
   state.json
   events.jsonl
@@ -153,7 +161,8 @@ The hidden test is not part of the autonomous loop. Only the retained validation
 - `GET /api/health`
 - `GET /api/state`
 - `GET /api/events`
-- `POST /api/run/start` with `{ "provider": "demo|gpt", "mode": "demo|kuairand" }`
+- `POST /api/run/start` with `{ "provider": "demo|gpt", "mode": "demo|kuairand", "limits": { "max_iterations": 20, "max_hours": 6, "convergence_epsilon": 0.0001, "convergence_patience": 8 }, "bootstrap_verified": true }`
+- `POST /api/run/continue` with a new `limits` object to retain the champion, evidence history, and cumulative compute accounting while opening another experiment/time budget.
 - `POST /api/run/pause`, `/api/run/resume`, `/api/run/stop`, `/api/run/reset`
 - `POST /api/steer` with `{ "instruction": "..." }`
 

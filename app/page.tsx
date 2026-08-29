@@ -18,8 +18,9 @@ type Iteration = {
   gain?: number; duration_seconds: number; error?: string; evidence?: string; artifact?: string; accepted: boolean; resource_usage?: ResourceUsage | null;
 };
 type EventItem = { id: number; time: string; kind: string; title: string; detail: string; iteration?: number; stage?: string };
+type RunLimits = { max_iterations: number; max_hours: number; convergence_epsilon: number; convergence_patience: number; bootstrap_verified: boolean };
 type State = {
-  campaign: { id: string | null; status: string; mode: string; provider: string; started_at: string | null; stop_reason: string | null; steering: string | null };
+  campaign: { id: string | null; status: string; mode: string; provider: string; started_at: string | null; stop_reason: string | null; steering: string | null; continuations: number; session_start_iteration: number; session_start_wall_seconds: number; limits: RunLimits };
   config: { model: string; reasoning_effort: string; max_iterations: number; max_hours: number; convergence_epsilon: number; convergence_patience: number; api_key_available: boolean; dataset_available: boolean; adapter_available: boolean };
   current: null | { number: number; title: string; hypothesis: string; stage: string; status: string; activity: string; stages: Stage[]; acceptance: string; abort_condition: string; expected_gain: number | null; error?: string };
   metrics: { baseline: Metrics; champion: Metrics; delta: number };
@@ -49,8 +50,14 @@ export default function Home() {
   const [error, setError] = useState('');
   const [showSetup, setShowSetup] = useState(false);
   const [showSteer, setShowSteer] = useState(false);
+  const [setupMode, setSetupMode] = useState<'new' | 'continue'>('new');
   const [provider, setProvider] = useState<'demo' | 'gpt'>('demo');
   const [mode, setMode] = useState<'demo' | 'kuairand'>('demo');
+  const [maxIterations, setMaxIterations] = useState(20);
+  const [maxHours, setMaxHours] = useState(6);
+  const [convergenceEpsilon, setConvergenceEpsilon] = useState(0.0001);
+  const [convergencePatience, setConvergencePatience] = useState(8);
+  const [bootstrapVerified, setBootstrapVerified] = useState(true);
   const [instruction, setInstruction] = useState('');
 
   const refresh = useCallback(async () => {
@@ -86,7 +93,28 @@ export default function Home() {
 
   async function startRun(event: FormEvent) {
     event.preventDefault();
-    if (await action('/api/run/start', { provider, mode })) setShowSetup(false);
+    const limits = {
+      max_iterations: maxIterations,
+      max_hours: maxHours,
+      convergence_epsilon: convergenceEpsilon,
+      convergence_patience: convergencePatience,
+    };
+    const path = setupMode === 'continue' ? '/api/run/continue' : '/api/run/start';
+    const body = setupMode === 'continue' ? { limits } : { provider, mode, limits, bootstrap_verified: bootstrapVerified };
+    if (await action(path, body)) setShowSetup(false);
+  }
+
+  function openSetup(kind: 'new' | 'continue') {
+    setSetupMode(kind);
+    setMaxIterations(kind === 'continue' ? 20 : (state?.config.max_iterations ?? 50));
+    setMaxHours(state?.config.max_hours ?? 6);
+    setConvergenceEpsilon(state?.config.convergence_epsilon ?? 0.0001);
+    setConvergencePatience(state?.config.convergence_patience ?? 8);
+    if (kind === 'new') {
+      setProvider(state?.config.api_key_available ? 'gpt' : 'demo');
+      setMode(state?.config.dataset_available && state?.config.adapter_available ? 'kuairand' : 'demo');
+    }
+    setShowSetup(true);
   }
 
   async function steer(event: FormEvent) {
@@ -96,10 +124,16 @@ export default function Home() {
 
   const status = state?.campaign.status ?? 'offline';
   const active = ['running', 'paused', 'stopping'].includes(status);
+  const synthetic = state?.campaign.mode === 'demo';
+  const canContinue = Boolean(!active && state?.campaign.id && status !== 'idle');
   const champion = state?.metrics.champion;
   const current = state?.current;
   const completedCount = Math.max(0, (state?.iterations.length ?? 1) - 1);
-  const remainingSeconds = Math.max(0, (state?.config.max_hours ?? 6) * 3600 - (state?.usage.wall_seconds ?? 0));
+  const runLimits = state?.campaign.limits ?? { max_iterations: state?.config.max_iterations ?? 50, max_hours: state?.config.max_hours ?? 6, convergence_epsilon: state?.config.convergence_epsilon ?? 0.0001, convergence_patience: state?.config.convergence_patience ?? 8, bootstrap_verified: true };
+  const sessionStart = state?.campaign.session_start_iteration ?? 1;
+  const sessionCompleted = (state?.iterations ?? []).filter((item) => item.number >= sessionStart).length;
+  const sessionWall = Math.max(0, (state?.usage.wall_seconds ?? 0) - (state?.campaign.session_start_wall_seconds ?? 0));
+  const remainingSeconds = Math.max(0, runLimits.max_hours * 3600 - sessionWall);
   const events = useMemo(() => [...(state?.events ?? [])].reverse().slice(0, 7), [state]);
 
   return (
@@ -126,26 +160,28 @@ export default function Home() {
             {status === 'paused' && <button className="button ghost" onClick={() => action('/api/run/resume')}>Resume</button>}
             {active && <button className="button danger" onClick={() => action('/api/run/stop')}>Stop</button>}
             {active && <button className="button primary" onClick={() => setShowSteer(true)}>Steer agent</button>}
-            {!active && <button className="button primary" onClick={() => setShowSetup(true)}>Start campaign</button>}
+            {canContinue && <button className="button ghost" onClick={() => openSetup('continue')}>Continue champion</button>}
+            {!active && <button className="button primary" onClick={() => openSetup('new')}>New campaign</button>}
           </div>
         </header>
 
         {!connected && <div className="banner warn-banner"><b>Backend is offline.</b> Start the local engine to enable real controls and live iteration updates.</div>}
         {error && <div className="banner error-banner" role="alert"><b>Couldn’t complete that action.</b> {error}<button onClick={() => setError('')} aria-label="Dismiss">×</button></div>}
+        {connected && synthetic && <div className="banner warn-banner"><b>Synthetic smoke-test evidence.</b> These scores—including the 0.6250 demo ceiling—are simulated to test the workflow, not trained KuaiRand validation results.</div>}
 
         <div className="metrics-grid">
-          <article className="metric-card featured"><span>Champion primary</span><strong>{score(champion?.primary)}</strong><small>{state ? `${state.metrics.delta >= 0 ? '+' : ''}${state.metrics.delta.toFixed(4)} over baseline` : 'Waiting for local engine'}</small></article>
-          <article className="metric-card"><span>GAUC</span><strong>{score(champion?.gauc)}</strong><small>validation-best</small></article>
-          <article className="metric-card"><span>nDCG@5</span><strong>{score(champion?.ndcg5)}</strong><small>validation-best</small></article>
+          <article className="metric-card featured"><span>{synthetic ? 'Demo primary · simulated' : 'Champion primary · verified'}</span><strong>{score(champion?.primary)}</strong><small>{state ? `${state.metrics.delta >= 0 ? '+' : ''}${state.metrics.delta.toFixed(4)} over ${synthetic ? 'demo' : 'reproduced'} baseline` : 'Waiting for local engine'}</small></article>
+          <article className="metric-card"><span>GAUC</span><strong>{score(champion?.gauc)}</strong><small>{synthetic ? 'simulated smoke test' : 'validation-best'}</small></article>
+          <article className="metric-card"><span>nDCG@5</span><strong>{score(champion?.ndcg5)}</strong><small>{synthetic ? 'simulated smoke test' : 'validation-best'}</small></article>
           <article className="metric-card"><span>Compute used</span><strong>{computeHours(state?.usage.cpu_hours ?? 0)} CPU</strong><small>{computeHours(state?.usage.gpu_hours ?? 0)} GPU · {memory(state?.usage.peak_rss_mb)} peak RAM</small></article>
-          <article className="metric-card"><span>Budget</span><strong>{String(completedCount).padStart(2, '0')} / {state?.config.max_iterations ?? 50}</strong><small>{elapsed(state?.usage.wall_seconds ?? 0)} elapsed · {elapsed(remainingSeconds)} left</small></article>
+          <article className="metric-card"><span>Session budget</span><strong>{String(sessionCompleted).padStart(2, '0')} / {runLimits.max_iterations}</strong><small>{elapsed(sessionWall)} this session · {elapsed(remainingSeconds)} left · {completedCount} total</small></article>
         </div>
 
         <div className="content-grid">
           <section className="panel active-run">
             <div className="panel-heading">
               <div><p className="eyebrow">{current ? `Iteration ${String(current.number).padStart(3, '0')}` : 'Campaign state'}</p><h2>{current?.title ?? (status === 'idle' ? 'Ready for the first experiment' : 'No active iteration')}</h2></div>
-              <span className="agent-badge">{state?.campaign.provider === 'gpt' ? state.config.model : 'Demo planner'} · {state?.config.reasoning_effort ?? 'high'}</span>
+              <span className="agent-badge">{state?.campaign.provider === 'gpt' ? state.config.model : 'Demo planner'} · {synthetic ? 'synthetic benchmark' : state?.config.reasoning_effort ?? 'high'}</span>
             </div>
             <p className="hypothesis">{current?.hypothesis ?? 'Choose a demo campaign to verify the full loop, or connect GPT-5.6 Sol and the organizer runner for real experiments.'}</p>
             <div className="stage-track" aria-label="Iteration stages">
@@ -161,7 +197,7 @@ export default function Home() {
               {status === 'running' && <span className="pulse-dots">•••</span>}
             </div>
             <div className="run-meta">
-              <div><span>Acceptance</span><b>{current?.acceptance ?? `Primary gain ≥ ${state?.config.convergence_epsilon?.toFixed(4) ?? '0.0020'}`}</b></div>
+              <div><span>Acceptance</span><b>{current?.acceptance ?? `Any positive gain · stop sensitivity ${runLimits.convergence_epsilon.toFixed(6)}`}</b></div>
               <div><span>Abort condition</span><b>{current?.abort_condition ?? 'Invalid metrics, timeout, or runner failure'}</b></div>
               <div><span>Resources</span><b>{(state?.usage.total_tokens ?? 0).toLocaleString()} tokens · {computeHours(state?.usage.cpu_hours ?? 0)} CPU · {computeHours(state?.usage.gpu_hours ?? 0)} GPU</b></div>
             </div>
@@ -176,7 +212,7 @@ export default function Home() {
         </div>
 
         <section className="panel table-panel" id="iterations">
-          <div className="panel-heading"><div><p className="eyebrow">Campaign history</p><h2>Iterations</h2></div><span className="subtle">Validation-best checkpoint retained · hidden test untouched</span></div>
+          <div className="panel-heading"><div><p className="eyebrow">Campaign history</p><h2>Iterations</h2></div><span className="subtle">{synthetic ? 'Synthetic workflow evidence · no model training' : 'Validation-best checkpoint retained · hidden test untouched'}</span></div>
           <div className="table-wrap">
             <table>
               <thead><tr><th>Iteration</th><th>Experiment</th><th>Status</th><th>Primary</th><th>Δ baseline</th><th>Train</th><th>Compute</th><th>Peak RAM</th></tr></thead>
@@ -193,12 +229,21 @@ export default function Home() {
         </section>
       </section>
 
-      {showSetup && <div className="modal-backdrop" onMouseDown={() => setShowSetup(false)}><form className="modal" onSubmit={startRun} onMouseDown={(event) => event.stopPropagation()}>
-        <div className="modal-heading"><div><p className="eyebrow">New campaign</p><h2>Choose the research path</h2></div><button type="button" className="close-button" onClick={() => setShowSetup(false)}>×</button></div>
-        <label>Researcher<select value={provider} onChange={(event) => setProvider(event.target.value as 'demo' | 'gpt')}><option value="demo">Demo planner — no API cost</option><option value="gpt" disabled={!state?.config.api_key_available}>GPT-5.6 Sol — high reasoning{!state?.config.api_key_available ? ' (key not set)' : ''}</option></select></label>
-        <label>Benchmark<select value={mode} onChange={(event) => setMode(event.target.value as 'demo' | 'kuairand')}><option value="demo">Synthetic smoke test</option><option value="kuairand" disabled={!state?.config.dataset_available || !state?.config.adapter_available}>KuaiRand-Pure validation{!state?.config.dataset_available || !state?.config.adapter_available ? ' (setup required)' : ''}</option></select></label>
-        <p className="modal-note">Use the smoke test first. Real mode stays locked until the dataset and organizer adapter are present.</p>
-        <button className="button primary wide" type="submit">Start autonomous campaign</button>
+      {showSetup && <div className="modal-backdrop" onMouseDown={() => setShowSetup(false)}><form className="modal campaign-modal" onSubmit={startRun} onMouseDown={(event) => event.stopPropagation()}>
+        <div className="modal-heading"><div><p className="eyebrow">{setupMode === 'continue' ? 'Retained research' : 'New campaign'}</p><h2>{setupMode === 'continue' ? 'Continue from the champion' : 'Configure autonomous research'}</h2></div><button type="button" className="close-button" onClick={() => setShowSetup(false)}>×</button></div>
+        {setupMode === 'new' ? <>
+          <label>Researcher<select value={provider} onChange={(event) => setProvider(event.target.value as 'demo' | 'gpt')}><option value="demo">Demo planner — no API cost</option><option value="gpt" disabled={!state?.config.api_key_available}>GPT-5.6 Sol — high reasoning{!state?.config.api_key_available ? ' (key not set)' : ''}</option></select></label>
+          <label>Benchmark<select value={mode} onChange={(event) => setMode(event.target.value as 'demo' | 'kuairand')}><option value="demo">Synthetic smoke test</option><option value="kuairand" disabled={!state?.config.dataset_available || !state?.config.adapter_available}>KuaiRand-Pure validation{!state?.config.dataset_available || !state?.config.adapter_available ? ' (setup required)' : ''}</option></select></label>
+          {mode === 'kuairand' && <label className="check-label"><input type="checkbox" checked={bootstrapVerified} onChange={(event) => setBootstrapVerified(event.target.checked)} /><span><b>Start from verified 0.605885 champion</b><small>Imports the clean temporal FM + BPR + DeepFM recipe and searches above it.</small></span></label>}
+        </> : <div className="resume-summary"><span>Retained primary</span><strong>{score(champion?.primary)}</strong><small>{state?.campaign.provider === 'gpt' ? state.config.model : 'Demo planner'} · {state?.campaign.mode === 'kuairand' ? 'KuaiRand-Pure validation' : 'Synthetic smoke test'} · {completedCount} recorded experiments</small></div>}
+        <div className="form-grid">
+          <label>Experiments this session<input type="number" min="1" max="100" step="1" value={maxIterations} onChange={(event) => setMaxIterations(Number(event.target.value))} required /></label>
+          <label>Time budget (hours)<input type="number" min="0.1" max="24" step="0.1" value={maxHours} onChange={(event) => setMaxHours(Number(event.target.value))} required /></label>
+          <label>Small-gain threshold<input type="number" min="0" max="0.01" step="0.00001" value={convergenceEpsilon} onChange={(event) => setConvergenceEpsilon(Number(event.target.value))} required /></label>
+          <label>Stop after small gains<input type="number" min="0" max="50" step="1" value={convergencePatience} onChange={(event) => setConvergencePatience(Number(event.target.value))} required /></label>
+        </div>
+        <p className="modal-note">Every positive validation gain is retained. Set “stop after small gains” to 0 to use the full experiment/time budget. Real autonomous research needs the dataset, runner, and your API key available to the local engine.</p>
+        <button className="button primary wide" type="submit">{setupMode === 'continue' ? 'Continue autonomous research' : 'Start autonomous campaign'}</button>
       </form></div>}
 
       {showSteer && <div className="modal-backdrop" onMouseDown={() => setShowSteer(false)}><form className="modal" onSubmit={steer} onMouseDown={(event) => event.stopPropagation()}>

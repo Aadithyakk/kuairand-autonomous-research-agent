@@ -1,0 +1,19 @@
+{
+  "cpu_hours": 0.020507,
+  "cpu_seconds": 73.824,
+  "cpu_utilization_percent": 106.88,
+  "data_loading_seconds": 2.042,
+  "device": "cpu",
+  "gpu_count": 0,
+  "gpu_hours": 0.0,
+  "gpu_seconds": 0.0,
+  "hardware": {
+    "architecture": "arm64",
+    "logical_cpu_count": 16,
+    "processor": "arm"
+  },
+  "peak_gpu_memory_mb": 0.0,
+  "peak_rss_mb": 1042.172,
+  "train_seconds": 67.028,
+  "wall_seconds": 69.07
+}

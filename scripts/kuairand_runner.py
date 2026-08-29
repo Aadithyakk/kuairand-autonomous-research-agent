@@ -62,6 +62,7 @@ def load_development_splits(data_dir: Path) -> dict:
                 item = (
                     date, row["user_id"], row["video_id"], video_to_author.get(row["video_id"], "UNK"),
                     row["tab"], float(row["duration_ms"]), 1 if row["long_view"] != "0" else 0,
+                    int(row["hourmin"]) // 100,
                 )
                 (train if date <= 20220421 else valid).append(item)
     if len(train) != 1_141_112 or len(valid) != 124_909:
@@ -128,7 +129,10 @@ class PairwiseFM(WeightedFM):
         return float(np.mean(np.logaddexp(0.0, -difference)))
 
 
-def train_one(train_x, train_y, valid_x, valid_y, valid_users, dimension: int, output_dir: Path, parameters: dict, seed: int, positive_weight: float):
+def train_one(
+    train_x, train_y, valid_x, valid_y, valid_users, dimension: int, output_dir: Path,
+    parameters: dict, seed: int, positive_weight: float, checkpoint_prefix: str = "checkpoint",
+):
     k = max(4, min(int(parameters.get("k", 16)), 32))
     lr = max(0.0001, min(float(parameters.get("lr", 0.001)), 0.01))
     epochs = max(5, min(int(parameters.get("epochs", 40)), 60))
@@ -158,7 +162,7 @@ def train_one(train_x, train_y, valid_x, valid_y, valid_users, dimension: int, o
     if best_state is None:
         raise RuntimeError("FM training produced no checkpoint")
     model.V, model.W, model.b, best_scores = best_state
-    np.savez_compressed(output_dir / f"checkpoint-seed-{seed}.npz", V=model.V, W=model.W, b=model.b)
+    np.savez_compressed(output_dir / f"{checkpoint_prefix}-seed-{seed}.npz", V=model.V, W=model.W, b=model.b)
     return best_scores, {"objective": "weighted_bce", "seed": seed, "positive_weight": positive_weight, "epochs": history}
 
 
@@ -215,18 +219,18 @@ def train_fm(splits: dict, output_dir: Path, proposal: dict) -> dict:
     parameters = proposal.get("parameters", {})
     experiment_type = proposal.get("experiment_type", "fm_config")
     seed = int(parameters.get("seed", 0))
-    ensemble_types = {"fm_ensemble", "fm_pairwise_blend", "fm_deep_blend"}
+    ensemble_types = {"fm_ensemble", "fm_pairwise_blend", "fm_deep_blend", "fm_temporal_deep_blend"}
     seeds = parameters.get("ensemble_seeds", [seed]) if experiment_type in ensemble_types else [seed]
     seeds = [int(value) for value in seeds[:3]]
     positive_weight = float(parameters.get("positive_weight", 1.0))
     positive_weight = max(1.0, min(positive_weight, 10.0))
-    predictions, histories, pairwise_histories, deep_histories = [], [], [], []
+    predictions, histories, pairwise_histories, deep_histories, temporal_histories = [], [], [], [], []
     if experiment_type != "fm_pairwise":
         for model_seed in seeds:
             scores, history = train_one(train_x, train_y, valid_x, valid_y, valid_users, dimension, output_dir, parameters, model_seed, positive_weight)
             predictions.append(scores)
             histories.append(history)
-    if experiment_type in {"fm_pairwise", "fm_pairwise_blend", "fm_deep_blend"}:
+    if experiment_type in {"fm_pairwise", "fm_pairwise_blend", "fm_deep_blend", "fm_temporal_deep_blend"}:
         pairwise_scores, pairwise_history = train_pairwise(
             train_x, train_y, train_users, valid_x, valid_y, valid_users,
             dimension, output_dir, parameters,
@@ -241,7 +245,7 @@ def train_fm(splits: dict, output_dir: Path, proposal: dict) -> dict:
     else:
         blend_weight = 0.0
         best_scores = np.mean(np.stack(predictions), axis=0)
-    if experiment_type == "fm_deep_blend":
+    if experiment_type in {"fm_deep_blend", "fm_temporal_deep_blend"}:
         from backend.kuailab.deepfm import train_deepfm
 
         deep_scores, deep_history = train_deepfm(
@@ -253,14 +257,35 @@ def train_fm(splits: dict, output_dir: Path, proposal: dict) -> dict:
         best_scores = (1.0 - deep_blend_weight) * best_scores + deep_blend_weight * deep_scores
     else:
         deep_blend_weight = 0.0
+    if experiment_type == "fm_temporal_deep_blend":
+        from backend.kuailab.temporal import encode_clock_context
+
+        temporal_encoded, temporal_dimension = encode_clock_context(splits)
+        temporal_train_x, temporal_train_y, _ = temporal_encoded["train"]
+        temporal_valid_x, temporal_valid_y, temporal_valid_users = temporal_encoded["valid"]
+        temporal_scores, temporal_history = train_one(
+            temporal_train_x, temporal_train_y, temporal_valid_x, temporal_valid_y,
+            temporal_valid_users, temporal_dimension, output_dir, parameters, seed,
+            positive_weight, checkpoint_prefix="temporal-checkpoint",
+        )
+        temporal_history["features"] = ["hour", "daypart", "weekday"]
+        temporal_histories.append(temporal_history)
+        temporal_blend_weight = max(0.0, min(float(parameters.get("temporal_blend_weight", 0.024)), 0.2))
+        base_standardized = (best_scores - best_scores.mean()) / max(float(best_scores.std()), 1e-8)
+        temporal_standardized = (temporal_scores - temporal_scores.mean()) / max(float(temporal_scores.std()), 1e-8)
+        best_scores = (1.0 - temporal_blend_weight) * base_standardized + temporal_blend_weight * temporal_standardized
+    else:
+        temporal_blend_weight = 0.0
     final = evaluate_module.evaluate(valid_users, valid_y, best_scores)
     (output_dir / "training-history.json").write_text(json.dumps({
         "experiment_type": experiment_type,
-        "blend_weight": blend_weight if experiment_type in {"fm_pairwise_blend", "fm_deep_blend"} else None,
-        "deep_blend_weight": deep_blend_weight if experiment_type == "fm_deep_blend" else None,
+        "blend_weight": blend_weight if experiment_type in {"fm_pairwise_blend", "fm_deep_blend", "fm_temporal_deep_blend"} else None,
+        "deep_blend_weight": deep_blend_weight if experiment_type in {"fm_deep_blend", "fm_temporal_deep_blend"} else None,
+        "temporal_blend_weight": temporal_blend_weight if experiment_type == "fm_temporal_deep_blend" else None,
         "runs": histories,
         "pairwise_runs": pairwise_histories,
         "deep_runs": deep_histories,
+        "temporal_runs": temporal_histories,
     }, indent=2), encoding="utf-8")
     return {"primary": float(final["primary"]), "gauc": float(final["GAUC"]), "ndcg5": float(final["nDCG@5"])}
 

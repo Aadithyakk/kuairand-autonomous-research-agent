@@ -7,13 +7,19 @@ from urllib.parse import urlparse
 
 from .config import Settings
 from .engine import CampaignEngine
-from .state import StateStore
+from .state import StateStore, utc_now
 
 
 settings = Settings()
 store = StateStore(settings.state_dir, settings.public_dict())
 def refresh_runtime_config(state: dict) -> None:
     state["config"] = settings.public_dict()
+    if state.get("campaign", {}).get("status") in {"running", "paused", "stopping"}:
+        state["campaign"].update(
+            status="interrupted",
+            ended_at=utc_now(),
+            stop_reason="backend restarted; campaign can be continued from the retained champion",
+        )
     if state.get("iterations") and state.get("campaign", {}).get("mode") == "demo":
         state["iterations"][0]["title"] = "Demo FM baseline"
         state["iterations"][0]["provider"] = "demo"
@@ -70,7 +76,14 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body = self._body()
             if path == "/api/run/start":
-                engine.start(body.get("mode", "demo"), body.get("provider", "demo"))
+                engine.start(
+                    body.get("mode", "demo"),
+                    body.get("provider", "demo"),
+                    body.get("limits"),
+                    bootstrap_verified=body.get("bootstrap_verified", True),
+                )
+            elif path == "/api/run/continue":
+                engine.continue_campaign(body.get("limits"))
             elif path == "/api/run/pause":
                 engine.pause()
             elif path == "/api/run/resume":

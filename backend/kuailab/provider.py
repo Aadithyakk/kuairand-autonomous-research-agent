@@ -87,7 +87,7 @@ class OpenAIProvider:
                 "title": {"type": "string"},
                 "experiment_type": {"type": "string", "enum": [
                     "fm_config", "fm_positive_weight", "fm_ensemble", "fm_pairwise", "fm_pairwise_blend",
-                    "fm_deep_blend"
+                    "fm_deep_blend", "fm_temporal_deep_blend"
                 ]},
                 "hypothesis": {"type": "string"}, "rationale": {"type": "string"},
                 "change_summary": {"type": "string"}, "code": {"type": "string"},
@@ -96,7 +96,7 @@ class OpenAIProvider:
                         "k", "lr", "epochs", "batch_size", "patience", "seed", "ensemble_seeds", "positive_weight",
                         "pairwise_lr", "pairwise_epochs", "pairwise_patience", "pairwise_seed", "blend_weight",
                         "deep_lr", "deep_epochs", "deep_patience", "deep_seed", "deep_hidden", "deep_dropout",
-                        "deep_threads", "deep_blend_weight"
+                        "deep_threads", "deep_blend_weight", "temporal_blend_weight"
                     ],
                     "properties": {
                         "k": {"type": "integer"},
@@ -119,7 +119,8 @@ class OpenAIProvider:
                         "deep_hidden": {"type": "integer"},
                         "deep_dropout": {"type": "number"},
                         "deep_threads": {"type": "integer"},
-                        "deep_blend_weight": {"type": "number"}
+                        "deep_blend_weight": {"type": "number"},
+                        "temporal_blend_weight": {"type": "number"}
                     }},
                 "acceptance": {"type": "string"}, "abort_condition": {"type": "string"}, "expected_gain": {"type": "number"},
             },
@@ -127,7 +128,7 @@ class OpenAIProvider:
         body = {
             "model": self.model,
             "reasoning": {"effort": self.reasoning_effort},
-            "instructions": "You are the experiment-design component of an autonomous recommender-systems researcher. Propose exactly one falsifiable, budget-aware KuaiRand-Pure long_view experiment using the executor contract in the input. Never claim a metric you have not observed. Use NumPy only; do not use Torch or undefined placeholders. The code field must show the concrete implementation corresponding to the selected typed experiment. Return only schema-valid JSON.",
+            "instructions": "You are the experiment-design component of an autonomous recommender-systems researcher. Propose exactly one falsifiable, budget-aware KuaiRand-Pure long_view experiment using the executor contract in the input. Never claim a metric you have not observed and do not repeat an exact tested parameter configuration. Use only the trusted typed executors: NumPy for FM variants and the installed PyTorch executor only for fm_deep_blend or fm_temporal_deep_blend. Do not install packages or use undefined placeholders. The code field must show the concrete configuration corresponding to the selected typed experiment. Return only schema-valid JSON.",
             "input": json.dumps(context, sort_keys=True),
             "text": {"format": {"type": "json_schema", "name": "experiment_proposal", "strict": True, "schema": schema}},
         }
