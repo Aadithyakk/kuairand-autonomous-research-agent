@@ -49,9 +49,12 @@
     "Random-log CatBoost transferred poorly (0.56101394 standard-log primary), while a nested 204-prior full random-panel search regressed to 0.61274505 OOF.",
     "Public-validation pointwise/pairwise stackers, linear pairwise stackers, and a structural expert router all failed the user-disjoint acceptance test.",
     "User-disjoint public-feedback rates selected zero weight in every fold.",
-    "Localized top-k reranking across 20 diverse experts regressed to 0.61234045 nested OOF primary."
+    "Localized top-k reranking across 20 diverse experts regressed to 0.61234045 nested OOF primary.",
+    "Censored mixture-of-lognormals survival ranking reached 0.59077823 standalone and selected a nonzero residual in only one fold.",
+    "Kaplan-Meier-style threshold survival priors produced apparent fixed micro-gains but retained held-out regressions, including the 0.61282837 type-at-risk candidate.",
+    "Three-seed duration-regime experts reached 0.60820252 standalone and 0.61280549 fixed, but fold 1 regressed; coverage gating and independent regime biases did not stabilize the gain."
   ],
-  "latest_rejected_cycle": "rejected-cycle-2026-08-30.json",
+  "latest_rejected_cycle": "rejected-cycle-2026-08-30-survival-duration.json",
   "target_primary": 0.7,
   "target_reached": false,
   "remaining_gap": 0.08721919059753414

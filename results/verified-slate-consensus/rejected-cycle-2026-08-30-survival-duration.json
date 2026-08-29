@@ -1,0 +1,126 @@
+{
+  "status": "no_verified_gain",
+  "branch": "feature/experiment-resource-tracking",
+  "starting_commit": "bdaaa6d",
+  "protocol": "Official April 8-21 train and April 22-28 validation split; no hidden-test outcomes; four user-ID-modulo folds for residual and gate selection; validation-slate gates use only identifiers, timestamps, and training-coverage attributes.",
+  "retained_champion": {
+    "primary": 0.6127808094024658,
+    "gauc": 0.6822733879089355,
+    "ndcg5": 0.5432882308959961,
+    "target_primary": 0.7,
+    "remaining_gap": 0.08721919059753414
+  },
+  "experiments": [
+    {
+      "name": "censored mixture-of-lognormals survival ranking",
+      "result": "rejected",
+      "evidence": "A three-component full-metadata DeepFM survival head reached 0.59077823 standalone. Residual fold weights were [0, 0, 0.005, 0]; the 0.61279035 fixed score was therefore unsupported by three folds.",
+      "resource_usage": {
+        "training": {
+          "wall_seconds": 38.136,
+          "cpu_seconds": 118.9,
+          "cpu_hours": 0.033028,
+          "peak_rss_mb": 15581.141
+        },
+        "residual_audit": {
+          "wall_seconds": 18.765,
+          "cpu_seconds": 18.657,
+          "cpu_hours": 0.005183,
+          "peak_rss_mb": 1220.594
+        },
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "mixture-survival auxiliary regularization",
+      "result": "rejected",
+      "evidence": "Weight 0.2 produced 0.60748172 standalone and 0.61276615 OOF; weight 0.02 produced 0.60716903 standalone and 0.61278379 OOF, but fold 1 regressed and the fixed recipe scored 0.61277413.",
+      "resource_usage": {
+        "weight_0_2_training": {
+          "wall_seconds": 28.832,
+          "cpu_seconds": 95.979,
+          "cpu_hours": 0.026661,
+          "peak_rss_mb": 15800.938
+        },
+        "weight_0_2_audit": {
+          "wall_seconds": 19.42,
+          "cpu_seconds": 19.383,
+          "cpu_hours": 0.005384
+        },
+        "weight_0_02_training": {
+          "wall_seconds": 30.882,
+          "cpu_seconds": 101.655,
+          "cpu_hours": 0.028238,
+          "peak_rss_mb": 15679.391
+        },
+        "weight_0_02_audit": {
+          "wall_seconds": 19.55,
+          "cpu_seconds": 19.541,
+          "cpu_hours": 0.005428
+        },
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "Kaplan-Meier-style threshold survival priors",
+      "result": "rejected",
+      "evidence": "A temporally trained 38-feature calibrator reached 0.59372330 standalone. Its nested OOF primary was 0.61278450 with only one nonzero fold. Among individual priors, type-at-risk density reached 0.61282837 fixed with both aggregate metrics higher, but held-out fold 0 lost 0.00002778; 124 duration interactions did not remove the instability.",
+      "resource_usage": {
+        "model_and_feature_runs": {
+          "wall_seconds": 24.336,
+          "cpu_seconds": 146.446,
+          "cpu_hours": 0.04068,
+          "peak_rss_mb": 4382.0
+        },
+        "residual_and_feature_audits": {
+          "wall_seconds": 214.071,
+          "cpu_seconds": 214.035,
+          "cpu_hours": 0.059454,
+          "peak_rss_mb": 1507.875
+        },
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "duration-regime DeepFM experts",
+      "result": "rejected",
+      "evidence": "Shared-backbone short/medium/long experts selected residual weight 0.005 in every fold. Three-seed averaging improved standalone primary to 0.60820252 and fixed primary to 0.61280549, but fold 1 still lost 0.00002116. Label-free activity and training-coverage gates selected consistent weights yet retained a negative fold. Independent regime-specific categorical and numeric biases reached 0.61279142 OOF but had two negative folds.",
+      "resource_usage": {
+        "three_seed_training": {
+          "wall_seconds": 89.584,
+          "cpu_seconds": 289.479,
+          "cpu_hours": 0.080411,
+          "peak_rss_mb": 15868.0
+        },
+        "averaging_and_residual_audit": {
+          "tracked_wall_seconds": 19.337,
+          "untracked_average_wall_seconds": 5.172,
+          "cpu_seconds": 19.312,
+          "cpu_hours": 0.005364
+        },
+        "gate_training_and_comparisons": {
+          "wall_seconds": 129.253,
+          "cpu_seconds": 129.175,
+          "cpu_hours": 0.035882,
+          "peak_rss_mb": 1305.312
+        },
+        "independent_bias_training_and_audit": {
+          "wall_seconds": 53.617,
+          "cpu_seconds": 125.012,
+          "cpu_hours": 0.034726,
+          "peak_rss_mb": 15720.703
+        },
+        "gpu_hours": 0.0
+      }
+    }
+  ],
+  "successful_tracked_run_totals": {
+    "wall_seconds": 705.294,
+    "cpu_seconds": 1317.067,
+    "cpu_hours": 0.365852,
+    "peak_rss_mb": 15868.0,
+    "gpu_hours": 0.0,
+    "note": "The separate rank-averaging step used another 5.172 wall-seconds but did not emit a resource tracker record."
+  },
+  "conclusion": "Every survival and duration-regime candidate either selected zero residual weight in most folds or retained at least one held-out regression. No candidate met the repository's stable-gain acceptance rule, so the 0.6127808094 champion remains authoritative."
+}
