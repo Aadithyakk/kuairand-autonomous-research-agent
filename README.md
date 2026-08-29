@@ -10,19 +10,22 @@ The previous repository is not a dependency. This implementation was rebuilt fro
 - GPT-5.6 Sol provider with high reasoning and strict JSON output.
 - Deterministic no-cost demo provider and synthetic benchmark for end-to-end smoke testing.
 - Real KuaiRand-Pure adapter built around the supplied organizer starter kit, plus a fail-closed external-adapter contract for alternative runners.
+- Typed pointwise, positive-weighted, multi-seed, BPR pairwise, and pointwise/pairwise-blend experiment executors.
 - Atomic `state.json`, append-only `events.jsonl`, proposal source, unified diff, runner logs, metrics, failures, and recovery evidence.
 - Champion promotion, 50-iteration and six-hour budgets, and convergence after three gains below 0.002.
 - Live dashboard controls: start, pause, resume, stop, and steer the next hypothesis.
 - Token accounting split into input, output, reasoning, and total tokens.
 - Per-run compute accounting: training and wall time, CPU time/hours, average CPU utilization, peak RAM, GPU-hours, and peak VRAM.
 
-## Verified real run
+## Verified real runs
 
-On 29 August 2026, KuaiLab completed a GPT-5.6 Sol campaign against the supplied KuaiRand-Pure validation split. It improved the retained FM champion from `0.601470` to `0.603781` primary score (`+0.002311`), with `0.669987` GAUC and `0.537574` nDCG@5. The campaign stopped by its convergence rule after five proposed iterations and used 24,802 API tokens.
+On 29 August 2026, KuaiLab completed a GPT-5.6 Sol campaign against the supplied KuaiRand-Pure validation split. It first improved the retained FM champion from `0.601470` to `0.603781` primary score. A subsequent controlled extension added a within-user BPR executor and verified a pointwise/pairwise blend at **`0.605366` primary** (`+0.003897` over the reproduced baseline), with `0.672471` GAUC and `0.538262` nDCG@5.
+
+The retained blend averages positive-weighted pointwise FMs from seeds 0 and 2, then mixes in a seed-1 BPR FM at weight `0.44`. Its clean executor run took `36.543` seconds, used `0.010146` CPU-hours, peaked at `604.359` MB RAM, and used no GPU. The method is now a typed `fm_pairwise_blend` option available to the autonomous planner rather than a one-off analysis script.
 
 One ensemble attempt was deliberately invalidated after its runner process was terminated: inspection showed that the ensemble path would have ignored the proposed positive-example weight. The result was not scored or promoted, and the runner was corrected before the campaign continued. The hidden test was never accessed.
 
-The sanitized proposals, generated diffs, metrics, training histories, and intervention record are in [`results/run-9ecfd2aa09`](results/run-9ecfd2aa09). Checkpoints, raw runner requests, logs containing local paths, and the dataset are excluded from Git.
+The original campaign evidence is in [`results/run-9ecfd2aa09`](results/run-9ecfd2aa09), and the compact pairwise-blend verification is in [`results/verified-pairwise-blend`](results/verified-pairwise-blend). Checkpoints, raw runner requests, logs containing local paths, and the dataset are excluded from Git.
 
 ## Security first
 
@@ -115,6 +118,12 @@ results/run-9ecfd2aa09/
   baseline/{metrics.json,training-history.json}
   iteration-001/{proposal.json,candidate.py,candidate.diff,metrics.json,training-history.json}
   ...
+
+results/verified-pairwise-blend/
+  summary.json
+  proposal.json
+  metrics.json
+  resource-usage.json
 
 runtime/
   state.json

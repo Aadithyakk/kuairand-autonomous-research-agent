@@ -85,11 +85,16 @@ class OpenAIProvider:
             "required": ["title", "experiment_type", "hypothesis", "rationale", "change_summary", "code", "parameters", "acceptance", "abort_condition", "expected_gain"],
             "properties": {
                 "title": {"type": "string"},
-                "experiment_type": {"type": "string", "enum": ["fm_config", "fm_positive_weight", "fm_ensemble"]},
+                "experiment_type": {"type": "string", "enum": [
+                    "fm_config", "fm_positive_weight", "fm_ensemble", "fm_pairwise", "fm_pairwise_blend"
+                ]},
                 "hypothesis": {"type": "string"}, "rationale": {"type": "string"},
                 "change_summary": {"type": "string"}, "code": {"type": "string"},
                 "parameters": {"type": "object", "additionalProperties": False,
-                    "required": ["k", "lr", "epochs", "batch_size", "patience", "seed", "ensemble_seeds", "positive_weight"],
+                    "required": [
+                        "k", "lr", "epochs", "batch_size", "patience", "seed", "ensemble_seeds", "positive_weight",
+                        "pairwise_lr", "pairwise_epochs", "pairwise_patience", "pairwise_seed", "blend_weight"
+                    ],
                     "properties": {
                         "k": {"type": "integer"},
                         "lr": {"type": "number"},
@@ -98,7 +103,12 @@ class OpenAIProvider:
                         "patience": {"type": "integer"},
                         "seed": {"type": "integer"},
                         "ensemble_seeds": {"type": "array", "items": {"type": "integer"}},
-                        "positive_weight": {"type": "number"}
+                        "positive_weight": {"type": "number"},
+                        "pairwise_lr": {"type": "number"},
+                        "pairwise_epochs": {"type": "integer"},
+                        "pairwise_patience": {"type": "integer"},
+                        "pairwise_seed": {"type": "integer"},
+                        "blend_weight": {"type": "number"}
                     }},
                 "acceptance": {"type": "string"}, "abort_condition": {"type": "string"}, "expected_gain": {"type": "number"},
             },

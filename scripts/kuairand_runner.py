@@ -22,6 +22,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from backend.kuailab.resources import ProcessResourceTracker
+from backend.kuailab.pairwise import sample_pair_indices
 
 
 STARTER = Path(os.getenv("KUAI_STARTER_KIT_DIR", ROOT / "external" / "kuairand-starter-kit")).resolve()
@@ -97,6 +98,36 @@ class WeightedFM(baseline_module.FM):
         return float(loss)
 
 
+class PairwiseFM(WeightedFM):
+    """Factorization Machine optimized for within-user BPR comparisons."""
+
+    def pair_step(self, positive_x: np.ndarray, negative_x: np.ndarray) -> float:
+        positive_z, positive_e, positive_s = self.logits(positive_x)
+        negative_z, negative_e, negative_s = self.logits(negative_x)
+        difference = positive_z - negative_z
+        gradient = ((baseline_module.sigmoid(difference) - 1.0) / len(difference)).astype(np.float32)
+        gradient_v = np.zeros_like(self.V)
+        gradient_w = np.zeros_like(self.W)
+        np.add.at(gradient_w, positive_x, gradient[:, None])
+        np.add.at(gradient_w, negative_x, -gradient[:, None])
+        np.add.at(gradient_v, positive_x, gradient[:, None, None] * (positive_s[:, None, :] - positive_e))
+        np.add.at(gradient_v, negative_x, -gradient[:, None, None] * (negative_s[:, None, :] - negative_e))
+        gradient_v += self.l2 * self.V
+        gradient_w += self.l2 * self.W
+        self.t += 1
+        beta1, beta2, epsilon = 0.9, 0.999, 1e-8
+        for parameter, update, mean, variance in (
+            (self.V, gradient_v, self.mV, self.vV),
+            (self.W, gradient_w, self.mW, self.vW),
+        ):
+            mean *= beta1
+            mean += (1 - beta1) * update
+            variance *= beta2
+            variance += (1 - beta2) * (update * update)
+            parameter -= self.lr * (mean / (1 - beta1 ** self.t)) / (np.sqrt(variance / (1 - beta2 ** self.t)) + epsilon)
+        return float(np.mean(np.logaddexp(0.0, -difference)))
+
+
 def train_one(train_x, train_y, valid_x, valid_y, valid_users, dimension: int, output_dir: Path, parameters: dict, seed: int, positive_weight: float):
     k = max(4, min(int(parameters.get("k", 16)), 32))
     lr = max(0.0001, min(float(parameters.get("lr", 0.001)), 0.01))
@@ -128,28 +159,94 @@ def train_one(train_x, train_y, valid_x, valid_y, valid_users, dimension: int, o
         raise RuntimeError("FM training produced no checkpoint")
     model.V, model.W, model.b, best_scores = best_state
     np.savez_compressed(output_dir / f"checkpoint-seed-{seed}.npz", V=model.V, W=model.W, b=model.b)
-    return best_scores, {"seed": seed, "positive_weight": positive_weight, "epochs": history}
+    return best_scores, {"objective": "weighted_bce", "seed": seed, "positive_weight": positive_weight, "epochs": history}
+
+
+def train_pairwise(
+    train_x, train_y, train_users, valid_x, valid_y, valid_users,
+    dimension: int, output_dir: Path, parameters: dict,
+):
+    k = max(4, min(int(parameters.get("k", 16)), 32))
+    lr = max(0.00005, min(float(parameters.get("pairwise_lr", 0.002)), 0.01))
+    epochs = max(3, min(int(parameters.get("pairwise_epochs", 12)), 30))
+    batch = max(2048, min(int(parameters.get("batch_size", 8192)), 32768))
+    patience = max(2, min(int(parameters.get("pairwise_patience", 4)), 8))
+    seed = int(parameters.get("pairwise_seed", parameters.get("seed", 0)))
+    model = PairwiseFM(dimension, k=k, lr=lr, seed=seed)
+    random = np.random.default_rng(seed)
+    best_score, best_state, bad = -1.0, None, 0
+    history = []
+    for epoch in range(1, epochs + 1):
+        positive_indices, negative_indices = sample_pair_indices(train_users, train_y, random)
+        if not len(positive_indices):
+            raise RuntimeError("Pairwise FM requires at least one user with both positive and negative impressions")
+        losses = [
+            model.pair_step(
+                train_x[positive_indices[start:start + batch]],
+                train_x[negative_indices[start:start + batch]],
+            )
+            for start in range(0, len(positive_indices), batch)
+        ]
+        scores = model.predict(valid_x)
+        metrics = evaluate_module.evaluate(valid_users, valid_y, scores)
+        history.append({
+            "epoch": epoch, "loss": float(np.mean(losses)), "pairs": int(len(positive_indices)),
+            "GAUC": float(metrics["GAUC"]), "nDCG@5": float(metrics["nDCG@5"]),
+            "primary": float(metrics["primary"]), "users": int(metrics["users"]), "rows": int(metrics["rows"]),
+        })
+        if metrics["primary"] > best_score + 1e-5:
+            best_score, bad = metrics["primary"], 0
+            best_state = (model.V.copy(), model.W.copy(), np.float32(model.b), scores.copy())
+        else:
+            bad += 1
+            if bad >= patience:
+                break
+    if best_state is None:
+        raise RuntimeError("Pairwise FM training produced no checkpoint")
+    model.V, model.W, model.b, best_scores = best_state
+    np.savez_compressed(output_dir / f"pairwise-checkpoint-seed-{seed}.npz", V=model.V, W=model.W, b=model.b)
+    return best_scores, {"objective": "bpr_pairwise", "seed": seed, "epochs": history}
 
 
 def train_fm(splits: dict, output_dir: Path, proposal: dict) -> dict:
     encoded, dimension = data_module.encode(splits)
-    train_x, train_y, _ = encoded["train"]
+    train_x, train_y, train_users = encoded["train"]
     valid_x, valid_y, valid_users = encoded["valid"]
     parameters = proposal.get("parameters", {})
     experiment_type = proposal.get("experiment_type", "fm_config")
     seed = int(parameters.get("seed", 0))
-    seeds = parameters.get("ensemble_seeds", [seed]) if experiment_type == "fm_ensemble" else [seed]
+    seeds = parameters.get("ensemble_seeds", [seed]) if experiment_type in {"fm_ensemble", "fm_pairwise_blend"} else [seed]
     seeds = [int(value) for value in seeds[:3]]
     positive_weight = float(parameters.get("positive_weight", 1.0))
     positive_weight = max(1.0, min(positive_weight, 10.0))
-    predictions, histories = [], []
-    for model_seed in seeds:
-        scores, history = train_one(train_x, train_y, valid_x, valid_y, valid_users, dimension, output_dir, parameters, model_seed, positive_weight)
-        predictions.append(scores)
-        histories.append(history)
-    best_scores = np.mean(np.stack(predictions), axis=0)
+    predictions, histories, pairwise_histories = [], [], []
+    if experiment_type != "fm_pairwise":
+        for model_seed in seeds:
+            scores, history = train_one(train_x, train_y, valid_x, valid_y, valid_users, dimension, output_dir, parameters, model_seed, positive_weight)
+            predictions.append(scores)
+            histories.append(history)
+    if experiment_type in {"fm_pairwise", "fm_pairwise_blend"}:
+        pairwise_scores, pairwise_history = train_pairwise(
+            train_x, train_y, train_users, valid_x, valid_y, valid_users,
+            dimension, output_dir, parameters,
+        )
+        pairwise_histories.append(pairwise_history)
+        if experiment_type == "fm_pairwise":
+            best_scores = pairwise_scores
+        else:
+            blend_weight = max(0.0, min(float(parameters.get("blend_weight", 0.4)), 1.0))
+            pointwise_scores = np.mean(np.stack(predictions), axis=0)
+            best_scores = (1.0 - blend_weight) * pointwise_scores + blend_weight * pairwise_scores
+    else:
+        blend_weight = 0.0
+        best_scores = np.mean(np.stack(predictions), axis=0)
     final = evaluate_module.evaluate(valid_users, valid_y, best_scores)
-    (output_dir / "training-history.json").write_text(json.dumps({"experiment_type": experiment_type, "runs": histories}, indent=2), encoding="utf-8")
+    (output_dir / "training-history.json").write_text(json.dumps({
+        "experiment_type": experiment_type,
+        "blend_weight": blend_weight if experiment_type == "fm_pairwise_blend" else None,
+        "runs": histories,
+        "pairwise_runs": pairwise_histories,
+    }, indent=2), encoding="utf-8")
     return {"primary": float(final["primary"]), "gauc": float(final["GAUC"]), "ndcg5": float(final["nDCG@5"])}
 
 

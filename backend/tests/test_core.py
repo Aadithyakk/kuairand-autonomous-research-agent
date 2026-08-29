@@ -6,10 +6,13 @@ import time
 import unittest
 from pathlib import Path
 
+import numpy as np
+
 from backend.kuailab.benchmark import SyntheticBenchmark, validate_metrics
 from backend.kuailab.config import Settings
 from backend.kuailab.engine import CampaignEngine
 from backend.kuailab.provider import DemoProvider, OpenAIProvider
+from backend.kuailab.pairwise import sample_pair_indices
 from backend.kuailab.resources import normalize_resource_usage
 from backend.kuailab.state import StateStore
 
@@ -24,6 +27,16 @@ class CoreTests(unittest.TestCase):
     def test_responses_output_text_fallback(self):
         response = {"output": [{"content": [{"type": "output_text", "text": "{\"ok\":true}"}]}]}
         self.assertEqual(OpenAIProvider._output_text(response), '{"ok":true}')
+
+    def test_pairwise_sampler_uses_same_user_logged_negatives(self):
+        users = ["u1", "u1", "u1", "u2", "u2", "u3"]
+        labels = np.asarray([1, 0, 1, 1, 1, 0], dtype=np.float32)
+        positives, negatives = sample_pair_indices(users, labels, np.random.default_rng(7))
+        self.assertEqual(len(positives), 2)
+        for positive, negative in zip(positives, negatives):
+            self.assertEqual(users[positive], users[negative])
+            self.assertEqual(labels[positive], 1)
+            self.assertEqual(labels[negative], 0)
 
     def test_metric_validation_rejects_impossible_values(self):
         with self.assertRaises(ValueError):
