@@ -1,0 +1,43 @@
+{
+  "title": "Continuous watch-ratio and anchored same-session margin consensus",
+  "experiment_type": "offline_regularized_history_consensus",
+  "hypothesis": "Continuous watch-ratio supervision can improve global preference calibration while a lightly weighted same-session margin can independently sharpen top-ranked separation without replacing the pointwise objective.",
+  "split_protocol": {
+    "candidate_training_dates": [20220408, 20220421],
+    "validation_dates": [20220422, 20220428],
+    "validation_labels_used_as_features": false,
+    "validation_labels_used_for_model_selection": true,
+    "hidden_test_accessed": false
+  },
+  "watch_ratio_candidate": {
+    "model": "full-history DeepFM with continuous auxiliary regression head",
+    "primary_objective": "positive-weighted binary cross-entropy",
+    "auxiliary_target": "clip(play_time_ms / duration_ms, 0, 1)",
+    "auxiliary_objective": "mean squared error",
+    "auxiliary_weight": 0.4,
+    "seed": 293,
+    "best_epoch": 4,
+    "standalone_primary": 0.6080526113510132
+  },
+  "session_margin_candidate": {
+    "model": "full-history DeepFM with pointwise-anchored same-session margin",
+    "primary_objective": "positive-weighted binary cross-entropy",
+    "margin_objective": "max(0, 1 - (positive_logit - negative_logit))",
+    "margin_weight": 0.05,
+    "pair_fraction": 0.1,
+    "session_boundary_minutes": 30,
+    "seed": 293,
+    "best_epoch": 1,
+    "standalone_primary": 0.6072958707809448
+  },
+  "consensus": {
+    "normalization": "within-user standardized ordinal rank",
+    "prior_ordered_consensus_weight_in_watch_stage": 0.635,
+    "watch_ratio_candidate_weight": 0.365,
+    "watch_stage_weight_in_final": 0.73,
+    "session_margin_candidate_weight": 0.27,
+    "two_fold_disjoint_user_primary": 0.6109704971313477
+  },
+  "acceptance": "Promote only when the fixed official-validation score improves, both disjoint-user folds improve, and no validation outcome is used as a feature or training target.",
+  "result": "accepted_as_research_best_target_not_reached"
+}

@@ -1,0 +1,22 @@
+{
+  "measurement_scope": "watch-ratio candidate training, same-session margin candidate training, and cached-candidate consensus verification",
+  "training_wall_seconds": 72.578,
+  "training_cpu_seconds": 215.872,
+  "training_cpu_hours": 0.059964,
+  "training_peak_rss_mb": 15898.125,
+  "verification_wall_seconds": 8.463,
+  "verification_cpu_seconds": 8.448,
+  "verification_cpu_hours": 0.002347,
+  "verification_peak_rss_mb": 477.375,
+  "gpu_count": 0,
+  "gpu_seconds": 0.0,
+  "gpu_hours": 0.0,
+  "peak_gpu_memory_mb": 0.0,
+  "device": "cpu",
+  "candidate_search_complete_tracking": true,
+  "hardware": {
+    "logical_cpu_count": 16,
+    "architecture": "arm64",
+    "processor": "arm"
+  }
+}
