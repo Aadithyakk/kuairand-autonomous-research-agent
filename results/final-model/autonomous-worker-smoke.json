@@ -32,5 +32,31 @@
     "device": "cpu",
     "architecture": "arm64"
   },
-  "result": "The freshly trained candidate was weaker than the frozen champion. Its conservative residual did not change any evaluated ordering, so the worker returned the exact champion metrics and supplied no promotion gain."
+  "result": "The freshly trained candidate was weaker than the frozen champion. Its conservative residual did not change any evaluated ordering, so the worker returned the exact champion metrics and supplied no promotion gain.",
+  "deepfm_runtime_verification": {
+    "pytorch_version": "2.10.0",
+    "candidate_family": "deepfm_blend",
+    "champion_blend_weight": 0.216,
+    "deep_epochs_completed": 8,
+    "candidate_metrics": {
+      "primary": 0.603428304195404,
+      "gauc": 0.6698174476623535,
+      "ndcg5": 0.5370391607284546
+    },
+    "worker_output_metrics": {
+      "primary": 0.6125683784484863,
+      "gauc": 0.682065486907959,
+      "ndcg5": 0.5430713295936584
+    },
+    "resource_usage": {
+      "wall_seconds": 32.833,
+      "train_seconds": 30.959,
+      "cpu_seconds": 38.234,
+      "cpu_hours": 0.010621,
+      "peak_rss_mb": 912.453,
+      "gpu_hours": 0.0,
+      "device": "cpu"
+    },
+    "result": "The launcher selected a PyTorch-capable interpreter and the previously blocked configuration completed. The measured residual regressed, so the frozen champion remained retained."
+  }
 }

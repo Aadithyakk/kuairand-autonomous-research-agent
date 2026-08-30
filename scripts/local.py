@@ -18,10 +18,27 @@ def runner_python() -> Path:
         Path.home() / ".cache" / "codex-runtimes" / "codex-primary-runtime" / "dependencies" / "python" / "bin" / "python3",
         Path(sys.executable),
     ]
+    numpy_candidates: list[Path] = []
     for candidate in candidates:
-        if candidate.exists() and subprocess.run([str(candidate), "-c", "import numpy"], capture_output=True).returncode == 0:
+        if not candidate.exists():
+            continue
+        has_numpy = subprocess.run(
+            [str(candidate), "-c", "import numpy"], capture_output=True,
+        ).returncode == 0
+        if not has_numpy:
+            continue
+        numpy_candidates.append(candidate)
+        has_deep_runtime = subprocess.run(
+            [
+                str(candidate), "-c",
+                "import torch; parts=torch.__version__.split('+')[0].split('.'); "
+                "assert tuple(map(int, parts[:2])) >= (2, 1)",
+            ],
+            capture_output=True,
+        ).returncode == 0
+        if has_deep_runtime:
             return candidate
-    return Path(sys.executable)
+    return numpy_candidates[0] if numpy_candidates else Path(sys.executable)
 
 
 def main() -> int:

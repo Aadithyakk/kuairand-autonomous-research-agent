@@ -43,6 +43,8 @@ The hidden split remains unavailable to this adapter. Set **Mount verified 0.612
 
 The real arm64 integration smoke retrained a fresh FM in `7.001` seconds, used `0.002496` CPU-hours and `541.359` MB peak RAM, and correctly retained the `0.612858` champion when the candidate reached only `0.596280`. Its auditable result is checked in at [`results/final-model/autonomous-worker-smoke.json`](results/final-model/autonomous-worker-smoke.json).
 
+The launcher also selects the most capable available runner interpreter instead of the first NumPy-only runtime. On this arm64 host it selected PyTorch `2.10.0` and completed the formerly blocked DeepFM residual in `32.833` seconds; its `0.612568` result was correctly rejected.
+
 ## Verified real runs
 
 On 29 August 2026, KuaiLab completed a GPT-5.6 Sol campaign against the supplied KuaiRand-Pure validation split. It first improved the retained FM champion from `0.601470` to `0.603781` primary score, then added a within-user BPR executor and reached `0.605366`. A controlled DeepFM extension reached `0.605809`; the current clean checkpoint adds a small label-free clock-context FM and verifies **`0.605885` primary** (`+0.004415`, or about `+0.73%` relative, over the reproduced baseline), with `0.672964` GAUC and `0.538805` nDCG@5.
