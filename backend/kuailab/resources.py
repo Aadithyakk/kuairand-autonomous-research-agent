@@ -93,6 +93,23 @@ def add_resource_usage(campaign_usage: dict, run_usage: Mapping[str, object] | N
     campaign_usage["experiments_measured"] = int(campaign_usage.get("experiments_measured", 0)) + 1
 
 
+def combine_resource_usage(*records: Mapping[str, object] | None) -> dict:
+    """Combine retry attempts without hiding compute spent on failed work."""
+    normalized = [normalize_resource_usage(record) for record in records if record]
+    if not normalized:
+        return normalize_resource_usage()
+    return normalize_resource_usage({
+        "wall_seconds": sum(item["wall_seconds"] for item in normalized),
+        "train_seconds": sum(item["train_seconds"] for item in normalized),
+        "cpu_seconds": sum(item["cpu_seconds"] for item in normalized),
+        "gpu_hours": sum(item["gpu_hours"] for item in normalized),
+        "peak_rss_mb": max(item["peak_rss_mb"] for item in normalized),
+        "peak_gpu_memory_mb": max(item["peak_gpu_memory_mb"] for item in normalized),
+        "gpu_count": max(item["gpu_count"] for item in normalized),
+        "device": "gpu" if any(item["gpu_count"] or item["gpu_hours"] for item in normalized) else "cpu",
+    })
+
+
 @dataclass
 class ProcessResourceTracker:
     """Low-overhead wall, CPU, and peak-RAM tracking for the trusted runner."""

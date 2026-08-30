@@ -64,7 +64,8 @@
     "Censored mixture-of-lognormals survival ranking reached 0.59077823 standalone and selected a nonzero residual in only one fold.",
     "Kaplan-Meier-style threshold survival priors produced apparent fixed micro-gains but retained held-out regressions, including the 0.61282837 type-at-risk candidate.",
     "Three-seed duration-regime experts reached 0.60820252 standalone and 0.61280549 fixed, but fold 1 regressed; coverage gating and independent regime biases did not stabilize the gain.",
-    "Whole-user residual CatBoost rankers reached 0.61187887 (PairLogitPairwise) and 0.61124790 (QuerySoftMax) standalone, but their cross-fitted corrections regressed and were excluded."
+    "Whole-user residual CatBoost rankers reached 0.61187887 (PairLogitPairwise) and 0.61124790 (QuerySoftMax) standalone, but their cross-fitted corrections regressed and were excluded.",
+    "XGBoost LambdaMART rank:ndcg, rank:pairwise, and rank:map reached at most 0.61194855 standalone; the three-seed rank:map ensemble reached 0.6118993, selected zero global residual, and retained a regressing fold under its strongest structural gate."
   ],
   "latest_rejected_cycle": "rejected-cycle-2026-08-30-interaction-watch.json",
   "latest_accepted_cycle": "accepted-cycle-2026-08-30-recent-coverage-yeti.json",

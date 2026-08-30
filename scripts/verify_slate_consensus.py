@@ -2,6 +2,7 @@
 """Reproduce the accepted label-free slate correction on the validation split."""
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import math
@@ -18,6 +19,15 @@ sys.path.insert(0, str(ROOT))
 
 from backend.kuailab.resources import ProcessResourceTracker
 from scripts import kuairand_runner as runner
+
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument(
+    "--scores-output",
+    type=Path,
+    help="Optional .npz path for the verified validation scores.",
+)
+args = parser.parse_args() if __name__ == "__main__" else parser.parse_args([])
 
 
 tracker = ProcessResourceTracker()
@@ -683,6 +693,9 @@ if batch_slate_tree is not None:
             shallow_yeti_rank - user_rank(scores)
         )
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
+if args.scores_output:
+    args.scores_output.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(args.scores_output, scores=scores.astype(np.float32))
 
 days = {}
 for date in sorted(set(dates.tolist())):

@@ -1,0 +1,40 @@
+{
+  "project": "KuaiLab v2",
+  "task": "KuaiRand-Pure long_view recommendation ranking",
+  "metric": "0.5 * GAUC + 0.5 * nDCG@5",
+  "official_limits": {
+    "iterations": 50,
+    "wall_hours": 6,
+    "convergence_epsilon": 0.002,
+    "convergence_patience": 3
+  },
+  "splits": {
+    "train": {"dates": "20220408-20220421", "rows": 1141112},
+    "validation": {"dates": "20220422-20220428", "rows": 124909},
+    "hidden_test": {"dates": "20220429-20220508", "rows": 170588, "accessed": false}
+  },
+  "results": {
+    "official_baseline": {"gauc": 0.6674, "ndcg5": 0.5357, "primary": 0.60155},
+    "reproduced_baseline": {"gauc": 0.6671333909034729, "ndcg5": 0.5358057022094727, "primary": 0.6014695167541504},
+    "validation_best": {"gauc": 0.6823537349700928, "ndcg5": 0.5433623194694519, "primary": 0.6128580570220947},
+    "absolute_gain_over_reproduced_baseline": 0.011388540267944336,
+    "relative_gain_over_reproduced_baseline_percent": 1.8934526107662046
+  },
+  "autonomous_campaign_to_convergence": {
+    "input_tokens": 6800,
+    "output_tokens": 18002,
+    "reasoning_tokens": 12238,
+    "total_tokens": 24802,
+    "wall_seconds": 479.67,
+    "iterations_used": 5,
+    "iterations_limit": 50,
+    "manual_interventions": 1,
+    "gpu_hours": 0.0
+  },
+  "canonical_final_verification": {
+    "wall_seconds": 17.493,
+    "cpu_hours": 0.004858,
+    "peak_rss_mb": 1108.156,
+    "gpu_hours": 0.0
+  }
+}

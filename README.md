@@ -12,16 +12,28 @@ The previous repository is not a dependency. This implementation was rebuilt fro
 - Real KuaiRand-Pure adapter built around the supplied organizer starter kit, plus a fail-closed external-adapter contract for alternative runners.
 - Typed pointwise, positive-weighted, multi-seed, BPR pairwise, pointwise/pairwise-blend, DeepFM-blend, and clock-context-blend experiment executors.
 - Atomic `state.json`, append-only `events.jsonl`, proposal source, unified diff, runner logs, metrics, failures, and recovery evidence.
-- Champion promotion, configurable per-session experiment/time limits, and configurable small-gain convergence checks.
+- Champion promotion plus the official global 50-iteration, six-hour, ε=0.002 / three-iteration convergence limits, preserved across continuation.
+- Automatic planner retry and one lower-resource worker retry with both failures, routes, diffs, and compute retained in the evidence log.
 - Live dashboard controls: start, continue from the retained champion, pause, resume, stop, and steer the next hypothesis.
 - Token accounting split into input, output, reasoning, and total tokens.
-- Per-run compute accounting: training and wall time, CPU time/hours, average CPU utilization, peak RAM, GPU-hours, and peak VRAM.
+- Per-run compute accounting: training and wall time, CPU time/hours, average CPU utilization, peak RAM, GPU-hours, and peak VRAM, plus campaign-level manual-intervention/failure/recovery counts.
+
+## Official benchmark contract
+
+- Target: `long_view`.
+- Metrics: user-grouped GAUC and nDCG@5; primary = `0.5 * (GAUC + nDCG@5)`.
+- Train: 8–21 April 2022, 1,141,112 rows.
+- Validation: 22–28 April 2022, 124,909 rows.
+- Hidden test: 29 April–8 May 2022, 170,588 rows; never used by the development loop.
+- Campaign ceiling: 50 experiments and six wall-clock hours.
+- Convergence: stop after three consecutive experiments without a primary gain greater than 0.002.
+- Submission header: `row_id,user_id,video_id,score` with zero-based strictly increasing row IDs.
 
 ## Verified real runs
 
 On 29 August 2026, KuaiLab completed a GPT-5.6 Sol campaign against the supplied KuaiRand-Pure validation split. It first improved the retained FM champion from `0.601470` to `0.603781` primary score, then added a within-user BPR executor and reached `0.605366`. A controlled DeepFM extension reached `0.605809`; the current clean checkpoint adds a small label-free clock-context FM and verifies **`0.605885` primary** (`+0.004415`, or about `+0.73%` relative, over the reproduced baseline), with `0.672964` GAUC and `0.538805` nDCG@5.
 
-A subsequent leak-free offline research sweep adds outcome-free session position, repeat-fatigue, and time-gap rerankers, then combines candidates by within-user ordinal rank. An ordered categorical full-history candidate adds a small independent correction. Continuous watch-ratio supervision and a lightly anchored same-session margin add complementary corrections, while a full-metadata CatBoost classifier supplies a final tree-based residual. A final slate correction aligns the recipe with the official evaluator's seven-day within-user ranking unit: label-free content and temporal neighborhoods remove locally anomalous scores, while three Bayesian-smoothed cross-conditional priors use only April 8-21 training outcomes. A temporally trained April 14-21 batch-slate CatBoost then combines full-slate score neighborhoods with a continuous repeat penalty; an outer ordinal consensus retains the same positive direction across four disjoint user folds. Score-only confidence gates correct high-margin predictions, active-day and slate-size gates route sparse structural regimes, two training-coverage gates select frozen experts, a training-only user-neighbor graph adds a collaborative correction, and a jointly selected user-balanced-tree/watch-ratio pair supplies a conservative residual. Final session-count gates move one-session users toward YetiRank and two/three-session users slightly away from broad median consensus; a high-recent-coverage gate extrapolates away from a shallow regularized YetiRank expert. The current reproduced validation result is **`0.612858` primary** (`0.682354` GAUC, `0.543362` nDCG@5), a gain of `+0.011389` (about `+1.89%`) over the baseline. Multi-view neighbors, uncertainty smoothing, causal Transformers, published CWM likelihood, and xDeepFM compressed interactions found no stable promotion; xDeepFM reached `0.607251` standalone but selected zero residual weight. This is recorded under `results/verified-slate-consensus`; it is a research ensemble rather than the lightweight checkpoint restored by the autonomous campaign engine. The `0.700000` stretch target has not been reached, and the remaining gap is `0.087142`.
+A subsequent leak-free offline research sweep adds outcome-free session position, repeat-fatigue, and time-gap rerankers, then combines candidates by within-user ordinal rank. An ordered categorical full-history candidate adds a small independent correction. Continuous watch-ratio supervision and a lightly anchored same-session margin add complementary corrections, while a full-metadata CatBoost classifier supplies a final tree-based residual. A final slate correction aligns the recipe with the official evaluator's seven-day within-user ranking unit: label-free content and temporal neighborhoods remove locally anomalous scores, while three Bayesian-smoothed cross-conditional priors use only April 8-21 training outcomes. A temporally trained April 14-21 batch-slate CatBoost then combines full-slate score neighborhoods with a continuous repeat penalty; an outer ordinal consensus retains the same positive direction across four disjoint user folds. Score-only confidence gates correct high-margin predictions, active-day and slate-size gates route sparse structural regimes, two training-coverage gates select frozen experts, a training-only user-neighbor graph adds a collaborative correction, and a jointly selected user-balanced-tree/watch-ratio pair supplies a conservative residual. Final session-count gates move one-session users toward YetiRank and two/three-session users slightly away from broad median consensus; a high-recent-coverage gate extrapolates away from a shallow regularized YetiRank expert. The current reproduced validation result is **`0.612858` primary** (`0.682354` GAUC, `0.543362` nDCG@5), a gain of `+0.011389` (about `+1.89%`) over the baseline. Multi-view neighbors, uncertainty smoothing, causal Transformers, published CWM likelihood, xDeepFM compressed interactions, and XGBoost LambdaMART found no stable promotion; the best LambdaMART seed reached `0.611949` standalone and selected zero global residual. This is recorded under `results/verified-slate-consensus`, and the autonomous engine now restores it as the validation-best starting champion. The `0.700000` stretch target has not been reached, and the remaining gap is `0.087142`.
 
 The retained blend averages positive-weighted pointwise FMs from seeds 0 and 2, mixes in a seed-1 BPR FM at weight `0.455`, mixes a seed-0 DeepFM into that score at weight `0.23`, then adds a globally standardized clock-context FM at weight `0.024`. Its clean executor run took `69.070` seconds, used `0.020507` CPU-hours, peaked at `1042.172` MB RAM, and used no GPU. The method is available to the autonomous planner as typed `fm_temporal_deep_blend` evidence rather than a one-off analysis script.
 
@@ -48,6 +60,8 @@ The dashboard's deterministic demo can display scores up to `0.6250`; those valu
 One ensemble attempt was deliberately invalidated after its runner process was terminated: inspection showed that the ensemble path would have ignored the proposed positive-example weight. The result was not scored or promoted, and the runner was corrected before the campaign continued. The hidden test was never accessed.
 
 The original campaign evidence is in [`results/run-9ecfd2aa09`](results/run-9ecfd2aa09), the pairwise milestone is in [`results/verified-pairwise-blend`](results/verified-pairwise-blend), the DeepFM milestone is in [`results/verified-deep-blend`](results/verified-deep-blend), the retained lightweight checkpoint is in [`results/verified-temporal-deep-blend`](results/verified-temporal-deep-blend), and the current research-best evidence is in [`results/verified-slate-consensus`](results/verified-slate-consensus). Checkpoints, raw runner requests, logs containing local paths, and the dataset are excluded from Git.
+
+The frozen recipe manifest, compressed validation scores, and 124,909-row organizer-schema validation export are checked into [`results/final-model`](results/final-model). The export is alignment evidence, not a hidden-test result. See [`docs/FINAL_SUBMISSION.md`](docs/FINAL_SUBMISSION.md) for the guarded one-time final procedure.
 
 ## Security first
 
@@ -79,6 +93,8 @@ npm run build
 python3 -m pip install -r requirements-research.txt  # research-only tree stack
 python3 scripts/train_batch_slate_meta.py            # rebuild final tree artifact
 python3 scripts/verify_slate_consensus.py  # requires retained runtime score artifacts
+python3 scripts/verify_slate_consensus.py --scores-output results/final-model/validation-scores.npz
+python3 scripts/export_submission.py --help
 ```
 
 ## Use GPT-5.6 Sol
@@ -196,9 +212,31 @@ The hidden test is not part of the autonomous loop. Only the retained validation
 - `GET /api/health`
 - `GET /api/state`
 - `GET /api/events`
-- `POST /api/run/start` with `{ "provider": "demo|gpt", "mode": "demo|kuairand", "limits": { "max_iterations": 20, "max_hours": 6, "convergence_epsilon": 0.0001, "convergence_patience": 8 }, "bootstrap_verified": true }`
+- `POST /api/run/start` with `{ "provider": "demo|gpt", "mode": "demo|kuairand", "limits": { "max_iterations": 50, "max_hours": 6, "convergence_epsilon": 0.002, "convergence_patience": 3 }, "bootstrap_verified": true }`
 - `POST /api/run/continue` with a new `limits` object to retain the champion, evidence history, and cumulative compute accounting while opening another experiment/time budget.
 - `POST /api/run/pause`, `/api/run/resume`, `/api/run/stop`, `/api/run/reset`
 - `POST /api/steer` with `{ "instruction": "..." }`
 
 The API binds to `127.0.0.1:8787` by default and only permits the local dashboard origins through CORS.
+
+## Submission materials
+
+- Devpost-ready project copy: [`docs/DEVPOST.md`](docs/DEVPOST.md)
+- Judging report and resource totals: [`docs/JUDGING_REPORT.md`](docs/JUDGING_REPORT.md)
+- Final output runbook: [`docs/FINAL_SUBMISSION.md`](docs/FINAL_SUBMISSION.md)
+- Requirement-by-requirement audit: [`docs/REQUIREMENTS_CHECKLIST.md`](docs/REQUIREMENTS_CHECKLIST.md)
+- Machine-readable score/resource summary: [`results/project-summary.json`](results/project-summary.json)
+- Validation-best recipe and output artifacts: [`results/final-model`](results/final-model)
+
+## Limitations and future improvements
+
+- The 0.612858 champion is a large offline ensemble with several frozen prerequisite artifacts; it is reproducible but not yet a compact production model. Distillation into one deployable scorer is the highest-value follow-up.
+- Full-slate label-free corrections assume the complete candidate slate is available at inference, which matches the official batch evaluator but not every online serving environment.
+- GPU telemetry must be supplied by a GPU-backed adapter; this CPU-only run used zero GPU-hours.
+- The hidden test is intentionally untouched. Its guarded export should be run once only after the validation recipe and Git commit are frozen.
+- KuaiRand-1k/27k remains an optional follow-up benchmark.
+
+## Team contributions
+
+- **Aadithyakk / Aadithya:** original autonomous-agent architecture, campaign hardening, trusted KuaiRand runner, challenge integration, and baseline research.
+- **milkksthetic:** compute tracking, pairwise/DeepFM executors, campaign continuation, extensive leak-free ablations, consensus/routing research, verified evidence, and final completion pass.

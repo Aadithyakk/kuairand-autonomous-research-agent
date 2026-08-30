@@ -81,7 +81,7 @@ class CoreTests(unittest.TestCase):
             self.assertTrue((Path(directory) / "campaigns" / snapshot["campaign"]["id"] / "resource-summary.json").exists())
             self.assertEqual(snapshot["iterations"][-1]["experiment_type"], "fm_config")
             self.assertTrue(snapshot["iterations"][-1]["parameters"])
-            self.assertEqual(json.loads((Path(directory) / "state.json").read_text())["version"], 4)
+            self.assertEqual(json.loads((Path(directory) / "state.json").read_text())["version"], 5)
 
     def test_campaign_continuation_preserves_champion_and_history(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -121,10 +121,41 @@ class CoreTests(unittest.TestCase):
             engine = CampaignEngine(settings, StateStore(Path(directory), settings.public_dict()))
             retained = engine._verified_champion({"primary": 0.6014695167541504, "gauc": 0.6671333909034729, "ndcg5": 0.5358057022094727})
             self.assertIsNotNone(retained)
-            self.assertEqual(retained["experiment_type"], "fm_temporal_deep_blend")
-            self.assertAlmostEqual(retained["metrics"]["primary"], 0.6058847904205322)
-            self.assertEqual(retained["parameters"]["deep_blend_weight"], 0.23)
-            self.assertEqual(retained["parameters"]["temporal_blend_weight"], 0.024)
+            self.assertEqual(retained["experiment_type"], "offline_slate_reranking")
+            self.assertAlmostEqual(retained["metrics"]["primary"], 0.6128580570220947)
+            self.assertFalse(retained["budget_counted"])
+
+    def test_failed_worker_is_retried_and_audited(self):
+        with tempfile.TemporaryDirectory() as directory:
+            settings = Settings(max_iterations=4, max_hours=1, convergence_patience=0, stage_delay_seconds=0, state_dir=Path(directory))
+            store = StateStore(Path(directory), settings.public_dict())
+            engine = CampaignEngine(settings, store)
+            engine.start("demo", "demo")
+            self.wait_for(engine)
+            snapshot = store.snapshot()
+            failed = snapshot["iterations"][-1]
+            self.assertEqual(failed["status"], "failed")
+            self.assertEqual(snapshot["campaign"]["recovery_count"], 1)
+            self.assertEqual(snapshot["campaign"]["failure_count"], 2)
+            self.assertEqual(failed["recovery_events"][0]["outcome"], "failed")
+            artifact = Path(failed["artifact"])
+            self.assertTrue((artifact / "retry-1" / "proposal.json").exists())
+            self.assertTrue((artifact / "iteration-log.json").exists())
+
+    def test_continuation_cannot_exceed_global_iteration_budget(self):
+        with tempfile.TemporaryDirectory() as directory:
+            settings = Settings(stage_delay_seconds=0, state_dir=Path(directory))
+            store = StateStore(Path(directory), settings.public_dict())
+            def exhaust(state):
+                state["campaign"].update(id="run-exhausted", mode="demo", provider="demo", status="complete")
+                state["iterations"].extend(
+                    {"number": number, "status": "rejected", "budget_counted": True}
+                    for number in range(1, 51)
+                )
+            store.update(exhaust)
+            engine = CampaignEngine(settings, store)
+            with self.assertRaisesRegex(RuntimeError, "50-iteration"):
+                engine.continue_campaign()
 
 
 if __name__ == "__main__":

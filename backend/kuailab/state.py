@@ -17,9 +17,9 @@ def utc_now() -> str:
 
 
 def initial_state(config: dict) -> dict:
-    baseline = {"primary": 0.6016, "gauc": 0.6612, "ndcg5": 0.5310}
+    baseline = {"primary": 0.60155, "gauc": 0.6674, "ndcg5": 0.5357}
     return {
-        "version": 4,
+        "version": 5,
         "campaign": {
             "id": None,
             "status": "idle",
@@ -33,6 +33,10 @@ def initial_state(config: dict) -> dict:
             "session_started_at": None,
             "session_start_iteration": 1,
             "session_start_wall_seconds": 0.0,
+            "manual_interventions": 0,
+            "failure_count": 0,
+            "recovery_count": 0,
+            "consecutive_small_gains": 0,
             "limits": {
                 "max_iterations": config["max_iterations"],
                 "max_hours": config["max_hours"],
@@ -76,7 +80,7 @@ class StateStore:
 
     def _migrate(self, config: dict) -> None:
         defaults = initial_state(config)
-        self._state["version"] = 4
+        self._state["version"] = 5
         self._state.setdefault("config", config)
         campaign = self._state.setdefault("campaign", defaults["campaign"])
         for key, value in defaults["campaign"].items():

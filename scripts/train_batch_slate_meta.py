@@ -15,6 +15,7 @@ import polars as pl
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "runtime" / "catboost-venv"))
+sys.path.insert(0, str(ROOT / "runtime" / "xgboost-venv"))
 
 from catboost import CatBoostClassifier, CatBoostRanker, Pool
 from sklearn.linear_model import LogisticRegression
@@ -35,11 +36,36 @@ parser.add_argument("--ranker-depth", type=int, default=8)
 parser.add_argument("--ranker-learning-rate", type=float, default=0.04)
 parser.add_argument("--ranker-l2", type=float, default=12.0)
 parser.add_argument("--ranker-seed", type=int, default=769)
+parser.add_argument(
+    "--xgboost-ranker",
+    action="store_true",
+    help="Use XGBoost LambdaMART (rank:ndcg) instead of CatBoost.",
+)
+parser.add_argument(
+    "--xgboost-objective",
+    choices=("rank:ndcg", "rank:pairwise", "rank:map"),
+    default="rank:ndcg",
+)
+parser.add_argument(
+    "--xgboost-pair-method", choices=("topk", "mean"), default="topk",
+)
 args = parser.parse_args()
+if args.xgboost_ranker and args.ranker_objective:
+    parser.error("--xgboost-ranker and --ranker-objective are mutually exclusive")
+if args.xgboost_ranker:
+    try:
+        from xgboost import XGBRanker
+    except ImportError as error:
+        parser.error(
+            "--xgboost-ranker requires xgboost from requirements-research.txt "
+            f"({error})"
+        )
 
 tracker = ProcessResourceTracker()
 residual_mode = args.residual_baseline
-ranker_mode = bool(args.ranker_objective)
+catboost_ranker_mode = bool(args.ranker_objective)
+xgboost_ranker_mode = args.xgboost_ranker
+ranker_mode = catboost_ranker_mode or xgboost_ranker_mode
 os.environ["KUAI_SKIP_BATCH_SLATE"] = "1"
 with contextlib.redirect_stdout(io.StringIO()):
     from scripts import verify_slate_consensus as champion
@@ -282,7 +308,12 @@ base_calibrator = LogisticRegression(C=100.0, max_iter=200, random_state=751)
 base_calibrator.fit(base_fraction[fit, None], y[fit])
 base_logit = base_calibrator.decision_function(base_fraction[:, None]).astype(np.float64)
 
-if ranker_mode:
+
+def query_order(indices: np.ndarray) -> np.ndarray:
+    return indices[np.argsort(users[indices], kind="stable")]
+
+
+if catboost_ranker_mode:
     parameters = dict(
         loss_function=args.ranker_objective, eval_metric="NDCG:top=5",
         iterations=args.ranker_iterations, depth=args.ranker_depth,
@@ -290,9 +321,6 @@ if ranker_mode:
         random_seed=args.ranker_seed, thread_count=8, random_strength=0.25,
         od_type="Iter", od_wait=50, allow_writing_files=False, verbose=25,
     )
-
-    def query_order(indices: np.ndarray) -> np.ndarray:
-        return indices[np.argsort(users[indices], kind="stable")]
 
     fit = query_order(fit)
     holdout = query_order(holdout)
@@ -307,6 +335,34 @@ if ranker_mode:
         baseline=base_logit[holdout],
     )
     model = CatBoostRanker(**parameters)
+elif xgboost_ranker_mode:
+    parameters = dict(
+        objective=args.xgboost_objective, eval_metric="ndcg@5",
+        n_estimators=args.ranker_iterations,
+        max_depth=args.ranker_depth,
+        learning_rate=args.ranker_learning_rate,
+        min_child_weight=20.0,
+        subsample=0.85,
+        colsample_bytree=0.85,
+        reg_alpha=0.05,
+        reg_lambda=args.ranker_l2,
+        tree_method="hist",
+        max_bin=256,
+        lambdarank_pair_method=args.xgboost_pair_method,
+        lambdarank_num_pair_per_sample=10,
+        early_stopping_rounds=50,
+        random_state=args.ranker_seed,
+        n_jobs=8,
+    )
+
+    def query_groups(indices: np.ndarray) -> np.ndarray:
+        return np.unique(users[indices], return_counts=True)[1].astype(np.int32)
+
+    fit = query_order(fit)
+    holdout = query_order(holdout)
+    fit_groups = query_groups(fit)
+    holdout_groups = query_groups(holdout)
+    model = XGBRanker(**parameters)  # type: ignore[name-defined]
 else:
     parameters = dict(
         loss_function="Logloss", eval_metric="AUC", iterations=500, depth=8,
@@ -325,12 +381,28 @@ else:
         baseline=base_logit[holdout] if residual_mode else None,
     )
     model = CatBoostClassifier(**parameters)
-model.fit(fit_pool, eval_set=holdout_pool, use_best_model=True)
-trees = max(model.tree_count_, 1)
-holdout_scores = (
-    model.predict(holdout_pool)
-    if ranker_mode else model.predict(holdout_pool, prediction_type="RawFormulaVal")
-)
+if xgboost_ranker_mode:
+    model.fit(
+        features.iloc[fit], y[fit], group=fit_groups,
+        base_margin=base_logit[fit],
+        eval_set=[(features.iloc[holdout], y[holdout])],
+        eval_group=[holdout_groups],
+        base_margin_eval_set=[base_logit[holdout]],
+        verbose=25,
+    )
+    trees = max(int(model.best_iteration) + 1, 1)
+    holdout_scores = model.predict(
+        features.iloc[holdout], base_margin=base_logit[holdout]
+    )
+else:
+    model.fit(fit_pool, eval_set=holdout_pool, use_best_model=True)
+    trees = max(model.tree_count_, 1)
+    holdout_scores = (
+        model.predict(holdout_pool)
+        if ranker_mode else model.predict(
+            holdout_pool, prediction_type="RawFormulaVal"
+        )
+    )
 holdout_metrics = runner.evaluate_module.evaluate(
     users[holdout].tolist(), y[holdout], holdout_scores,
 )
@@ -344,50 +416,74 @@ holdout_best = max(holdout_blends, key=lambda value: value[0])
 print("HOLDOUT", holdout_metrics, "BLEND", holdout_best, "TREES", trees, flush=True)
 
 final_parameters = dict(parameters)
-final_parameters.update({"iterations": trees, "od_type": None, "od_wait": None, "verbose": 0})
-final = CatBoostRanker(**final_parameters) if ranker_mode else CatBoostClassifier(
-    **final_parameters
-)
 final_indices = query_order(meta_indices) if ranker_mode else meta_indices
-final.fit(Pool(
-    features.iloc[final_indices], label=y[final_indices],
-    cat_features=categorical, feature_names=list(features.columns),
-    group_id=users[final_indices] if ranker_mode else None,
-    baseline=(
-        base_logit[final_indices]
-        if ranker_mode or residual_mode else None
-    ),
-))
-valid_pool = Pool(
-    features.iloc[valid_indices], cat_features=categorical,
-    feature_names=list(features.columns),
-    baseline=(
-        base_logit[valid_indices]
-        if ranker_mode or residual_mode else None
-    ),
-)
-scores = (
-    final.predict(valid_pool)
-    if ranker_mode else final.predict(valid_pool, prediction_type="RawFormulaVal")
-).astype(np.float32)
-metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
-np.savez_compressed(
-    ROOT / "runtime" / (
-        f"batch-slate-meta-catboost-ranker-{args.ranker_objective}-"
-        f"s{args.ranker_seed}.npz"
-        if ranker_mode else (
-            "batch-slate-meta-catboost-residual-s751.npz"
-            if residual_mode else "batch-slate-meta-catboost-s751.npz"
+if xgboost_ranker_mode:
+    final_parameters.update({
+        "n_estimators": trees,
+        "early_stopping_rounds": None,
+    })
+    final = XGBRanker(**final_parameters)  # type: ignore[name-defined]
+    final.fit(
+        features.iloc[final_indices], y[final_indices],
+        group=query_groups(final_indices),
+        base_margin=base_logit[final_indices],
+        verbose=False,
+    )
+    scores = final.predict(
+        features.iloc[valid_indices], base_margin=base_logit[valid_indices]
+    ).astype(np.float32)
+else:
+    final_parameters.update({
+        "iterations": trees, "od_type": None, "od_wait": None, "verbose": 0,
+    })
+    final = (
+        CatBoostRanker(**final_parameters)
+        if ranker_mode else CatBoostClassifier(**final_parameters)
+    )
+    final.fit(Pool(
+        features.iloc[final_indices], label=y[final_indices],
+        cat_features=categorical, feature_names=list(features.columns),
+        group_id=users[final_indices] if ranker_mode else None,
+        baseline=(
+            base_logit[final_indices]
+            if ranker_mode or residual_mode else None
+        ),
+    ))
+    valid_pool = Pool(
+        features.iloc[valid_indices], cat_features=categorical,
+        feature_names=list(features.columns),
+        baseline=(
+            base_logit[valid_indices]
+            if ranker_mode or residual_mode else None
+        ),
+    )
+    scores = (
+        final.predict(valid_pool)
+        if ranker_mode else final.predict(
+            valid_pool, prediction_type="RawFormulaVal"
         )
-    ), scores=scores,
+    ).astype(np.float32)
+metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
+artifact_stem = (
+    f"batch-slate-meta-xgboost-ranker-"
+    f"{args.xgboost_objective.replace(':', '_')}-"
+    f"{args.xgboost_pair_method}-s{args.ranker_seed}"
+    if xgboost_ranker_mode else (
+        f"batch-slate-meta-catboost-ranker-{args.ranker_objective}-"
+        f"s{args.ranker_seed}"
+        if catboost_ranker_mode else (
+            "batch-slate-meta-catboost-residual-s751"
+            if residual_mode else "batch-slate-meta-catboost-s751"
+        )
+    )
+)
+np.savez_compressed(
+    ROOT / "runtime" / f"{artifact_stem}.npz", scores=scores,
     holdout_scores=holdout_scores, holdout_alpha=holdout_best[1], trees=trees,
 )
-final.save_model(ROOT / "runtime" / (
-    f"batch-slate-meta-catboost-ranker-{args.ranker_objective}-"
-    f"s{args.ranker_seed}.cbm"
-    if ranker_mode else (
-        "batch-slate-meta-catboost-residual-s751.cbm"
-        if residual_mode else "batch-slate-meta-catboost-s751.cbm"
+final.save_model(
+    ROOT / "runtime" / (
+        f"{artifact_stem}.json" if xgboost_ranker_mode else f"{artifact_stem}.cbm"
     )
-))
+)
 print("VALID", metrics, "RESOURCE_USAGE", tracker.finish(), flush=True)

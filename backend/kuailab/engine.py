@@ -8,15 +8,19 @@ import uuid
 from dataclasses import asdict
 from pathlib import Path
 
-from .benchmark import CommandBenchmark, SyntheticBenchmark, validate_metrics
+from .benchmark import BenchmarkRunError, CommandBenchmark, SyntheticBenchmark, validate_metrics
 from .config import Settings
 from .provider import DemoProvider, OpenAIProvider, Proposal
-from .resources import add_resource_usage, empty_campaign_usage
+from .resources import add_resource_usage, combine_resource_usage, empty_campaign_usage
 from .state import StateStore, utc_now
 
 
 STAGES = ("inspect", "hypothesize", "implement", "train", "evaluate", "reflect")
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+OFFICIAL_MAX_ITERATIONS = 50
+OFFICIAL_MAX_HOURS = 6.0
+OFFICIAL_CONVERGENCE_EPSILON = 0.002
+OFFICIAL_CONVERGENCE_PATIENCE = 3
 
 
 class CampaignEngine:
@@ -41,10 +45,10 @@ class CampaignEngine:
             "convergence_patience": int(values.get("convergence_patience", self.settings.convergence_patience)),
             "bootstrap_verified": bool(bootstrap_verified),
         }
-        if not 1 <= limits["max_iterations"] <= 100:
-            raise ValueError("max_iterations must be between 1 and 100")
-        if not 0.1 <= limits["max_hours"] <= 24:
-            raise ValueError("max_hours must be between 0.1 and 24")
+        if not 1 <= limits["max_iterations"] <= OFFICIAL_MAX_ITERATIONS:
+            raise ValueError(f"max_iterations must be between 1 and {OFFICIAL_MAX_ITERATIONS}")
+        if not 0.1 <= limits["max_hours"] <= OFFICIAL_MAX_HOURS:
+            raise ValueError(f"max_hours must be between 0.1 and {OFFICIAL_MAX_HOURS:g}")
         if not 0 <= limits["convergence_epsilon"] <= 0.01:
             raise ValueError("convergence_epsilon must be between 0 and 0.01")
         if not 0 <= limits["convergence_patience"] <= 50:
@@ -66,6 +70,9 @@ class CampaignEngine:
         if provider_name == "gpt" and not self.settings.api_key_available:
             raise RuntimeError("GPT mode needs a newly rotated OPENAI_API_KEY in the backend environment")
         limits = self._limits(raw_limits, bootstrap_verified=bootstrap_verified)
+        if mode == "kuairand":
+            limits["convergence_epsilon"] = OFFICIAL_CONVERGENCE_EPSILON
+            limits["convergence_patience"] = OFFICIAL_CONVERGENCE_PATIENCE
         with self._guard:
             if self.running:
                 raise RuntimeError("A campaign is already running")
@@ -76,12 +83,14 @@ class CampaignEngine:
             campaign_id = f"run-{uuid.uuid4().hex[:10]}"
 
             def initialize(state: dict) -> None:
-                baseline = {"primary": 0.6016, "gauc": 0.6612, "ndcg5": 0.5310}
+                baseline = {"primary": 0.60155, "gauc": 0.6674, "ndcg5": 0.5357}
                 state["campaign"] = {
                     "id": campaign_id, "status": "running", "mode": mode, "provider": provider_name,
                     "started_at": utc_now(), "ended_at": None, "stop_reason": None, "steering": None,
                     "continuations": 0, "session_started_at": utc_now(), "session_start_iteration": 1,
                     "session_start_wall_seconds": 0.0, "limits": limits,
+                    "manual_interventions": 0, "failure_count": 0, "recovery_count": 0,
+                    "consecutive_small_gains": 0,
                 }
                 state["current"] = None
                 state["metrics"] = {"baseline": baseline, "champion": baseline, "delta": 0.0}
@@ -92,7 +101,7 @@ class CampaignEngine:
                     "status": "baseline", "stage": "complete" if mode == "demo" else "waiting", "metrics": baseline if mode == "demo" else None,
                     "delta": 0.0 if mode == "demo" else None, "accepted": True, "duration_seconds": 0.0,
                     "provider": "demo" if mode == "demo" else "organizer", "evidence": "synthetic-demo" if mode == "demo" else None,
-                    "resource_usage": None,
+                    "resource_usage": None, "budget_counted": False,
                 }]
 
             self.store.update(initialize)
@@ -117,6 +126,15 @@ class CampaignEngine:
         if provider_name == "gpt" and not self.settings.api_key_available:
             raise RuntimeError("Continuing GPT research needs OPENAI_API_KEY in the backend environment")
         limits = self._limits(raw_limits, bootstrap_verified=False)
+        if mode == "kuairand":
+            limits["convergence_epsilon"] = OFFICIAL_CONVERGENCE_EPSILON
+            limits["convergence_patience"] = OFFICIAL_CONVERGENCE_PATIENCE
+        used = self._budget_iterations(snapshot)
+        if used >= OFFICIAL_MAX_ITERATIONS:
+            raise RuntimeError("The official 50-iteration campaign budget is exhausted")
+        if float(snapshot.get("usage", {}).get("wall_seconds", 0.0)) >= OFFICIAL_MAX_HOURS * 3600:
+            raise RuntimeError("The official six-hour campaign budget is exhausted")
+        limits["max_iterations"] = min(limits["max_iterations"], OFFICIAL_MAX_ITERATIONS - used)
         with self._guard:
             if self.running:
                 raise RuntimeError("A campaign is already running")
@@ -181,7 +199,12 @@ class CampaignEngine:
         clean = instruction.strip()[:1000]
         if not clean:
             raise ValueError("Steering instruction cannot be empty")
-        self.store.update(lambda state: state["campaign"].update(steering=clean))
+        def queue(state: dict) -> None:
+            state["campaign"].update(
+                steering=clean,
+                manual_interventions=int(state["campaign"].get("manual_interventions", 0)) + 1,
+            )
+        self.store.update(queue)
         self.store.event("control", "Operator guidance queued", clean)
 
     def reset(self) -> None:
@@ -235,8 +258,121 @@ class CampaignEngine:
             return SyntheticBenchmark()
         return CommandBenchmark(self.settings.experiment_command, self.settings.dataset_path, self.settings.run_timeout_seconds)
 
+    @staticmethod
+    def _budget_iterations(snapshot: dict) -> int:
+        return sum(
+            1 for item in snapshot.get("iterations", [])
+            if item.get("budget_counted", item.get("number", 0) > 0 and not item.get("imported"))
+        )
+
+    @staticmethod
+    def _small_gain_streak(snapshot: dict, epsilon: float) -> int:
+        streak = 0
+        for item in reversed(snapshot.get("iterations", [])):
+            if not item.get("budget_counted", item.get("number", 0) > 0 and not item.get("imported")):
+                continue
+            gain = item.get("gain")
+            if gain is not None and float(gain) > epsilon:
+                break
+            streak += 1
+        return streak
+
+    def _propose_with_retry(self, provider, context: dict, number: int) -> Proposal:
+        try:
+            return provider.propose(context)
+        except Exception as first_error:
+            def mark(state: dict) -> None:
+                state["campaign"]["failure_count"] = int(state["campaign"].get("failure_count", 0)) + 1
+                state["campaign"]["recovery_count"] = int(state["campaign"].get("recovery_count", 0)) + 1
+            self.store.update(mark)
+            self.store.event(
+                "recovery", "Planner retry routed", f"First proposal request failed: {str(first_error)[:400]}",
+                number, "hypothesize",
+            )
+            return provider.propose({**context, "recovery_instruction": "Retry once with the same sealed executor contract."})
+
+    @staticmethod
+    def _recovery_proposal(proposal: Proposal, error: Exception) -> Proposal:
+        parameters = dict(proposal.parameters)
+        changes: list[str] = []
+        for key, minimum in (("batch_size", 2048), ("deep_threads", 1)):
+            value = parameters.get(key)
+            if isinstance(value, int) and value > minimum:
+                reduced = max(minimum, value // 2)
+                parameters[key] = reduced
+                changes.append(f"{key} {value}->{reduced}")
+        if not changes:
+            value = parameters.get("epochs")
+            if isinstance(value, int) and value > 5:
+                reduced = max(5, int(value * 0.75))
+                parameters["epochs"] = reduced
+                changes.append(f"epochs {value}->{reduced}")
+        recovery = ", ".join(changes) if changes else "repeat once after an isolated worker failure"
+        code = proposal.code.rstrip() + f"\n# Automatic recovery route: {recovery}\n"
+        return Proposal(
+            title=f"{proposal.title} · recovery route",
+            experiment_type=proposal.experiment_type,
+            hypothesis=proposal.hypothesis,
+            rationale=f"{proposal.rationale} Automatic recovery after: {str(error)[:240]}",
+            change_summary=f"{proposal.change_summary}; recovery: {recovery}",
+            code=code,
+            parameters=parameters,
+            acceptance=proposal.acceptance,
+            abort_condition=proposal.abort_condition,
+            expected_gain=proposal.expected_gain,
+            usage=proposal.usage,
+            response_id=proposal.response_id,
+        )
+
+    def _evaluate_with_recovery(self, benchmark, proposal: Proposal, number: int, workspace: Path):
+        try:
+            return proposal, benchmark.evaluate(proposal, number, workspace), []
+        except BenchmarkRunError as first_error:
+            retry_proposal = self._recovery_proposal(proposal, first_error)
+            retry_workspace = workspace / "retry-1"
+            retry_workspace.mkdir(parents=True, exist_ok=True)
+            self._save_proposal(retry_workspace, retry_proposal)
+            recovery = {
+                "attempt": 1,
+                "error": str(first_error)[:800],
+                "route": retry_proposal.change_summary,
+                "resource_usage": first_error.resource_usage,
+            }
+            def mark(state: dict) -> None:
+                state["campaign"]["failure_count"] = int(state["campaign"].get("failure_count", 0)) + 1
+                state["campaign"]["recovery_count"] = int(state["campaign"].get("recovery_count", 0)) + 1
+            self.store.update(mark)
+            self.store.event(
+                "recovery", "Worker retry routed", f"{recovery['error']} · {recovery['route']}",
+                number, "train",
+            )
+            try:
+                evaluation = benchmark.evaluate(retry_proposal, number, retry_workspace)
+            except BenchmarkRunError as retry_error:
+                combined = combine_resource_usage(first_error.resource_usage, retry_error.resource_usage)
+                combined_error = BenchmarkRunError(
+                    f"Initial attempt failed ({first_error}); recovery attempt failed ({retry_error})",
+                    combined,
+                )
+                recovery.update(
+                    outcome="failed",
+                    retry_error=str(retry_error)[:800],
+                    retry_resource_usage=retry_error.resource_usage,
+                )
+                combined_error.recovery_events = [recovery]
+                raise combined_error from retry_error
+            evaluation.resource_usage = combine_resource_usage(first_error.resource_usage, evaluation.resource_usage)
+            recovery["outcome"] = "recovered"
+            return retry_proposal, evaluation, [recovery]
+
+    @staticmethod
+    def _write_iteration_log(workspace: Path, record: dict) -> None:
+        (workspace / "iteration-log.json").write_text(
+            json.dumps(record, indent=2, sort_keys=True), encoding="utf-8"
+        )
+
     def _verified_champion(self, baseline: dict) -> dict | None:
-        evidence_dir = PROJECT_ROOT / "results" / "verified-temporal-deep-blend"
+        evidence_dir = PROJECT_ROOT / "results" / "verified-slate-consensus"
         try:
             summary = json.loads((evidence_dir / "summary.json").read_text(encoding="utf-8"))
             proposal = json.loads((evidence_dir / "proposal.json").read_text(encoding="utf-8"))
@@ -247,7 +383,10 @@ class CampaignEngine:
                 "ndcg5": float(champion["ndcg5"]),
             }
             validate_metrics(metrics)
-            if summary.get("target") != "long_view" or summary.get("hidden_test_accessed") is not False:
+            hidden_test_accessed = summary.get(
+                "hidden_test_accessed", summary.get("split", {}).get("hidden_test_accessed")
+            )
+            if summary.get("target") != "long_view" or hidden_test_accessed is not False:
                 return None
             if metrics["primary"] <= baseline["primary"]:
                 return None
@@ -270,6 +409,7 @@ class CampaignEngine:
                 "parameters": proposal.get("parameters", {}),
                 "resource_usage": summary.get("resource_usage"),
                 "imported": True,
+                "budget_counted": False,
             }
         except (FileNotFoundError, KeyError, TypeError, ValueError, json.JSONDecodeError):
             return None
@@ -281,8 +421,8 @@ class CampaignEngine:
         benchmark = self._benchmark(mode)
         campaign = self.store.snapshot()["campaign"]
         campaign_id = campaign["id"]
-        small_gain_streak = 0
-        stop_reason = "session iteration budget reached"
+        small_gain_streak = self._small_gain_streak(self.store.snapshot(), limits["convergence_epsilon"])
+        stop_reason = "official iteration budget reached"
         try:
             if mode == "kuairand" and not continuing:
                 baseline_workspace = self.settings.state_dir / "campaigns" / campaign_id / "baseline"
@@ -295,7 +435,7 @@ class CampaignEngine:
                     state["iterations"][0].update(title="Organizer baseline", stage="complete", metrics=baseline_metrics,
                                                   delta=0.0, duration_seconds=measured.runtime_seconds,
                                                   evidence=measured.evidence, artifact=str(baseline_workspace),
-                                                  resource_usage=measured.resource_usage)
+                                                  resource_usage=measured.resource_usage, budget_counted=False)
                     add_resource_usage(state["usage"], measured.resource_usage)
                 self.store.update(save_baseline)
                 self.store.event("result", "Baseline reproduced", f"Primary {baseline_metrics['primary']:.4f} · GAUC {baseline_metrics['gauc']:.4f} · nDCG@5 {baseline_metrics['ndcg5']:.4f}", 0, "baseline")
@@ -311,19 +451,24 @@ class CampaignEngine:
                         self.store.event(
                             "result",
                             "Verified champion restored",
-                            f"Primary {retained['metrics']['primary']:.6f} · continuing from clean temporal blend evidence",
+                            f"Primary {retained['metrics']['primary']:.6f} · continuing from checked-in validation-best evidence",
                             1,
                             "baseline",
                         )
                         start_number = 2
-            end_number = start_number + limits["max_iterations"]
+            snapshot = self.store.snapshot()
+            used = self._budget_iterations(snapshot)
+            remaining = min(limits["max_iterations"], OFFICIAL_MAX_ITERATIONS - used)
+            if remaining <= 0:
+                stop_reason = "official 50-iteration budget reached"
+            end_number = start_number + max(0, remaining)
             for number in range(start_number, end_number):
                 if self._stop.is_set():
                     stop_reason = "operator stopped"
                     break
                 elapsed = time.monotonic() - started
-                if elapsed >= limits["max_hours"] * 3600:
-                    stop_reason = "session wall-clock budget reached"
+                if wall_before + elapsed >= min(limits["max_hours"], OFFICIAL_MAX_HOURS) * 3600:
+                    stop_reason = "official six-hour wall-clock budget reached"
                     break
                 iteration_started = time.monotonic()
                 workspace = self._workspace(campaign_id, number)
@@ -352,6 +497,8 @@ class CampaignEngine:
                         "prior_iterations": snapshot["iterations"][-12:],
                         "epsilon": limits["convergence_epsilon"],
                         "remaining_iterations": end_number - number,
+                        "official_iterations_used": self._budget_iterations(snapshot),
+                        "official_iterations_limit": OFFICIAL_MAX_ITERATIONS,
                         "resource_usage": snapshot["usage"],
                         "steering": snapshot["campaign"].get("steering"),
                         "constraints": [
@@ -386,7 +533,7 @@ class CampaignEngine:
                         },
                     }
                     self._set_stage(number, "hypothesize", f"Asking {self.settings.model if provider_name == 'gpt' else 'deterministic demo planner'} for one falsifiable experiment.")
-                    proposal = provider.propose(context)
+                    proposal = self._propose_with_retry(provider, context, number)
 
                     def proposed(state: dict) -> None:
                         current = state["current"]
@@ -408,7 +555,9 @@ class CampaignEngine:
                         break
 
                     self._set_stage(number, "train", "Running the sealed benchmark adapter; generated code is not executed on the host directly.")
-                    evaluation = benchmark.evaluate(proposal, number, workspace)
+                    proposal, evaluation, recovery_events = self._evaluate_with_recovery(
+                        benchmark, proposal, number, workspace
+                    )
                     self._set_stage(number, "evaluate", "Validating metric bounds and comparing against the retained champion.")
                     metrics = evaluation.metrics()
                     gain = round(metrics["primary"] - champion_before["primary"], 6)
@@ -425,7 +574,10 @@ class CampaignEngine:
                         "change_summary": proposal.change_summary, "response_id": proposal.response_id,
                         "experiment_type": proposal.experiment_type, "parameters": proposal.parameters,
                         "resource_usage": evaluation.resource_usage,
+                        "recovery_events": recovery_events, "budget_counted": True,
+                        "code_diff": "candidate.diff" if not recovery_events else "retry-1/candidate.diff",
                     }
+                    self._write_iteration_log(workspace, record)
 
                     def finish_iteration(state: dict) -> None:
                         state["iterations"].append(record)
@@ -447,7 +599,10 @@ class CampaignEngine:
                         number,
                         "reflect",
                     )
-                    small_gain_streak = small_gain_streak + 1 if gain < limits["convergence_epsilon"] else 0
+                    small_gain_streak = small_gain_streak + 1 if gain <= limits["convergence_epsilon"] else 0
+                    self.store.update(
+                        lambda state: state["campaign"].update(consecutive_small_gains=small_gain_streak)
+                    )
                     if limits["convergence_patience"] and small_gain_streak >= limits["convergence_patience"]:
                         stop_reason = f"converged: {small_gain_streak} consecutive gains below {limits['convergence_epsilon']:.6f}"
                         break
@@ -459,15 +614,26 @@ class CampaignEngine:
                         "status": "failed", "stage": "failed", "metrics": None, "delta": None, "accepted": False,
                         "duration_seconds": duration, "provider": provider_name, "error": str(error)[:800], "artifact": str(workspace),
                         "resource_usage": resource_usage,
+                        "gain": None, "recovery_events": getattr(error, "recovery_events", []), "budget_counted": True,
+                        "code_diff": "candidate.diff",
                     }
+                    self._write_iteration_log(workspace, failed)
                     def record_failure(state: dict) -> None:
                         state["iterations"].append(failed)
+                        state["campaign"]["failure_count"] = int(state["campaign"].get("failure_count", 0)) + 1
                         if state["current"]:
                             state["current"].update(status="failed", error=failed["error"])
                         add_resource_usage(state["usage"], resource_usage)
                         state["usage"]["wall_seconds"] = round(wall_before + time.monotonic() - started, 2)
                     self.store.update(record_failure)
                     self.store.event("error", "Iteration failed · recovered", failed["error"], number, "failed")
+                    small_gain_streak += 1
+                    self.store.update(
+                        lambda state: state["campaign"].update(consecutive_small_gains=small_gain_streak)
+                    )
+                    if limits["convergence_patience"] and small_gain_streak >= limits["convergence_patience"]:
+                        stop_reason = f"converged: {small_gain_streak} consecutive iterations without > {limits['convergence_epsilon']:.6f} gain"
+                        break
                     if provider_name == "gpt" and "OpenAI Responses API failed" in str(error):
                         stop_reason = "model provider error"
                         break
@@ -495,6 +661,17 @@ class CampaignEngine:
             summary_path.write_text(json.dumps({
                 "campaign": final["campaign"],
                 "usage": final["usage"],
+                "official_budget": {
+                    "iterations_used": self._budget_iterations(final),
+                    "iterations_limit": OFFICIAL_MAX_ITERATIONS,
+                    "wall_hours_used": round(final["usage"]["wall_seconds"] / 3600, 6),
+                    "wall_hours_limit": OFFICIAL_MAX_HOURS,
+                    "convergence_epsilon": limits["convergence_epsilon"],
+                    "convergence_patience": limits["convergence_patience"],
+                },
+                "manual_interventions": int(final["campaign"].get("manual_interventions", 0)),
+                "failure_count": int(final["campaign"].get("failure_count", 0)),
+                "recovery_count": int(final["campaign"].get("recovery_count", 0)),
                 "iterations": [
                     {
                         "number": item["number"],

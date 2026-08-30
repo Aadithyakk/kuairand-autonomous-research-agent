@@ -45,7 +45,7 @@ class SyntheticBenchmark:
 
     def baseline(self, workspace: Path) -> Evaluation:
         usage = normalize_resource_usage({"wall_seconds": 0, "train_seconds": 0, "device": "cpu"})
-        return Evaluation(primary=0.6016, gauc=0.6612, ndcg5=0.5310, runtime_seconds=0, evidence="synthetic-demo", resource_usage=usage)
+        return Evaluation(primary=0.60155, gauc=0.6674, ndcg5=0.5357, runtime_seconds=0, evidence="synthetic-demo", resource_usage=usage)
 
     def evaluate(self, proposal: Proposal, iteration: int, workspace: Path) -> Evaluation:
         if iteration == 4:
@@ -58,9 +58,9 @@ class SyntheticBenchmark:
             })
             (workspace / "resource-usage.json").write_text(json.dumps(usage, indent=2, sort_keys=True), encoding="utf-8")
             raise BenchmarkRunError("Synthetic worker simulated an out-of-memory failure", usage)
-        primary = min(0.625, 0.6016 + sum([0.0025, 0.0051, 0.0069, 0.0069, 0.0075, 0.0077][:iteration]))
-        gauc = min(0.70, 0.6612 + (primary - 0.6016) * 1.9)
-        ndcg = min(0.59, 0.5310 + (primary - 0.6016) * 1.55)
+        primary = min(0.625, 0.60155 + sum([0.0025, 0.0051, 0.0069, 0.0069, 0.0075, 0.0077][:iteration]))
+        gauc = min(0.70, 0.6674 + (primary - 0.60155) * 1.2)
+        ndcg = min(0.59, 0.5357 + (primary - 0.60155) * 0.8)
         metrics = {"primary": round(primary, 4), "gauc": round(gauc, 4), "ndcg5": round(ndcg, 4)}
         validate_metrics(metrics)
         runtime = round(2.2 + iteration * 0.6, 2)

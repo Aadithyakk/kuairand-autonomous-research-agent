@@ -15,12 +15,12 @@ type ResourceUsage = {
 };
 type Iteration = {
   number: number; title: string; status: string; stage: string; metrics: Metrics | null; delta: number | null;
-  gain?: number; duration_seconds: number; error?: string; evidence?: string; artifact?: string; accepted: boolean; resource_usage?: ResourceUsage | null;
+  gain?: number; duration_seconds: number; error?: string; evidence?: string; artifact?: string; accepted: boolean; budget_counted?: boolean; resource_usage?: ResourceUsage | null;
 };
 type EventItem = { id: number; time: string; kind: string; title: string; detail: string; iteration?: number; stage?: string };
 type RunLimits = { max_iterations: number; max_hours: number; convergence_epsilon: number; convergence_patience: number; bootstrap_verified: boolean };
 type State = {
-  campaign: { id: string | null; status: string; mode: string; provider: string; started_at: string | null; stop_reason: string | null; steering: string | null; continuations: number; session_start_iteration: number; session_start_wall_seconds: number; limits: RunLimits };
+  campaign: { id: string | null; status: string; mode: string; provider: string; started_at: string | null; stop_reason: string | null; steering: string | null; continuations: number; session_start_iteration: number; session_start_wall_seconds: number; manual_interventions: number; failure_count: number; recovery_count: number; consecutive_small_gains: number; limits: RunLimits };
   config: { model: string; reasoning_effort: string; max_iterations: number; max_hours: number; convergence_epsilon: number; convergence_patience: number; api_key_available: boolean; dataset_available: boolean; adapter_available: boolean };
   current: null | { number: number; title: string; hypothesis: string; stage: string; status: string; activity: string; stages: Stage[]; acceptance: string; abort_condition: string; expected_gain: number | null; error?: string };
   metrics: { baseline: Metrics; champion: Metrics; delta: number };
@@ -53,10 +53,10 @@ export default function Home() {
   const [setupMode, setSetupMode] = useState<'new' | 'continue'>('new');
   const [provider, setProvider] = useState<'demo' | 'gpt'>('demo');
   const [mode, setMode] = useState<'demo' | 'kuairand'>('demo');
-  const [maxIterations, setMaxIterations] = useState(20);
+  const [maxIterations, setMaxIterations] = useState(50);
   const [maxHours, setMaxHours] = useState(6);
-  const [convergenceEpsilon, setConvergenceEpsilon] = useState(0.0001);
-  const [convergencePatience, setConvergencePatience] = useState(8);
+  const [convergenceEpsilon, setConvergenceEpsilon] = useState(0.002);
+  const [convergencePatience, setConvergencePatience] = useState(3);
   const [bootstrapVerified, setBootstrapVerified] = useState(true);
   const [instruction, setInstruction] = useState('');
 
@@ -106,10 +106,11 @@ export default function Home() {
 
   function openSetup(kind: 'new' | 'continue') {
     setSetupMode(kind);
-    setMaxIterations(kind === 'continue' ? 20 : (state?.config.max_iterations ?? 50));
+    const used = (state?.iterations ?? []).filter((item) => item.budget_counted ?? (item.number > 0)).length;
+    setMaxIterations(kind === 'continue' ? Math.max(1, 50 - used) : Math.min(50, state?.config.max_iterations ?? 50));
     setMaxHours(state?.config.max_hours ?? 6);
-    setConvergenceEpsilon(state?.config.convergence_epsilon ?? 0.0001);
-    setConvergencePatience(state?.config.convergence_patience ?? 8);
+    setConvergenceEpsilon(state?.config.convergence_epsilon ?? 0.002);
+    setConvergencePatience(state?.config.convergence_patience ?? 3);
     if (kind === 'new') {
       setProvider(state?.config.api_key_available ? 'gpt' : 'demo');
       setMode(state?.config.dataset_available && state?.config.adapter_available ? 'kuairand' : 'demo');
@@ -125,15 +126,14 @@ export default function Home() {
   const status = state?.campaign.status ?? 'offline';
   const active = ['running', 'paused', 'stopping'].includes(status);
   const synthetic = state?.campaign.mode === 'demo';
-  const canContinue = Boolean(!active && state?.campaign.id && status !== 'idle');
+  const officialIterationsUsed = (state?.iterations ?? []).filter((item) => item.budget_counted ?? (item.number > 0)).length;
+  const canContinue = Boolean(!active && state?.campaign.id && status !== 'idle' && officialIterationsUsed < 50 && (state?.usage.wall_seconds ?? 0) < 21600);
   const champion = state?.metrics.champion;
   const current = state?.current;
-  const completedCount = Math.max(0, (state?.iterations.length ?? 1) - 1);
-  const runLimits = state?.campaign.limits ?? { max_iterations: state?.config.max_iterations ?? 50, max_hours: state?.config.max_hours ?? 6, convergence_epsilon: state?.config.convergence_epsilon ?? 0.0001, convergence_patience: state?.config.convergence_patience ?? 8, bootstrap_verified: true };
-  const sessionStart = state?.campaign.session_start_iteration ?? 1;
-  const sessionCompleted = (state?.iterations ?? []).filter((item) => item.number >= sessionStart).length;
-  const sessionWall = Math.max(0, (state?.usage.wall_seconds ?? 0) - (state?.campaign.session_start_wall_seconds ?? 0));
-  const remainingSeconds = Math.max(0, runLimits.max_hours * 3600 - sessionWall);
+  const completedCount = officialIterationsUsed;
+  const runLimits = state?.campaign.limits ?? { max_iterations: state?.config.max_iterations ?? 50, max_hours: state?.config.max_hours ?? 6, convergence_epsilon: state?.config.convergence_epsilon ?? 0.002, convergence_patience: state?.config.convergence_patience ?? 3, bootstrap_verified: true };
+  const remainingSeconds = Math.max(0, 21600 - (state?.usage.wall_seconds ?? 0));
+  const officialMode = setupMode === 'new' ? mode === 'kuairand' : state?.campaign.mode === 'kuairand';
   const events = useMemo(() => [...(state?.events ?? [])].reverse().slice(0, 7), [state]);
 
   return (
@@ -174,7 +174,7 @@ export default function Home() {
           <article className="metric-card"><span>GAUC</span><strong>{score(champion?.gauc)}</strong><small>{synthetic ? 'simulated smoke test' : 'validation-best'}</small></article>
           <article className="metric-card"><span>nDCG@5</span><strong>{score(champion?.ndcg5)}</strong><small>{synthetic ? 'simulated smoke test' : 'validation-best'}</small></article>
           <article className="metric-card"><span>Compute used</span><strong>{computeHours(state?.usage.cpu_hours ?? 0)} CPU</strong><small>{computeHours(state?.usage.gpu_hours ?? 0)} GPU · {memory(state?.usage.peak_rss_mb)} peak RAM</small></article>
-          <article className="metric-card"><span>Session budget</span><strong>{String(sessionCompleted).padStart(2, '0')} / {runLimits.max_iterations}</strong><small>{elapsed(sessionWall)} this session · {elapsed(remainingSeconds)} left · {completedCount} total</small></article>
+          <article className="metric-card"><span>Official research budget</span><strong>{String(officialIterationsUsed).padStart(2, '0')} / 50</strong><small>{elapsed(state?.usage.wall_seconds ?? 0)} / 06:00:00 · {elapsed(remainingSeconds)} left</small></article>
         </div>
 
         <div className="content-grid">
@@ -234,15 +234,15 @@ export default function Home() {
         {setupMode === 'new' ? <>
           <label>Researcher<select value={provider} onChange={(event) => setProvider(event.target.value as 'demo' | 'gpt')}><option value="demo">Demo planner — no API cost</option><option value="gpt" disabled={!state?.config.api_key_available}>GPT-5.6 Sol — high reasoning{!state?.config.api_key_available ? ' (key not set)' : ''}</option></select></label>
           <label>Benchmark<select value={mode} onChange={(event) => setMode(event.target.value as 'demo' | 'kuairand')}><option value="demo">Synthetic smoke test</option><option value="kuairand" disabled={!state?.config.dataset_available || !state?.config.adapter_available}>KuaiRand-Pure validation{!state?.config.dataset_available || !state?.config.adapter_available ? ' (setup required)' : ''}</option></select></label>
-          {mode === 'kuairand' && <label className="check-label"><input type="checkbox" checked={bootstrapVerified} onChange={(event) => setBootstrapVerified(event.target.checked)} /><span><b>Start from verified 0.605885 champion</b><small>Imports the clean temporal FM + BPR + DeepFM recipe and searches above it.</small></span></label>}
+          {mode === 'kuairand' && <label className="check-label"><input type="checkbox" checked={bootstrapVerified} onChange={(event) => setBootstrapVerified(event.target.checked)} /><span><b>Start from verified 0.612858 champion</b><small>Imports the leak-free validation-best slate ensemble and searches above it.</small></span></label>}
         </> : <div className="resume-summary"><span>Retained primary</span><strong>{score(champion?.primary)}</strong><small>{state?.campaign.provider === 'gpt' ? state.config.model : 'Demo planner'} · {state?.campaign.mode === 'kuairand' ? 'KuaiRand-Pure validation' : 'Synthetic smoke test'} · {completedCount} recorded experiments</small></div>}
         <div className="form-grid">
-          <label>Experiments this session<input type="number" min="1" max="100" step="1" value={maxIterations} onChange={(event) => setMaxIterations(Number(event.target.value))} required /></label>
-          <label>Time budget (hours)<input type="number" min="0.1" max="24" step="0.1" value={maxHours} onChange={(event) => setMaxHours(Number(event.target.value))} required /></label>
-          <label>Small-gain threshold<input type="number" min="0" max="0.01" step="0.00001" value={convergenceEpsilon} onChange={(event) => setConvergenceEpsilon(Number(event.target.value))} required /></label>
-          <label>Stop after small gains<input type="number" min="0" max="50" step="1" value={convergencePatience} onChange={(event) => setConvergencePatience(Number(event.target.value))} required /></label>
+          <label>Experiments this session<input type="number" min="1" max={Math.max(1, 50 - (setupMode === 'continue' ? officialIterationsUsed : 0))} step="1" value={maxIterations} onChange={(event) => setMaxIterations(Number(event.target.value))} required /></label>
+          <label>Time budget (hours)<input type="number" min="0.1" max="6" step="0.1" value={maxHours} onChange={(event) => setMaxHours(Number(event.target.value))} required /></label>
+          <label>Small-gain threshold<input type="number" min="0" max="0.01" step="0.00001" value={officialMode ? 0.002 : convergenceEpsilon} onChange={(event) => setConvergenceEpsilon(Number(event.target.value))} disabled={officialMode} required /></label>
+          <label>Stop after small gains<input type="number" min="0" max="50" step="1" value={officialMode ? 3 : convergencePatience} onChange={(event) => setConvergencePatience(Number(event.target.value))} disabled={officialMode} required /></label>
         </div>
-        <p className="modal-note">Every positive validation gain is retained. Set “stop after small gains” to 0 to use the full experiment/time budget. Real autonomous research needs the dataset, runner, and your API key available to the local engine.</p>
+        <p className="modal-note">Real KuaiRand campaigns enforce the official 50-iteration, six-hour, ε=0.002 / three-iteration convergence rule. Every positive validation gain is retained; failures are retried once through a lower-resource route and logged.</p>
         <button className="button primary wide" type="submit">{setupMode === 'continue' ? 'Continue autonomous research' : 'Start autonomous campaign'}</button>
       </form></div>}
 
