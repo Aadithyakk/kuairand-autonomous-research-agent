@@ -736,6 +736,47 @@
       "peak_rss_mb": 1207.531,
       "gpu_hours": 0.0,
       "selected_weight": 0.0
+    },
+    "centered_item_coexposure_graph": {
+      "wall_seconds": 94.29,
+      "cpu_seconds": 94.492,
+      "cpu_hours": 0.026248,
+      "peak_rss_mb": 959.641,
+      "gpu_hours": 0.0,
+      "temporal_holdout_primary": 0.5584964,
+      "standalone_primary": 0.5807955,
+      "ranked_standalone_primary": 0.58118916,
+      "accepted": false
+    },
+    "centered_item_coexposure_residual_audit": {
+      "wall_seconds": 19.374,
+      "cpu_seconds": 19.369,
+      "cpu_hours": 0.00538,
+      "peak_rss_mb": 1206.906,
+      "gpu_hours": 0.0,
+      "selected_weight": 0.0
+    },
+    "legacy_itemknn_residual_audit": {
+      "wall_seconds": 18.872,
+      "cpu_seconds": 18.852,
+      "cpu_hours": 0.005237,
+      "peak_rss_mb": 1206.438,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.55179089,
+      "selected_weight": 0.0
+    },
+    "retained_interaction_residual_audits": {
+      "runs": 3,
+      "wall_seconds": 55.164,
+      "cpu_seconds": 55.147,
+      "cpu_hours": 0.015319,
+      "peak_rss_mb": 1221.422,
+      "gpu_hours": 0.0,
+      "dcn_standalone_primary": 0.60764265,
+      "autoint_standalone_primary": 0.60788572,
+      "numeric_bilinear_standalone_primary": 0.6073218,
+      "numeric_bilinear_fixed_primary": 0.61280066,
+      "accepted": false
     }
   }
 }

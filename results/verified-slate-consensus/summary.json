@@ -22,6 +22,7 @@
   "selection_evidence": "The final user-neighbor correction was selected from a temporally screened family. An April 8-18 exposure graph ranked April 19-21 candidates from other users' prior outcomes; the frozen 60-neighbor, squared-similarity, smoothing-8 candidate then selected weight 0.002 on every one of four disjoint validation-user folds. Its held-out primary gains were [0.00003803, 0.00001961, 0.00002128, 0.00001639]. The final recipe reproduces 0.61280465 primary with both GAUC and nDCG@5 above the 0.61278081 prior champion.",
   "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. Outcome priors, coverage membership, and the user-neighbor graph use only the April 8-21 training block; the validation slate contributes identifiers but no outcomes. The neighbor graph uses training exposure overlap for similarity and other users' training outcomes for candidate estimates. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit before April 22-28 inference. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
   "rejected_ablations": [
+    "A temporally selected centered-outcome co-exposure item graph reached 0.58079550 raw standalone and 0.58118916 after within-user ranking, but all four residual folds selected zero weight; retained DCN and AutoInt artifacts also selected zero, while numeric-bilinear interactions regressed at the mean fixed weight.",
     "Published KuaiRand CWM likelihood reached 0.56198001 alone; a 0.1 BCE-anchored variant reached 0.60583085 but retained two negative residual folds, and duration-threshold inference did not stabilize it.",
     "A two-layer rich-categorical xDeepFM compressed interaction network reached 0.60725051 standalone but all four residual folds selected zero weight after 0.577833 CPU-hours of training.",
     "Causal exposure-history Transformers reached 0.60735643 with session scope and 0.60686481 with 99.66%-coverage full-user scope; global and timestamp-gated residuals either selected zero weight or retained a negative held-out fold.",
@@ -60,7 +61,7 @@
     "Three-seed duration-regime experts reached 0.60820252 standalone and 0.61280549 fixed, but fold 1 regressed; coverage gating and independent regime biases did not stabilize the gain.",
     "Whole-user residual CatBoost rankers reached 0.61187887 (PairLogitPairwise) and 0.61124790 (QuerySoftMax) standalone, but their cross-fitted corrections regressed and were excluded."
   ],
-  "latest_rejected_cycle": "rejected-cycle-2026-08-30-cwm-xdeepfm.json",
+  "latest_rejected_cycle": "rejected-cycle-2026-08-30-item-graph-interactions.json",
   "latest_accepted_cycle": "accepted-cycle-2026-08-30-user-neighbor.json",
   "target_primary": 0.7,
   "target_reached": false,

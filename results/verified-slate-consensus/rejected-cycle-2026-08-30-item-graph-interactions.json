@@ -1,0 +1,74 @@
+{
+  "status": "no_verified_gain",
+  "branch": "feature/experiment-resource-tracking",
+  "starting_commit": "a2fd352",
+  "protocol": "The item graph was selected on an April 19-21 temporal holdout after fitting on April 9-18, then refit on April 9-21. Official April 22-28 outcomes were used only for reporting and four user-ID-modulo residual folds. No random-log or hidden-test outcome was accessed.",
+  "retained_champion": {
+    "primary": 0.612804651260376,
+    "gauc": 0.6822999715805054,
+    "ndcg5": 0.5433093309402466,
+    "baseline_primary": 0.6014695167541504,
+    "gain_over_baseline": 0.011335134506225586,
+    "target_primary": 0.7,
+    "remaining_gap": 0.08719534873962398
+  },
+  "experiments": [
+    {
+      "name": "centered-outcome item co-exposure graph",
+      "result": "rejected",
+      "architecture": "An item-item cosine graph built from every training exposure, with inverse-user-frequency weighting, transfers each user's item-centered historical long-view residuals to candidate items. This is distinct from the earlier co-positive ItemKNN and user-neighbor graph.",
+      "selection": "The April 19-21 temporal screen selected inverse-user-frequency power 0.5 and Bayesian transfer smoothing 0.5 from 12 candidates, reaching 0.55849640 primary.",
+      "evidence": "The April 9-21 refit reached 0.58079550 on raw scores and 0.58118916 after within-user ordinal normalization. Despite materially outperforming the old co-positive ItemKNN's 0.55179089, all four residual folds selected exactly zero weight against the 0.61280465 champion.",
+      "resource_usage": {
+        "temporal_selection_and_refit": {
+          "wall_seconds": 94.29,
+          "cpu_seconds": 94.492,
+          "cpu_hours": 0.026248,
+          "peak_rss_mb": 959.641
+        },
+        "residual_audit": {
+          "wall_seconds": 19.374,
+          "cpu_seconds": 19.369,
+          "cpu_hours": 0.00538,
+          "peak_rss_mb": 1206.906
+        },
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "legacy co-positive ItemKNN re-audit",
+      "result": "rejected",
+      "evidence": "The retained co-positive artifact reached 0.55179089 standalone after within-user ranking and every residual fold selected zero weight.",
+      "resource_usage": {
+        "wall_seconds": 18.872,
+        "cpu_seconds": 18.852,
+        "cpu_hours": 0.005237,
+        "peak_rss_mb": 1206.438,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "retained DCN, AutoInt, and numeric-bilinear interactions",
+      "result": "rejected",
+      "evidence": "The two-layer low-rank cross network reached 0.60764265 and AutoInt reached 0.60788572 standalone; both selected zero residual weight in all folds. Numeric-bilinear interactions reached 0.60732180 and selected 0.005 in one fold only. Its mean fixed weight lowered primary to 0.61280066 and regressed in three folds.",
+      "resource_usage": {
+        "residual_audits": {
+          "runs": 3,
+          "wall_seconds": 55.164,
+          "cpu_seconds": 55.147,
+          "cpu_hours": 0.015319,
+          "peak_rss_mb": 1221.422
+        },
+        "gpu_hours": 0.0
+      }
+    }
+  ],
+  "successful_tracked_run_totals": {
+    "wall_seconds": 187.7,
+    "cpu_seconds": 187.86,
+    "cpu_hours": 0.052184,
+    "peak_rss_mb": 1221.422,
+    "gpu_hours": 0.0
+  },
+  "conclusion": "A substantially stronger item-item collaborative signal still contained no stable residual ordering beyond the accepted ensemble and user-neighbor correction. Higher-order DCN, AutoInt, and numeric-bilinear predictions also failed the user-disjoint promotion rule, so 0.6128046513 remains authoritative."
+}
