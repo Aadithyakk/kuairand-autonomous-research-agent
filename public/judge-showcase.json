@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "title": "KuaiLab verified judge walkthrough",
+  "evidence_status": "checked-in validation evidence",
+  "benchmark": {
+    "dataset": "KuaiRand-Pure",
+    "target": "long_view",
+    "metric": "0.5 × GAUC + 0.5 × nDCG@5",
+    "train_window": "8–21 Apr 2022",
+    "validation_window": "22–28 Apr 2022",
+    "hidden_test_accessed": false,
+    "train_rows": 1141112,
+    "validation_rows": 124909,
+    "validation_users": 22377
+  },
+  "result": {
+    "baseline_primary": 0.6014695167541504,
+    "champion_primary": 0.6128580570220947,
+    "gauc": 0.6823537349700928,
+    "ndcg5": 0.5433623194694519,
+    "absolute_gain": 0.011388540267944336,
+    "relative_gain_percent": 1.8934526107662046
+  },
+  "autonomy": {
+    "loop": ["Inspect", "Hypothesize", "Implement", "Train", "Evaluate", "Reflect"],
+    "operators": ["Exploit the champion", "Explore a new family", "Innovate from research"],
+    "limits": ["50-experiment ceiling", "6-hour wall-clock ceiling", "Stop after 3 gains below 0.002"],
+    "safety": ["Sealed evaluator owns labels", "One bounded recovery retry", "Validation-best promotion only"]
+  },
+  "experiment_wave": {
+    "methods_tested": 10,
+    "screen_survivors": 1,
+    "confirmed_standalone_improvements": 1,
+    "champion_promotions": 0,
+    "aggregate_trainer_wall_seconds": 346.197,
+    "aggregate_cpu_hours": 0.139206,
+    "gpu_hours": 0.0,
+    "largest_single_process_peak_rss_mb": 1490.812,
+    "case_study": {
+      "method": "Regression-Compatible Ranking",
+      "screen_primary_gain": 0.00018596649169921875,
+      "confirmation_primary_gain": 0.00011724233627319336,
+      "champion_residual_gain": -0.000002384185791015625,
+      "decision": "Rejected: it improved its matched base, but weakened the frozen champion."
+    }
+  },
+  "worker_smoke": {
+    "candidate_family": "pointwise FM residual",
+    "train_seconds": 7.001,
+    "cpu_hours": 0.002496,
+    "peak_rss_mb": 541.359,
+    "gpu_hours": 0.0,
+    "candidate_primary": 0.5962795615196228,
+    "returned_primary": 0.6128580570220947,
+    "decision": "Candidate rejected; checksum-verified champion retained."
+  },
+  "criteria": [
+    {
+      "name": "Technical execution",
+      "proof": "A complete six-stage loop, sealed evaluator, recovery route, budgets, and per-run telemetry."
+    },
+    {
+      "name": "Innovation & insight",
+      "proof": "Experiment-tree search combines targeted refinement, method memory, and KuaiRand-specific slate reasoning."
+    },
+    {
+      "name": "Impact & relevance",
+      "proof": "The system turns repeated recommender research into an inspectable autonomous workflow."
+    },
+    {
+      "name": "Feasibility & practicality",
+      "proof": "Local-first, CPU-capable execution with deterministic smoke mode and bounded resource use."
+    },
+    {
+      "name": "Presentation & communication",
+      "proof": "A live control room connects every score and deployment decision to persisted evidence."
+    }
+  ],
+  "artifacts": [
+    "results/verified-slate-consensus/summary.json",
+    "results/verified-slate-consensus/proposal.json",
+    "results/calibrated-ranking/summary.json",
+    "results/final-model/manifest.json",
+    "results/final-model/autonomous-worker-smoke.json"
+  ],
+  "limitations": [
+    "The 0.612858 score is public validation evidence, not a hidden-test result.",
+    "The full champion is a research ensemble; distillation into a smaller deployable model remains future work.",
+    "Some label-free slate corrections assume the full candidate slate is available at inference."
+  ]
+}

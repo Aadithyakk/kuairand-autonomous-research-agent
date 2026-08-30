@@ -24,7 +24,7 @@
 | Devpost written description | `docs/DEVPOST.md` | Complete |
 | Final model output/checkpoint | Frozen manifest, score archive, validation schema export | Complete for validation |
 | Results table and baseline delta | README, final runbook, judging report | Complete |
-| Optional video | Detailed report supplied instead | Not required |
+| Public three-minute YouTube demo | Deterministic in-app walkthrough and timed script in `docs/JUDGE_DEMO.md` | Recording/upload pending |
 | Bonus KuaiRand-1k/27k | Future work | Optional |
 
 The only deliberately unexecuted step is the organizer's one-time hidden-test run. Running it during development would violate the brief; `docs/FINAL_SUBMISSION.md` contains the final-only procedure.

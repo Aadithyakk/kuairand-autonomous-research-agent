@@ -10,6 +10,7 @@
     "dashboard": "vinext dev",
     "backend": "python3 -m backend.kuailab.server",
     "local": "python3 scripts/local.py",
+    "verify:demo": "python3 scripts/verify_judge_demo.py",
     "test:backend": "python3 -m unittest discover -s backend/tests -v",
     "build": "vinext build",
     "start": "vinext start",

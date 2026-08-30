@@ -1,11 +1,20 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import judgeShowcase from '../public/judge-showcase.json';
 
 const API = process.env.NEXT_PUBLIC_KUAILAB_API ?? 'http://127.0.0.1:8787';
 const stageLabels: Record<string, string> = {
   inspect: 'Inspect', hypothesize: 'Hypothesize', implement: 'Implement', train: 'Train', evaluate: 'Evaluate', reflect: 'Reflect',
 };
+
+const judgeSteps = [
+  { label: 'Challenge', criterion: 'Impact & relevance', title: 'Improve recommendations without leaking tomorrow into today' },
+  { label: 'Agent', criterion: 'Technical execution', title: 'One falsifiable experiment at a time' },
+  { label: 'Insight', criterion: 'Innovation & insight', title: 'Search broadly, refine narrowly, remember every result' },
+  { label: 'Evidence', criterion: 'Feasibility & practicality', title: 'A strong agent must know when not to deploy' },
+  { label: 'Reproduce', criterion: 'Presentation & communication', title: 'Every headline number resolves to a checked-in artifact' },
+] as const;
 
 type Metrics = { primary: number; gauc: number; ndcg5: number };
 type Stage = { name: string; status: 'done' | 'active' | 'waiting' };
@@ -46,12 +55,16 @@ function statusTone(status: string) {
   return 'base';
 }
 
+function signed(value: number, digits = 6) { return `${value >= 0 ? '+' : ''}${value.toFixed(digits)}`; }
+
 export default function Home() {
   const [state, setState] = useState<State | null>(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState('');
   const [showSetup, setShowSetup] = useState(false);
   const [showSteer, setShowSteer] = useState(false);
+  const [showJudgeWalkthrough, setShowJudgeWalkthrough] = useState(false);
+  const [judgeStep, setJudgeStep] = useState(0);
   const [setupMode, setSetupMode] = useState<'new' | 'continue'>('new');
   const [provider, setProvider] = useState<'demo' | 'gpt'>('demo');
   const [mode, setMode] = useState<'demo' | 'kuairand'>('demo');
@@ -78,6 +91,22 @@ export default function Home() {
     const timer = window.setInterval(refresh, 900);
     return () => { window.clearTimeout(kickoff); window.clearInterval(timer); };
   }, [refresh]);
+
+  useEffect(() => {
+    if (!showJudgeWalkthrough) return;
+    function navigate(event: KeyboardEvent) {
+      if (event.key === 'Escape') setShowJudgeWalkthrough(false);
+      if (event.key === 'ArrowRight') setJudgeStep((step) => Math.min(judgeSteps.length - 1, step + 1));
+      if (event.key === 'ArrowLeft') setJudgeStep((step) => Math.max(0, step - 1));
+    }
+    window.addEventListener('keydown', navigate);
+    return () => window.removeEventListener('keydown', navigate);
+  }, [showJudgeWalkthrough]);
+
+  function openJudgeWalkthrough() {
+    setJudgeStep(0);
+    setShowJudgeWalkthrough(true);
+  }
 
   async function action(path: string, body: Record<string, unknown> = {}) {
     setError('');
@@ -144,6 +173,7 @@ export default function Home() {
         <div className="brand-mark">KL</div>
         <nav aria-label="Dashboard sections">
           <a className="nav-item active" href="#overview" aria-label="Run overview">⌁</a>
+          <button className="nav-item" type="button" onClick={openJudgeWalkthrough} aria-label="Judge walkthrough">▶</button>
           <a className="nav-item" href="#iterations" aria-label="Iterations">◇</a>
           <a className="nav-item" href="#trace" aria-label="Evidence trace">≡</a>
         </nav>
@@ -157,6 +187,7 @@ export default function Home() {
             <h1>Research control room</h1>
           </div>
           <div className="top-actions">
+            <button className="button judge-button" type="button" data-testid="open-judge-walkthrough" onClick={openJudgeWalkthrough}><span>▶</span> 3-minute walkthrough</button>
             <span className={`live-pill ${status}`}><i /> {connected ? status : 'backend offline'}</span>
             {status === 'running' && <button className="button ghost" onClick={() => action('/api/run/pause')}>Pause</button>}
             {status === 'paused' && <button className="button ghost" onClick={() => action('/api/run/resume')}>Resume</button>}
@@ -166,6 +197,29 @@ export default function Home() {
             {!active && <button className="button primary" onClick={() => openSetup('new')}>New campaign</button>}
           </div>
         </header>
+
+        <section className="judge-hero" aria-labelledby="judge-hero-title">
+          <div className="judge-hero-copy">
+            <div className="verified-kicker"><i /> Verified validation evidence · hidden test untouched</div>
+            <h2 id="judge-hero-title">An AI research agent that improves models—and knows when not to deploy them.</h2>
+            <p>KuaiLab proposes, trains, evaluates, and reflects under a sealed temporal protocol. Every decision is tied to metrics, compute, and an auditable artifact.</p>
+            <div className="judge-hero-actions">
+              <button className="button judge-primary" type="button" onClick={openJudgeWalkthrough}>Start the judge walkthrough <span>→</span></button>
+              <a className="text-link" href="#iterations">Inspect the live evidence <span>↓</span></a>
+            </div>
+          </div>
+          <div className="judge-result" aria-label="Verified performance improvement">
+            <div className="score-journey">
+              <div><span>Reproduced baseline</span><strong>{judgeShowcase.result.baseline_primary.toFixed(6)}</strong></div>
+              <span className="journey-arrow">→</span>
+              <div className="champion-score"><span>Verified champion</span><strong>{judgeShowcase.result.champion_primary.toFixed(6)}</strong></div>
+            </div>
+            <div className="gain-line"><strong>+{judgeShowcase.result.relative_gain_percent.toFixed(2)}%</strong><span>relative lift · {judgeShowcase.benchmark.validation_users.toLocaleString()} users · {judgeShowcase.benchmark.validation_rows.toLocaleString()} rows</span></div>
+            <div className="criterion-row" aria-label="Judging criteria covered">
+              {judgeShowcase.criteria.map((criterion, index) => <span key={criterion.name}>{String(index + 1).padStart(2, '0')} {criterion.name.split(' ')[0]}</span>)}
+            </div>
+          </div>
+        </section>
 
         {!connected && <div className="banner warn-banner"><b>Backend is offline.</b> Start the local engine to enable real controls and live iteration updates.</div>}
         {error && <div className="banner error-banner" role="alert"><b>Couldn’t complete that action.</b> {error}<button onClick={() => setError('')} aria-label="Dismiss">×</button></div>}
@@ -231,6 +285,105 @@ export default function Home() {
           <div className="resource-total">Train {elapsed(state?.usage.train_seconds ?? 0)} · CPU {computeHours(state?.usage.cpu_hours ?? 0)} · GPU {computeHours(state?.usage.gpu_hours ?? 0)} · Tokens {(state?.usage.total_tokens ?? 0).toLocaleString()}</div>
         </section>
       </section>
+
+      {showJudgeWalkthrough && <div className="walkthrough-backdrop" role="dialog" aria-modal="true" aria-labelledby="walkthrough-title" data-testid="judge-walkthrough">
+        <section className="walkthrough-shell">
+          <aside className="walkthrough-rail">
+            <div className="walkthrough-brand"><span>KL</span><div><b>KuaiLab</b><small>Verified demo</small></div></div>
+            <div className="walkthrough-progress">
+              {judgeSteps.map((step, index) => <button className={index === judgeStep ? 'active' : index < judgeStep ? 'done' : ''} type="button" onClick={() => setJudgeStep(index)} key={step.label} aria-current={index === judgeStep ? 'step' : undefined}>
+                <span>{index < judgeStep ? '✓' : String(index + 1).padStart(2, '0')}</span><div><b>{step.label}</b><small>{step.criterion}</small></div>
+              </button>)}
+            </div>
+            <div className="walkthrough-rail-note"><i /> Checked-in evidence<br />No network required</div>
+          </aside>
+
+          <div className="walkthrough-stage">
+            <header className="walkthrough-heading">
+              <div><p className="eyebrow">Step {judgeStep + 1} of {judgeSteps.length} · {judgeSteps[judgeStep].criterion}</p><h2 id="walkthrough-title">{judgeSteps[judgeStep].title}</h2></div>
+              <button type="button" className="walkthrough-close" onClick={() => setShowJudgeWalkthrough(false)} aria-label="Close walkthrough">×</button>
+            </header>
+
+            <div className="walkthrough-content" data-testid={`judge-step-${judgeStep + 1}`}>
+              {judgeStep === 0 && <>
+                <div className="walkthrough-lead">
+                  <p>KuaiRand-Pure asks us to predict <code>{judgeShowcase.benchmark.target}</code> and rank each user’s logged impressions. The challenge is not just accuracy: research must remain temporal, bounded, and auditable.</p>
+                </div>
+                <div className="challenge-grid">
+                  <article><span>Objective</span><strong>{judgeShowcase.benchmark.metric}</strong><small>Balance global per-user discrimination with top-five ranking quality.</small></article>
+                  <article><span>Train</span><strong>{judgeShowcase.benchmark.train_window}</strong><small>{judgeShowcase.benchmark.train_rows.toLocaleString()} historical interactions.</small></article>
+                  <article><span>Validation</span><strong>{judgeShowcase.benchmark.validation_window}</strong><small>{judgeShowcase.benchmark.validation_rows.toLocaleString()} impressions across {judgeShowcase.benchmark.validation_users.toLocaleString()} users.</small></article>
+                </div>
+                <div className="result-ribbon">
+                  <div><span>Baseline</span><strong>{judgeShowcase.result.baseline_primary.toFixed(6)}</strong></div>
+                  <div className="lift-mark"><span>Verified lift</span><strong>+{judgeShowcase.result.relative_gain_percent.toFixed(2)}%</strong><small>{signed(judgeShowcase.result.absolute_gain)} absolute</small></div>
+                  <div><span>Champion</span><strong>{judgeShowcase.result.champion_primary.toFixed(6)}</strong></div>
+                </div>
+                <p className="integrity-callout"><span>✓</span><b>Hidden test untouched.</b> The walkthrough reports public validation evidence only.</p>
+              </>}
+
+              {judgeStep === 1 && <>
+                <div className="walkthrough-lead"><p>The LLM chooses what to investigate; deterministic tools decide whether it worked. Each iteration is small, falsifiable, and recoverable.</p></div>
+                <div className="agent-loop" aria-label="Autonomous research loop">
+                  {judgeShowcase.autonomy.loop.map((stage, index) => <div key={stage}><span>{String(index + 1).padStart(2, '0')}</span><b>{stage}</b>{index < judgeShowcase.autonomy.loop.length - 1 && <i>→</i>}</div>)}
+                </div>
+                <div className="proof-grid three">
+                  <article><span>Search policy</span><h3>Hypothesis before code</h3><ul>{judgeShowcase.autonomy.operators.map((item) => <li key={item}>{item}</li>)}</ul></article>
+                  <article><span>Trusted execution</span><h3>Generated ideas, sealed labels</h3><ul>{judgeShowcase.autonomy.safety.map((item) => <li key={item}>{item}</li>)}</ul></article>
+                  <article><span>Bounded autonomy</span><h3>Stops by construction</h3><ul>{judgeShowcase.autonomy.limits.map((item) => <li key={item}>{item}</li>)}</ul></article>
+                </div>
+                <div className="worker-strip"><div><span>Real arm64 smoke run</span><strong>{judgeShowcase.worker_smoke.train_seconds.toFixed(3)}s train</strong></div><div><span>Compute</span><strong>{judgeShowcase.worker_smoke.cpu_hours.toFixed(6)} CPU-h</strong></div><div><span>Peak RAM</span><strong>{judgeShowcase.worker_smoke.peak_rss_mb.toFixed(0)} MB</strong></div><div><span>GPU</span><strong>{judgeShowcase.worker_smoke.gpu_hours.toFixed(1)} hours</strong></div></div>
+              </>}
+
+              {judgeStep === 2 && <>
+                <div className="walkthrough-lead"><p>KuaiLab uses an experiment tree instead of overwriting the champion. It retrieves method cards, proposes exploit / explore / innovate branches, and refines only the component supported by evidence.</p></div>
+                <div className="search-tree">
+                  <div className="tree-root"><span>Retained champion</span><strong>{judgeShowcase.result.champion_primary.toFixed(6)}</strong></div>
+                  <div className="tree-branches">
+                    <article><span>Exploit</span><b>Refine a proven model</b><small>Residuals, gates, calibration</small></article>
+                    <article><span>Explore</span><b>Try a distinct family</b><small>Rankers, sequences, graphs</small></article>
+                    <article><span>Innovate</span><b>Adapt research insight</b><small>Bias, uncertainty, slate context</small></article>
+                  </div>
+                </div>
+                <div className="insight-panel"><span>Problem insight</span><h3>Top-five swaps are expensive; calibration and stability beat aggressive ranking losses.</h3><p>The winning recipe combines calibrated pointwise models, training-only preferences, label-free slate structure, and conservative regime routing. Every terminal correction must survive disjoint actual-user-ID folds.</p></div>
+                <div className="wave-stats"><div><strong>{judgeShowcase.experiment_wave.methods_tested}</strong><span>new methods tested</span></div><div><strong>{judgeShowcase.experiment_wave.screen_survivors}</strong><span>passed locked screen</span></div><div><strong>{judgeShowcase.experiment_wave.confirmed_standalone_improvements}</strong><span>confirmed its own gain</span></div><div><strong>{judgeShowcase.experiment_wave.champion_promotions}</strong><span>unsafe promotions</span></div></div>
+              </>}
+
+              {judgeStep === 3 && <>
+                <div className="walkthrough-lead"><p>A polished demo should show a rejection, not only a victory. This real experiment demonstrates that the agent protects the champion even when a paper-inspired method looks promising.</p></div>
+                <div className="case-study">
+                  <div className="case-method"><span>Case study · paper-guided experiment</span><h3>{judgeShowcase.experiment_wave.case_study.method}</h3><p>Improved its matched pointwise base twice, then failed the stronger champion-integration gate.</p></div>
+                  <div className="case-metrics">
+                    <div className="pass"><span>Train-only screen</span><strong>{signed(judgeShowcase.experiment_wave.case_study.screen_primary_gain)}</strong><small>all metrics improved</small></div>
+                    <div className="pass"><span>Locked confirmation</span><strong>{signed(judgeShowcase.experiment_wave.case_study.confirmation_primary_gain)}</strong><small>signal replicated</small></div>
+                    <div className="reject"><span>Champion residual</span><strong>{signed(judgeShowcase.experiment_wave.case_study.champion_residual_gain)}</strong><small>rejected automatically</small></div>
+                  </div>
+                </div>
+                <div className="decision-banner"><span>RETAIN</span><div><b>{judgeShowcase.experiment_wave.case_study.decision}</b><p>The experiment still becomes reusable memory; failure is evidence, not wasted work.</p></div></div>
+                <div className="telemetry-row"><div><span>Trainer wall time</span><b>{judgeShowcase.experiment_wave.aggregate_trainer_wall_seconds.toFixed(1)}s</b></div><div><span>CPU compute</span><b>{judgeShowcase.experiment_wave.aggregate_cpu_hours.toFixed(3)}h</b></div><div><span>GPU compute</span><b>{judgeShowcase.experiment_wave.gpu_hours.toFixed(1)}h</b></div><div><span>Largest process</span><b>{judgeShowcase.experiment_wave.largest_single_process_peak_rss_mb.toFixed(0)} MB</b></div></div>
+              </>}
+
+              {judgeStep === 4 && <>
+                <div className="walkthrough-lead"><p>The demo is a deterministic view over checked-in evidence. The live campaign remains available underneath, but the judging story does not require an API key, dataset download, or a lucky run.</p></div>
+                <div className="reproduce-grid">
+                  <article className="command-card"><span>One-command local demo</span><code><i>$</i> npm install<br /><i>$</i> npm run local</code><small>Then open localhost:3000 and choose “3-minute walkthrough”.</small></article>
+                  <article className="command-card"><span>Evidence consistency check</span><code><i>$</i> npm run verify:demo</code><small>Fails if the showcase drifts from the champion, experiment-wave, or worker artifacts.</small></article>
+                </div>
+                <div className="artifact-list"><div className="artifact-heading"><span>Source of truth</span><b>{judgeShowcase.artifacts.length} checked-in artifacts</b></div>{judgeShowcase.artifacts.map((artifact) => <code key={artifact}>{artifact}</code>)}</div>
+                <div className="limitations"><span>Honest boundary</span>{judgeShowcase.limitations.map((limitation) => <p key={limitation}><i>!</i>{limitation}</p>)}</div>
+              </>}
+            </div>
+
+            <footer className="walkthrough-footer">
+              <span>Use ← → keys · approximately {judgeStep === 0 ? '30' : judgeStep === 4 ? '35' : '40'} seconds</span>
+              <div>
+                <button className="button ghost" type="button" disabled={judgeStep === 0} onClick={() => setJudgeStep((step) => Math.max(0, step - 1))}>Back</button>
+                {judgeStep < judgeSteps.length - 1 ? <button className="button judge-primary" type="button" data-testid="judge-next" onClick={() => setJudgeStep((step) => Math.min(judgeSteps.length - 1, step + 1))}>Next: {judgeSteps[judgeStep + 1].label} <span>→</span></button> : <button className="button judge-primary" type="button" data-testid="judge-finish" onClick={() => setShowJudgeWalkthrough(false)}>Open live control room <span>↗</span></button>}
+              </div>
+            </footer>
+          </div>
+        </section>
+      </div>}
 
       {showSetup && <div className="modal-backdrop" onMouseDown={() => setShowSetup(false)}><form className="modal campaign-modal" onSubmit={startRun} onMouseDown={(event) => event.stopPropagation()}>
         <div className="modal-heading"><div><p className="eyebrow">{setupMode === 'continue' ? 'Retained research' : 'New campaign'}</p><h2>{setupMode === 'continue' ? 'Continue from the champion' : 'Configure autonomous research'}</h2></div><button type="button" className="close-button" onClick={() => setShowSetup(false)}>×</button></div>
