@@ -41,6 +41,31 @@ The 0.612858 validation champion is no longer metrics-only bootstrap evidence. R
 
 The hidden split remains unavailable to this adapter. Set **Mount verified 0.612858 champion** in the dashboard; the agent can then choose this family autonomously. Operator steering is optional, for example: `Try champion_residual_blend with a pairwise_fm candidate and a conservative positive weight.`
 
+The worker also exposes a `slate_context_deepfm` champion candidate. Unlike the
+row-wise residuals, it batches complete user slates, pools a permutation-invariant
+DeepSets context, and includes label-free session/repeat structure. It selects an
+epoch on matched seven-day slates (April 8–14 → April 15–21), refits both weeks,
+then computes the April 22–28 confirmation score, reducing repeated confirmation-
+split tuning.
+
+Promotion has a stability guard: any primary gain below `0.0001` must also leave
+both GAUC and nDCG@5 non-decreasing. Larger primary gains still follow the
+organizer's combined metric. This prevents top-five regressions from being
+promoted as floating-point-scale average improvements.
+
+Real campaigns use a two-level evaluator. The fast loop trains only on April
+8–14 and screens on April 15–21. A weak candidate is recorded as `screened_out`
+without reading April 22–28 labels. Only candidates that match or beat the fixed
+train-only FM screen baseline enter the slow confirmation loop; ensemble
+operators receive a narrow `0.002` diversity allowance. Both tiers' resource
+usage is retained in the same experiment journal.
+
+The controller now keeps an AIDE-style experiment tree, applies MLE-STAR-style
+single-component refinement, asks for one exploit/explore/innovate alternative
+before every selection, and retrieves DS-Agent-style method cards with explicit
+attempt status and risk. See [`docs/PAPER_METHODS.md`](docs/PAPER_METHODS.md) and
+[`backend/kuailab/method_cards.json`](backend/kuailab/method_cards.json).
+
 The real arm64 integration smoke retrained a fresh FM in `7.001` seconds, used `0.002496` CPU-hours and `541.359` MB peak RAM, and correctly retained the `0.612858` champion when the candidate reached only `0.596280`. Its auditable result is checked in at [`results/final-model/autonomous-worker-smoke.json`](results/final-model/autonomous-worker-smoke.json).
 
 The launcher also selects the most capable available runner interpreter instead of the first NumPy-only runtime. On this arm64 host it selected PyTorch `2.10.0` and completed the formerly blocked DeepFM residual in `32.833` seconds; its `0.612568` result was correctly rejected.
@@ -66,6 +91,17 @@ A follow-up paired the strongest unused interaction families with the continuous
 The next cycle rejected causal randomized-feedback transfer, weekly recurrence priors, focal BCE, and several multi-task/user-balance controls. A later audit found that the apparent tree-only micro-gain used ordinal row codes instead of actual user IDs for held-out reporting; the corrected tree-only OOF score regressed, so that claim is explicitly invalidated in [`results/verified-slate-consensus/accepted-cycle-2026-08-30-user-balanced-tree.json`](results/verified-slate-consensus/accepted-cycle-2026-08-30-user-balanced-tree.json). A corrected two-dimensional audit then selected the user-balanced CatBoost and watch-ratio DeepFM together at weights `(0.001875, 0.001875)` in all four user folds. Every held-out fold improved, raising the verified champion to `0.612830`; the joint audit used `19.204` wall-seconds, `0.005328` CPU-hours, `1210.094` MB peak RAM, and no GPU. Full evidence is in [`results/verified-slate-consensus/accepted-cycle-2026-08-30-joint-terminal-residual.json`](results/verified-slate-consensus/accepted-cycle-2026-08-30-joint-terminal-residual.json).
 
 A YetiRankPairwise batch-slate model reached `0.612307` standalone and selected zero global residual weight, but four user folds selected weights `[0.78, 0.78, 0.78, 0.40]` toward it for users whose supplied slate forms exactly one 30-minute session. Their fixed mean `0.685` changes three pair orderings across three users, improves one held-out fold, leaves three unchanged, and raises the champion to `0.612834`. Training used `212.028` wall-seconds, `0.406794` CPU-hours, `3746.594` MB peak RAM, and no GPU; evidence is in [`results/verified-slate-consensus/accepted-cycle-2026-08-30-single-session-yeti.json`](results/verified-slate-consensus/accepted-cycle-2026-08-30-single-session-yeti.json).
+
+A later diagnostic localized 53.1% of recoverable nDCG loss to users with seven
+or more sessions. A new full-slate DeepSets/DeepFM executor therefore modeled
+permutation-invariant user context plus outcome-free session and repeat features.
+Matched-week temporal selection and refitting improved a single seed from
+`0.602125` to `0.603570` standalone; its apparent fixed residual was only
+`+0.0000063` and three held-out user folds regressed. A three-seed rank ensemble
+reached `0.603915` standalone but its fixed residual was `-0.0000001`, so the
+`0.612858` champion remains frozen. The four tracked trainers used `113.919`
+wall-seconds, `0.044665` CPU-hours, at most `1369.594` MB RAM, and no GPU.
+Evidence is recorded in `results/final-model/*slate-context*.json`.
 
 A corrected zero-preferring scan of 20 frozen model families across 32 outcome-free structural regimes then selected a `-0.0275` median-consensus extrapolation for users with two or three sessions. Fold weights `[-0.03, -0.03, -0.02, -0.03]` are directionally consistent, the fixed recipe improves every fold or leaves it unchanged, and the champion rises to `0.612839`. The broad scan used `342.668` wall-seconds, `0.095170` CPU-hours, `1520.953` MB peak RAM, and no GPU; evidence is in [`results/verified-slate-consensus/accepted-cycle-2026-08-30-session-median.json`](results/verified-slate-consensus/accepted-cycle-2026-08-30-session-median.json).
 
@@ -135,7 +171,7 @@ export KUAI_EXPERIMENT_COMMAND='/absolute/path/to/your-organizer-adapter'
 
 The command is split into arguments without a shell and runs inside an iteration workspace. It receives `KUAI_RUNNER_REQUEST`, the path to JSON containing:
 
-- `action` (`baseline` or `experiment`)
+- `action` (`baseline`, `screen_baseline`, `screen`, or `experiment`)
 - `iteration`
 - `dataset_path`
 - `proposal_path` (`null` for the baseline)

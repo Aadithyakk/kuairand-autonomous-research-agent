@@ -5,7 +5,7 @@ import os
 import ssl
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import certifi
@@ -24,6 +24,11 @@ class Proposal:
     abort_condition: str
     expected_gain: float
     usage: dict[str, int]
+    strategy: str = "exploit"
+    operator: str = "improve"
+    component: str = "model"
+    parent_iteration: int = 0
+    alternatives: list[dict[str, Any]] = field(default_factory=list)
     response_id: str | None = None
 
 
@@ -57,6 +62,15 @@ class DemoProvider:
             abort_condition="Invalid metrics, non-zero runner exit, or iteration timeout.",
             expected_gain=gain,
             usage={"input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0, "total_tokens": 0},
+            strategy=("exploit", "explore", "innovate")[(number - 1) % 3],
+            operator="improve",
+            component="model",
+            parent_iteration=max(0, number - 1),
+            alternatives=[
+                {"strategy": "exploit", "title": "Refine current best", "operator": "improve", "component": "model", "rationale": "Exploit the strongest branch.", "expected_gain": 0.001},
+                {"strategy": "explore", "title": "Try a distinct family", "operator": "draft", "component": "model", "rationale": "Preserve search diversity.", "expected_gain": 0.001},
+                {"strategy": "innovate", "title": "Test a new signal", "operator": "ablate", "component": "reward", "rationale": "Probe an unattempted mechanism.", "expected_gain": 0.001},
+            ],
         )
 
 
@@ -91,7 +105,7 @@ class OpenAIProvider:
         schema = {
             "type": "object",
             "additionalProperties": False,
-            "required": ["title", "experiment_type", "hypothesis", "rationale", "change_summary", "code", "parameters", "acceptance", "abort_condition", "expected_gain"],
+            "required": ["title", "experiment_type", "hypothesis", "rationale", "change_summary", "code", "parameters", "acceptance", "abort_condition", "expected_gain", "strategy", "operator", "component", "parent_iteration", "alternatives"],
             "properties": {
                 "title": {"type": "string"},
                 "experiment_type": {"type": "string", "enum": [
@@ -133,17 +147,39 @@ class OpenAIProvider:
                         "temporal_blend_weight": {"type": "number"},
                         "champion_candidate_family": {
                             "type": "string",
-                            "enum": ["pointwise_fm", "pairwise_fm", "deepfm_blend", "temporal_deepfm_blend"]
+                            "enum": [
+                                "pointwise_fm", "pairwise_fm", "deepfm_blend",
+                                "temporal_deepfm_blend", "slate_context_deepfm"
+                            ]
                         },
                         "champion_blend_weight": {"type": "number", "minimum": -0.25, "maximum": 0.25}
                     }},
                 "acceptance": {"type": "string"}, "abort_condition": {"type": "string"}, "expected_gain": {"type": "number"},
+                "strategy": {"type": "string", "enum": ["exploit", "explore", "innovate"]},
+                "operator": {"type": "string", "enum": ["draft", "improve", "ablate", "ensemble", "debug"]},
+                "component": {"type": "string", "enum": ["features", "model", "loss", "training", "ensemble", "reward"]},
+                "parent_iteration": {"type": "integer", "minimum": 0},
+                "alternatives": {
+                    "type": "array", "minItems": 3, "maxItems": 3,
+                    "items": {
+                        "type": "object", "additionalProperties": False,
+                        "required": ["strategy", "title", "operator", "component", "rationale", "expected_gain"],
+                        "properties": {
+                            "strategy": {"type": "string", "enum": ["exploit", "explore", "innovate"]},
+                            "title": {"type": "string"},
+                            "operator": {"type": "string", "enum": ["draft", "improve", "ablate", "ensemble", "debug"]},
+                            "component": {"type": "string", "enum": ["features", "model", "loss", "training", "ensemble", "reward"]},
+                            "rationale": {"type": "string"},
+                            "expected_gain": {"type": "number"}
+                        }
+                    }
+                }
             },
         }
         body = {
             "model": self.model,
             "reasoning": {"effort": self.reasoning_effort},
-            "instructions": "You are the experiment-design component of an autonomous recommender-systems researcher. Propose exactly one falsifiable, budget-aware KuaiRand-Pure long_view experiment using the executor contract in the input. Never claim a metric you have not observed and do not repeat an exact tested parameter configuration. Use only the trusted typed executors: NumPy for FM variants, the installed PyTorch executor for deep variants, or champion_residual_blend to train a fresh candidate and blend it into the checksum-verified frozen 0.612858 champion. Prefer champion_residual_blend once the retained champion is above the standalone FM family. Do not install packages or use undefined placeholders. The code field must show the concrete configuration corresponding to the selected typed experiment. Return only schema-valid JSON.",
+            "instructions": "You are the experiment-design component of an autonomous recommender-systems researcher. First produce exactly three distinct alternatives: one exploit, one explore, and one innovate. Then select exactly one as the returned proposal. Anchor it to one parent_iteration in the supplied search_tree and apply one atomic operator to one component. Use ablation evidence and the method-card case library; never repeat an exhausted card or exact tested configuration. Propose a falsifiable, budget-aware KuaiRand-Pure long_view experiment using the executor contract. Never claim a metric you have not observed. Use only the trusted typed executors: NumPy FM variants, installed PyTorch deep variants, or champion_residual_blend over the checksum-verified 0.612858 champion. Prefer conservative residual weights. Do not install packages or use undefined placeholders. The code field must show the concrete typed configuration. Return only schema-valid JSON.",
             "input": json.dumps(context, sort_keys=True),
             "text": {"format": {"type": "json_schema", "name": "experiment_proposal", "strict": True, "schema": schema}},
         }
@@ -162,6 +198,20 @@ class OpenAIProvider:
         except urllib.error.URLError as error:
             raise RuntimeError(f"OpenAI Responses API secure connection failed: {error.reason}") from error
         payload = json.loads(self._output_text(response))
+        alternative_strategies = [item.get("strategy") for item in payload.get("alternatives", [])]
+        if sorted(alternative_strategies) != ["exploit", "explore", "innovate"]:
+            raise RuntimeError("Planner must return one exploit, one explore, and one innovate alternative")
+        if payload.get("strategy") not in alternative_strategies:
+            raise RuntimeError("Selected strategy must match one proposed alternative")
+        matching = [
+            item for item in payload["alternatives"]
+            if item["strategy"] == payload["strategy"]
+        ]
+        if not matching or matching[0]["operator"] != payload.get("operator") or matching[0]["component"] != payload.get("component"):
+            raise RuntimeError("Selected operator and component must match the chosen alternative")
+        valid_parents = {int(item["node"]) for item in context.get("search_tree", [])}
+        if valid_parents and int(payload.get("parent_iteration", -1)) not in valid_parents:
+            raise RuntimeError("parent_iteration must reference an existing search-tree node")
         raw_usage = response.get("usage", {})
         output_details = raw_usage.get("output_tokens_details", {})
         usage = {

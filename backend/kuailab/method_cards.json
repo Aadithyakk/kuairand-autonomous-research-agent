@@ -1,0 +1,79 @@
+[
+  {
+    "id": "rad_watch_quantiles",
+    "category": "reward",
+    "status": "unattempted-priority",
+    "paper": "Relative Advantage Debiasing for Watch-Time Prediction in Short-Video Recommendation",
+    "source": "https://arxiv.org/abs/2508.11086",
+    "method": "Map play time to train-only user- and video-conditional empirical quantiles, then learn the relative-preference signal in a separate stage.",
+    "fit": "Distinct from watch_ratio and CWM: it removes both user watch-habit and item-duration/popularity confounding.",
+    "smallest_ablation": "Add fused user/video watch quantiles as an auxiliary target to one pointwise DeepFM seed; retain long_view as the ranking head.",
+    "risk": "Quantiles must be constructed strictly from the training window and need smoothing for sparse users/videos."
+  },
+  {
+    "id": "umre_monotonic_ensemble",
+    "category": "ensemble",
+    "status": "unattempted-priority",
+    "paper": "UMRE: A Unified Monotonic Transformation for Ranking Ensemble in Recommender Systems",
+    "source": "https://arxiv.org/abs/2508.07613",
+    "method": "Learn monotonic transformations of diverse objective scores, then fuse them with lightweight personalized weights.",
+    "fit": "The frozen champion relies on linear rank consensus; RRF failed, but learned monotonic score-region weighting is mathematically different.",
+    "smallest_ablation": "Fit train-only monotonic spline/isotonic transforms for three diverse frozen scores, followed by a strongly regularized user-context gate.",
+    "risk": "Requires aligned out-of-time scores for every component and strict cross-fitting to avoid a flexible stacker leak."
+  },
+  {
+    "id": "cdr_debiasing",
+    "category": "loss",
+    "status": "research-only",
+    "paper": "Conservative Doubly Robust Learning for Debiased Recommendation",
+    "source": "https://jiawei-chen.github.io/paper/CIKM23-CDR.pdf",
+    "method": "Filter uncertain error imputations in doubly robust learning using their estimated mean and variance.",
+    "fit": "Directly evaluated on KuaiRand with biased training and random-exposure evaluation data.",
+    "smallest_ablation": "Only after rebuilding a valid random-log screen: compare DR against conservative uncertainty filtering.",
+    "risk": "This challenge validates on standard logs, so optimizing toward the random-log distribution can reduce the official score."
+  },
+  {
+    "id": "setrank_attention",
+    "category": "model",
+    "status": "partially-attempted",
+    "paper": "SetRank: Learning a Permutation-Invariant Ranking Model for Information Retrieval",
+    "source": "https://arxiv.org/abs/1912.05891",
+    "method": "Encode a candidate set with permutation-invariant self-attention before producing item scores.",
+    "fit": "Matches the evaluator's whole-user slate, particularly long slates where nDCG degrades.",
+    "smallest_ablation": "Replace mean-pooled DeepSets context with one low-rank self-attention block while keeping BCE and temporal selection fixed.",
+    "risk": "The mean-pooled slate model and prior causal Transformers failed; CPU cost and instability are material."
+  },
+  {
+    "id": "lambda_mart",
+    "category": "model",
+    "status": "exhausted",
+    "paper": "From RankNet to LambdaRank to LambdaMART: An Overview",
+    "source": "https://www.microsoft.com/en-us/research/publication/from-ranknet-to-lambdarank-to-lambdamart-an-overview/",
+    "method": "Gradient-boosted trees with metric-weighted pair gradients.",
+    "fit": "Correct group-wise ranking baseline.",
+    "smallest_ablation": "None: CatBoost YetiRank and XGBoost LambdaMART were already audited.",
+    "risk": "Best XGBoost seed was 0.611949 standalone and selected zero residual."
+  },
+  {
+    "id": "cwm_duration",
+    "category": "reward",
+    "status": "exhausted",
+    "paper": "Counteracting Duration Bias in Video Recommendation via Counterfactual Watch Time",
+    "source": "https://arxiv.org/abs/2406.07932",
+    "method": "Model censored watch time counterfactually rather than treating completion as an exact preference value.",
+    "fit": "Published KuaiRand relevance-ranking gains motivated the existing survival experiments.",
+    "smallest_ablation": "None without a new hypothesis.",
+    "risk": "CWM likelihood, censored mixture survival, and duration-regime variants already failed stable promotion."
+  },
+  {
+    "id": "mmoe_ple",
+    "category": "model",
+    "status": "exhausted",
+    "paper": "Modeling Task Relationships in Multi-task Learning with Multi-gate Mixture-of-Experts",
+    "source": "https://research.google/pubs/modeling-task-relationships-in-multi-task-learning-with-multi-gate-mixture-of-experts/",
+    "method": "Use task-specific gates over shared experts for multiple feedback signals.",
+    "fit": "KuaiRand exposes multiple feedback labels.",
+    "smallest_ablation": "Only revisit with a new target such as RAD quantiles.",
+    "risk": "Generic multi-task and MMoE controls have already regressed."
+  }
+]

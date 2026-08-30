@@ -23,7 +23,7 @@ if str(ROOT) not in sys.path:
 
 from backend.kuailab.resources import ProcessResourceTracker
 from backend.kuailab.pairwise import sample_pair_indices
-from backend.kuailab.champion import blend_with_champion, load_champion_scores
+from backend.kuailab.champion import blend_with_champion, load_champion_scores, within_user_rank
 
 
 STARTER = Path(os.getenv("KUAI_STARTER_KIT_DIR", ROOT / "external" / "kuairand-starter-kit")).resolve()
@@ -63,11 +63,35 @@ def load_development_splits(data_dir: Path) -> dict:
                 item = (
                     date, row["user_id"], row["video_id"], video_to_author.get(row["video_id"], "UNK"),
                     row["tab"], float(row["duration_ms"]), 1 if row["long_view"] != "0" else 0,
-                    int(row["hourmin"]) // 100,
+                    int(row["hourmin"]) // 100, int(row["time_ms"]),
                 )
                 (train if date <= 20220421 else valid).append(item)
     if len(train) != 1_141_112 or len(valid) != 124_909:
         raise RuntimeError(f"Unexpected split sizes: train={len(train)}, valid={len(valid)}")
+    return {"train": train, "valid": valid, "test": []}
+
+
+def load_screen_splits(data_dir: Path) -> dict:
+    """Load two disjoint seven-day train-only windows for the fast loop."""
+    video_to_author: dict[str, str] = {}
+    with (data_dir / "video_features_basic_pure.csv").open(encoding="utf-8") as stream:
+        for row in csv.DictReader(stream):
+            video_to_author[row["video_id"]] = row["author_id"]
+    train, valid = [], []
+    with (data_dir / "log_standard_4_08_to_4_21_pure.csv").open(encoding="utf-8") as stream:
+        for row in csv.DictReader(stream):
+            date = int(row["date"])
+            item = (
+                date, row["user_id"], row["video_id"],
+                video_to_author.get(row["video_id"], "UNK"), row["tab"],
+                float(row["duration_ms"]), 1 if row["long_view"] != "0" else 0,
+                int(row["hourmin"]) // 100, int(row["time_ms"]),
+            )
+            (train if date <= 20220414 else valid).append(item)
+    if not train or not valid or len(train) + len(valid) != 1_141_112:
+        raise RuntimeError(
+            f"Unexpected fast-loop split sizes: train={len(train)}, valid={len(valid)}"
+        )
     return {"train": train, "valid": valid, "test": []}
 
 
@@ -213,34 +237,59 @@ def train_pairwise(
     return best_scores, {"objective": "bpr_pairwise", "seed": seed, "epochs": history}
 
 
-def train_fm(splits: dict, output_dir: Path, proposal: dict) -> dict:
+def train_fm(
+    splits: dict, output_dir: Path, proposal: dict, *, mount_champion: bool = True,
+) -> dict:
     encoded, dimension = data_module.encode(splits)
     train_x, train_y, train_users = encoded["train"]
     valid_x, valid_y, valid_users = encoded["valid"]
     parameters = proposal.get("parameters", {})
     experiment_type = proposal.get("experiment_type", "fm_config")
-    champion_mode = experiment_type == "champion_residual_blend"
+    requested_champion_mode = experiment_type == "champion_residual_blend"
+    champion_mode = requested_champion_mode and mount_champion
     champion_families = {
         "pointwise_fm": "fm_ensemble",
         "pairwise_fm": "fm_pairwise",
         "deepfm_blend": "fm_deep_blend",
         "temporal_deepfm_blend": "fm_temporal_deep_blend",
+        "slate_context_deepfm": "fm_slate_deep",
     }
     candidate_family = str(parameters.get("champion_candidate_family", "pointwise_fm"))
-    if champion_mode and candidate_family not in champion_families:
+    if requested_champion_mode and candidate_family not in champion_families:
         raise ValueError(
             f"Unsupported champion_candidate_family {candidate_family!r}; "
             f"choose one of {sorted(champion_families)}"
         )
-    training_type = champion_families[candidate_family] if champion_mode else experiment_type
+    training_type = (
+        champion_families[candidate_family]
+        if requested_champion_mode else experiment_type
+    )
     seed = int(parameters.get("seed", 0))
-    ensemble_types = {"fm_ensemble", "fm_pairwise_blend", "fm_deep_blend", "fm_temporal_deep_blend"}
+    ensemble_types = {
+        "fm_ensemble", "fm_pairwise_blend", "fm_deep_blend",
+        "fm_temporal_deep_blend", "fm_slate_deep",
+    }
     seeds = parameters.get("ensemble_seeds", [seed]) if training_type in ensemble_types else [seed]
     seeds = [int(value) for value in seeds[:3]]
     positive_weight = float(parameters.get("positive_weight", 1.0))
     positive_weight = max(1.0, min(positive_weight, 10.0))
     predictions, histories, pairwise_histories, deep_histories, temporal_histories = [], [], [], [], []
-    if training_type != "fm_pairwise":
+    if training_type == "fm_slate_deep":
+        from backend.kuailab.slate import train_slate_deepfm
+
+        slate_predictions = []
+        for model_seed in seeds:
+            slate_parameters = {**parameters, "deep_seed": model_seed}
+            slate_scores, slate_history = train_slate_deepfm(
+                splits, encoded, dimension, output_dir, slate_parameters,
+                evaluate_module.evaluate,
+            )
+            slate_predictions.append(within_user_rank(valid_users, slate_scores))
+            deep_histories.append(slate_history)
+        best_scores = np.mean(np.stack(slate_predictions), axis=0)
+        blend_weight = 0.0
+        deep_blend_weight = 0.0
+    elif training_type != "fm_pairwise":
         for model_seed in seeds:
             scores, history = train_one(train_x, train_y, valid_x, valid_y, valid_users, dimension, output_dir, parameters, model_seed, positive_weight)
             predictions.append(scores)
@@ -257,7 +306,7 @@ def train_fm(splits: dict, output_dir: Path, proposal: dict) -> dict:
             blend_weight = max(0.0, min(float(parameters.get("blend_weight", 0.455)), 1.0))
             pointwise_scores = np.mean(np.stack(predictions), axis=0)
             best_scores = (1.0 - blend_weight) * pointwise_scores + blend_weight * pairwise_scores
-    else:
+    elif training_type != "fm_slate_deep":
         blend_weight = 0.0
         best_scores = np.mean(np.stack(predictions), axis=0)
     if training_type in {"fm_deep_blend", "fm_temporal_deep_blend"}:
@@ -342,14 +391,16 @@ def main() -> int:
     tracker = ProcessResourceTracker()
     started = time.monotonic()
     proposal = {"experiment_type": "fm_config", "parameters": {}}
-    if request.get("action") == "experiment":
+    if request.get("action") in {"experiment", "screen"}:
         proposal_path = Path(request["proposal_path"])
         proposal = json.loads(proposal_path.read_text(encoding="utf-8"))
     load_started = time.monotonic()
-    splits = load_development_splits(data_dir)
+    screening = request.get("action") in {"screen", "screen_baseline"}
+    splits = load_screen_splits(data_dir) if screening else load_development_splits(data_dir)
     data_loading_seconds = time.monotonic() - load_started
     train_started = time.monotonic()
-    metrics = train_fm(splits, output_dir, proposal)
+    metrics = train_fm(splits, output_dir, proposal, mount_champion=not screening)
+    metrics["evaluation_tier"] = "internal_screen" if screening else "official_confirmation"
     train_seconds = time.monotonic() - train_started
     metrics["runtime_seconds"] = round(time.monotonic() - started, 3)
     usage = tracker.finish(train_seconds=train_seconds)

@@ -16,6 +16,8 @@ from backend.kuailab.engine import CampaignEngine
 from backend.kuailab.provider import DemoProvider, OpenAIProvider
 from backend.kuailab.pairwise import sample_pair_indices
 from backend.kuailab.resources import normalize_resource_usage
+from backend.kuailab.slate import build_slate_features
+from backend.kuailab.research import load_method_cards, summarize_search_tree
 from backend.kuailab.state import StateStore
 
 
@@ -31,6 +33,19 @@ class CoreTests(unittest.TestCase):
         self.assertIn("def configure_experiment", proposal.code)
         self.assertTrue(proposal.hypothesis)
         self.assertEqual(proposal.usage["total_tokens"], 0)
+        self.assertEqual(
+            {alternative["strategy"] for alternative in proposal.alternatives},
+            {"exploit", "explore", "innovate"},
+        )
+        self.assertIn(proposal.strategy, {"exploit", "explore", "innovate"})
+
+    def test_research_memory_has_prioritized_and_exhausted_cards(self):
+        cards = load_method_cards()
+        statuses = {card["status"] for card in cards}
+        self.assertIn("unattempted-priority", statuses)
+        self.assertIn("exhausted", statuses)
+        tree = summarize_search_tree([{"number": 0, "title": "root", "status": "baseline", "metrics": {"primary": 0.6}}])
+        self.assertEqual(tree[0]["node"], 0)
 
     def test_responses_output_text_fallback(self):
         response = {"output": [{"content": [{"type": "output_text", "text": "{\"ok\":true}"}]}]}
@@ -75,6 +90,21 @@ class CoreTests(unittest.TestCase):
         np.testing.assert_allclose(blended, within_user_rank(users, champion))
         with self.assertRaisesRegex(ValueError, "between -0.25 and 0.25"):
             blend_with_champion(users, champion, candidate, 0.3)
+
+    def test_slate_features_are_outcome_free_and_session_aware(self):
+        base = [
+            (20220408, "u1", "v1", "a1", "0", 10_000.0, 0, 8, 1_000),
+            (20220408, "u1", "v1", "a1", "0", 10_000.0, 1, 8, 2_000),
+            (20220409, "u1", "v2", "a1", "0", 20_000.0, 0, 9, 2_000_000),
+        ]
+        changed_labels = [tuple(list(row[:6]) + [1 - row[6]] + list(row[7:])) for row in base]
+        features, names = build_slate_features(base)
+        changed, _ = build_slate_features(changed_labels)
+        np.testing.assert_allclose(features, changed)
+        self.assertEqual(features.shape, (3, len(names)))
+        session_fraction = names.index("session_fraction")
+        self.assertEqual(features[0, session_fraction], features[1, session_fraction])
+        self.assertGreater(features[2, session_fraction], features[1, session_fraction])
 
     def test_synthetic_failure_is_visible(self):
         proposal = DemoProvider().propose({"iteration": 4, "epsilon": 0.002, "steering": None})

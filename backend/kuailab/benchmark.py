@@ -138,9 +138,14 @@ class CommandBenchmark:
             peak_rss_mb=fallback_usage["peak_rss_mb"],
         )
         (workspace / "resource-usage.json").write_text(json.dumps(usage, indent=2, sort_keys=True), encoding="utf-8")
+        evidence = (
+            "kuairand-train-only-screen"
+            if action in {"screen", "screen_baseline"}
+            else "kuairand-pure-validation"
+        )
         return Evaluation(
             primary=float(metrics["primary"]), gauc=float(metrics["gauc"]), ndcg5=float(metrics["ndcg5"]),
-            runtime_seconds=runtime_seconds, evidence="kuairand-pure-validation", resource_usage=usage,
+            runtime_seconds=runtime_seconds, evidence=evidence, resource_usage=usage,
         )
 
     def baseline(self, workspace: Path) -> Evaluation:
@@ -148,3 +153,9 @@ class CommandBenchmark:
 
     def evaluate(self, proposal: Proposal, iteration: int, workspace: Path) -> Evaluation:
         return self._invoke("experiment", iteration, workspace, str(workspace / "proposal.json"))
+
+    def screen_baseline(self, workspace: Path) -> Evaluation:
+        return self._invoke("screen_baseline", 0, workspace, None)
+
+    def screen(self, proposal: Proposal, iteration: int, workspace: Path) -> Evaluation:
+        return self._invoke("screen", iteration, workspace, str(workspace / "proposal.json"))

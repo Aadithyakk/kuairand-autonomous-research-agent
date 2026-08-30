@@ -16,6 +16,7 @@ type ResourceUsage = {
 type Iteration = {
   number: number; title: string; status: string; stage: string; metrics: Metrics | null; delta: number | null;
   gain?: number; duration_seconds: number; error?: string; evidence?: string; artifact?: string; accepted: boolean; budget_counted?: boolean; resource_usage?: ResourceUsage | null;
+  screen_metrics?: Metrics | null; screen_gain?: number | null; screen_passed?: boolean; confirmation_accessed?: boolean;
 };
 type EventItem = { id: number; time: string; kind: string; title: string; detail: string; iteration?: number; stage?: string };
 type RunLimits = { max_iterations: number; max_hours: number; convergence_epsilon: number; convergence_patience: number; bootstrap_verified: boolean };
@@ -40,6 +41,7 @@ function timeLabel(value: string) { return new Date(value).toLocaleTimeString([]
 function statusTone(status: string) {
   if (status === 'accepted' || status === 'complete') return 'good';
   if (status === 'failed') return 'warn';
+  if (status === 'screened_out') return 'warn';
   if (status === 'running') return 'active';
   return 'base';
 }
@@ -215,8 +217,8 @@ export default function Home() {
           <div className="panel-heading"><div><p className="eyebrow">Campaign history</p><h2>Iterations</h2></div><span className="subtle">{synthetic ? 'Synthetic workflow evidence · no model training' : 'Validation-best checkpoint retained · hidden test untouched'}</span></div>
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Iteration</th><th>Experiment</th><th>Status</th><th>Primary</th><th>Δ baseline</th><th>Train</th><th>Compute</th><th>Peak RAM</th></tr></thead>
-              <tbody>{[...(state?.iterations ?? [])].reverse().map((item) => <tr key={item.number}><td className="mono">#{String(item.number).padStart(3, '0')}</td><td><b>{item.title}</b>{item.error && <small className="row-note">{item.error}</small>}</td><td><span className={`status ${statusTone(item.status)}`}>{item.status}</span></td><td className="mono">{score(item.metrics?.primary)}</td><td className={`mono ${(item.delta ?? 0) > 0 ? 'positive' : ''}`}>{item.delta == null ? '—' : `${item.delta >= 0 ? '+' : ''}${item.delta.toFixed(4)}`}</td><td className="mono">{item.resource_usage ? elapsed(item.resource_usage.train_seconds) : elapsed(item.duration_seconds)}</td><td className="mono resource-cell">{item.resource_usage ? `${computeHours(item.resource_usage.cpu_hours)} CPU · ${computeHours(item.resource_usage.gpu_hours)} GPU` : '—'}</td><td className="mono">{memory(item.resource_usage?.peak_rss_mb)}</td></tr>)}</tbody>
+              <thead><tr><th>Iteration</th><th>Experiment</th><th>Status</th><th>Fast screen</th><th>Confirmed primary</th><th>Δ baseline</th><th>Train</th><th>Compute</th><th>Peak RAM</th></tr></thead>
+              <tbody>{[...(state?.iterations ?? [])].reverse().map((item) => <tr key={item.number}><td className="mono">#{String(item.number).padStart(3, '0')}</td><td><b>{item.title}</b>{item.error && <small className="row-note">{item.error}</small>}</td><td><span className={`status ${statusTone(item.status)}`}>{item.status}</span></td><td className="mono">{score(item.screen_metrics?.primary)}</td><td className="mono">{score(item.metrics?.primary)}</td><td className={`mono ${(item.delta ?? 0) > 0 ? 'positive' : ''}`}>{item.delta == null ? '—' : `${item.delta >= 0 ? '+' : ''}${item.delta.toFixed(4)}`}</td><td className="mono">{item.resource_usage ? elapsed(item.resource_usage.train_seconds) : elapsed(item.duration_seconds)}</td><td className="mono resource-cell">{item.resource_usage ? `${computeHours(item.resource_usage.cpu_hours)} CPU · ${computeHours(item.resource_usage.gpu_hours)} GPU` : '—'}</td><td className="mono">{memory(item.resource_usage?.peak_rss_mb)}</td></tr>)}</tbody>
             </table>
           </div>
         </section>
@@ -243,7 +245,7 @@ export default function Home() {
           <label>Small-gain threshold<input type="number" min="0" max="0.01" step="0.00001" value={officialMode ? 0.002 : convergenceEpsilon} onChange={(event) => setConvergenceEpsilon(Number(event.target.value))} disabled={officialMode} required /></label>
           <label>Stop after small gains<input type="number" min="0" max="50" step="1" value={officialMode ? 3 : convergencePatience} onChange={(event) => setConvergencePatience(Number(event.target.value))} disabled={officialMode} required /></label>
         </div>
-        <p className="modal-note">Real KuaiRand campaigns enforce the official 50-iteration, six-hour, ε=0.002 / three-iteration convergence rule. Every positive validation gain is retained; failures are retried once through a lower-resource route and logged.</p>
+        <p className="modal-note">Real KuaiRand campaigns enforce the 50-iteration, six-hour, ε=0.002 / three-iteration convergence rule. Train-only fast screening protects the confirmation split; tiny confirmed gains must preserve both GAUC and nDCG@5. Failures are retried once and logged.</p>
         <button className="button primary wide" type="submit">{setupMode === 'continue' ? 'Continue autonomous research' : 'Start autonomous campaign'}</button>
       </form></div>}
 

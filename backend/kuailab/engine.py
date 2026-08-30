@@ -13,6 +13,7 @@ from .champion import load_champion_scores
 from .config import Settings
 from .provider import DemoProvider, OpenAIProvider, Proposal
 from .resources import add_resource_usage, combine_resource_usage, empty_campaign_usage
+from .research import load_method_cards, summarize_search_tree
 from .state import StateStore, utc_now
 
 
@@ -322,12 +323,21 @@ class CampaignEngine:
             abort_condition=proposal.abort_condition,
             expected_gain=proposal.expected_gain,
             usage=proposal.usage,
+            strategy=proposal.strategy,
+            operator=proposal.operator,
+            component=proposal.component,
+            parent_iteration=proposal.parent_iteration,
+            alternatives=proposal.alternatives,
             response_id=proposal.response_id,
         )
 
-    def _evaluate_with_recovery(self, benchmark, proposal: Proposal, number: int, workspace: Path):
+    def _evaluate_with_recovery(
+        self, benchmark, proposal: Proposal, number: int, workspace: Path,
+        *, operation: str = "evaluate",
+    ):
+        run = getattr(benchmark, operation)
         try:
-            return proposal, benchmark.evaluate(proposal, number, workspace), []
+            return proposal, run(proposal, number, workspace), []
         except BenchmarkRunError as first_error:
             retry_proposal = self._recovery_proposal(proposal, first_error)
             retry_workspace = workspace / "retry-1"
@@ -348,7 +358,7 @@ class CampaignEngine:
                 number, "train",
             )
             try:
-                evaluation = benchmark.evaluate(retry_proposal, number, retry_workspace)
+                evaluation = run(retry_proposal, number, retry_workspace)
             except BenchmarkRunError as retry_error:
                 combined = combine_resource_usage(first_error.resource_usage, retry_error.resource_usage)
                 combined_error = BenchmarkRunError(
@@ -413,6 +423,10 @@ class CampaignEngine:
                 "experiment_type": proposal.get("experiment_type"),
                 "parameters": proposal.get("parameters", {}),
                 "resource_usage": summary.get("resource_usage"),
+                "strategy": "exploit",
+                "operator": "import",
+                "component": "ensemble",
+                "parent_iteration": 0,
                 "imported": True,
                 "budget_counted": False,
             }
@@ -461,6 +475,31 @@ class CampaignEngine:
                             "baseline",
                         )
                         start_number = 2
+            screen_snapshot = self.store.snapshot()
+            if mode == "kuairand" and "screen_baseline" not in screen_snapshot["metrics"]:
+                screen_baseline_workspace = (
+                    self.settings.state_dir / "campaigns" / campaign_id / "screen-baseline"
+                )
+                screen_baseline_workspace.mkdir(parents=True, exist_ok=True)
+                self.store.event(
+                    "stage", "Measuring train-only screen baseline",
+                    "Training on April 8-14 and scoring April 15-21; April 22-28 remains untouched.",
+                    0, "baseline",
+                )
+                screened_baseline = benchmark.screen_baseline(screen_baseline_workspace)
+                screen_metrics = screened_baseline.metrics()
+
+                def save_screen_baseline(state: dict) -> None:
+                    state["metrics"]["screen_baseline"] = screen_metrics
+                    state["metrics"]["screen_champion"] = screen_metrics
+                    add_resource_usage(state["usage"], screened_baseline.resource_usage)
+
+                self.store.update(save_screen_baseline)
+                self.store.event(
+                    "result", "Train-only screen ready",
+                    f"Internal primary {screen_metrics['primary']:.4f}; confirmation split still sealed.",
+                    0, "baseline",
+                )
             snapshot = self.store.snapshot()
             used = self._budget_iterations(snapshot)
             remaining = min(limits["max_iterations"], OFFICIAL_MAX_ITERATIONS - used)
@@ -484,7 +523,7 @@ class CampaignEngine:
                         "number": number, "title": "Designing next experiment", "hypothesis": "Inspecting evidence…",
                         "stage": "inspect", "status": "running", "activity": "Reading campaign evidence and resource limits.",
                         "stages": [{"name": name, "status": "active" if name == "inspect" else "waiting"} for name in STAGES],
-                        "acceptance": f"Any validation primary gain is promoted; convergence sensitivity {limits['convergence_epsilon']:.6f}",
+                        "acceptance": f"Positive primary gain; gains below 0.0001 must not regress GAUC or nDCG@5. Convergence sensitivity {limits['convergence_epsilon']:.6f}",
                         "abort_condition": "Invalid output, timeout, or runner failure", "expected_gain": None,
                     }
                 self.store.update(begin)
@@ -500,6 +539,8 @@ class CampaignEngine:
                         "baseline": snapshot["metrics"]["baseline"],
                         "champion": champion_before,
                         "prior_iterations": snapshot["iterations"][-12:],
+                        "search_tree": summarize_search_tree(snapshot["iterations"]),
+                        "method_cards": load_method_cards(),
                         "epsilon": limits["convergence_epsilon"],
                         "remaining_iterations": end_number - number,
                         "official_iterations_used": self._budget_iterations(snapshot),
@@ -514,8 +555,13 @@ class CampaignEngine:
                             "do not repeat an exact experiment_type and parameter configuration already listed",
                             "prefer validation gain per CPU/GPU hour when expected gains are similar",
                         ],
+                        "offline_research_evidence": {
+                            "residual_plateau": "Pointwise FM, pairwise FM, ordinary DeepFM, and anti-expert residuals repeatedly returned 0.6126-0.6129 and were rejected.",
+                            "slate_context_audit": "A k16/hidden64/dropout0.1 matched-week slate_context_deepfm reached 0.603570 standalone; its apparent +0.0000063 residual regressed in three of four held-out user folds. A three-seed ensemble reached 0.603915 standalone and had -0.0000001 fixed residual. Do not repeat these exact configurations.",
+                            "error_regime": "Users with seven or more sessions account for 53.1% of recoverable nDCG@5 gap, but gating the tested slate residual to that regime still failed.",
+                        },
                         "executor_contract": {
-                            "runtime": "Trusted NumPy FM/BPR executors, an installed PyTorch DeepFM executor, and a checksum-verified frozen-champion residual adapter; no package installation or arbitrary generated-code execution",
+                            "runtime": "Trusted NumPy FM/BPR executors, installed PyTorch DeepFM and full-slate DeepSets executors, and a checksum-verified frozen-champion residual adapter; no package installation or arbitrary generated-code execution",
                             "experiment_types": {
                                 "fm_config": "One FM with typed k/lr/epochs/batch_size/patience/seed parameters",
                                 "fm_positive_weight": "FM logistic loss with the supplied positive_weight in [1,10]",
@@ -524,7 +570,7 @@ class CampaignEngine:
                                 "fm_pairwise_blend": "Blend a 1-3 seed weighted-FM ensemble with one independently trained BPR FM",
                                 "fm_deep_blend": "Blend weighted FM, BPR FM, and a nonlinear DeepFM trained with weighted BCE",
                                 "fm_temporal_deep_blend": "Add a small globally standardized clock-context FM to the weighted FM, BPR, and DeepFM blend",
-                                "champion_residual_blend": "Retrain one typed pointwise/pairwise/DeepFM candidate, convert both predictions to stable within-user ranks, and blend or extrapolate it at weight [-0.25,0.25] from the checksum-verified 0.612858 frozen champion"
+                                "champion_residual_blend": "Retrain one typed pointwise/pairwise/DeepFM/full-slate candidate, convert both predictions to stable within-user ranks, and blend or extrapolate it at weight [-0.25,0.25] from the checksum-verified 0.612858 frozen champion. slate_context_deepfm selects epochs out of time on matched seven-day slates, refits April 8-21, and uses outcome-free whole-user slate/session/repeat context"
                             },
                             "defaults": {
                                 "k": 16, "lr": 0.001, "epochs": 40, "batch_size": 8192, "patience": 4,
@@ -562,13 +608,134 @@ class CampaignEngine:
                         break
 
                     self._set_stage(number, "train", "Running the sealed benchmark adapter; generated code is not executed on the host directly.")
+                    screen_evaluation = None
+                    screen_metrics = None
+                    screen_gain = None
+                    screen_passed = True
+                    screen_recovery_events: list[dict] = []
+                    if mode == "kuairand":
+                        screen_workspace = workspace / "screen"
+                        screen_workspace.mkdir(parents=True, exist_ok=True)
+                        self._save_proposal(screen_workspace, proposal)
+                        proposal, screen_evaluation, screen_recovery_events = self._evaluate_with_recovery(
+                            benchmark, proposal, number, screen_workspace, operation="screen"
+                        )
+                        # A recovered fast-loop configuration is the exact candidate
+                        # that must enter slow confirmation and remain auditable.
+                        self._save_proposal(workspace, proposal)
+                        screen_metrics = screen_evaluation.metrics()
+                        screen_baseline = snapshot["metrics"]["screen_baseline"]
+                        screen_champion = snapshot["metrics"]["screen_champion"]
+                        screen_gain = round(
+                            screen_metrics["primary"] - screen_baseline["primary"], 6
+                        )
+                        allowance = 0.002 if proposal.operator == "ensemble" else 0.0
+                        screen_passed = (
+                            screen_metrics["primary"] >= screen_baseline["primary"] - allowance
+                        )
+
+                        def update_screen_champion(state: dict) -> None:
+                            if screen_metrics["primary"] > screen_champion["primary"]:
+                                state["metrics"]["screen_champion"] = screen_metrics
+
+                        self.store.update(update_screen_champion)
+                        self.store.event(
+                            "result",
+                            "Fast screen passed" if screen_passed else "Fast screen rejected",
+                            f"Internal primary {screen_metrics['primary']:.4f} · versus screen baseline {screen_gain:+.4f}",
+                            number,
+                            "train",
+                        )
+                    if not screen_passed:
+                        self._set_stage(
+                            number, "reflect",
+                            "Recording a train-only rejection without reading April 22-28 confirmation labels.",
+                        )
+                        duration = round(time.monotonic() - iteration_started, 2)
+                        record = {
+                            "number": number,
+                            "title": proposal.title,
+                            "hypothesis": proposal.hypothesis,
+                            "status": "screened_out",
+                            "stage": "complete",
+                            "metrics": None,
+                            "screen_metrics": screen_metrics,
+                            "screen_gain": screen_gain,
+                            "screen_passed": False,
+                            "delta": None,
+                            "gain": None,
+                            "accepted": False,
+                            "duration_seconds": duration,
+                            "provider": provider_name,
+                            "evidence": screen_evaluation.evidence,
+                            "artifact": str(workspace),
+                            "change_summary": proposal.change_summary,
+                            "response_id": proposal.response_id,
+                            "experiment_type": proposal.experiment_type,
+                            "parameters": proposal.parameters,
+                            "resource_usage": screen_evaluation.resource_usage,
+                            "strategy": proposal.strategy,
+                            "operator": proposal.operator,
+                            "component": proposal.component,
+                            "parent_iteration": proposal.parent_iteration,
+                            "alternatives": proposal.alternatives,
+                            "recovery_events": screen_recovery_events,
+                            "budget_counted": True,
+                            "confirmation_accessed": False,
+                            "code_diff": "candidate.diff",
+                        }
+                        self._write_iteration_log(workspace, record)
+
+                        def finish_screened(state: dict) -> None:
+                            state["iterations"].append(record)
+                            add_resource_usage(state["usage"], screen_evaluation.resource_usage)
+                            state["current"]["status"] = "complete"
+                            for item in state["current"]["stages"]:
+                                item["status"] = "done"
+                            state["usage"]["wall_seconds"] = round(
+                                wall_before + time.monotonic() - started, 2
+                            )
+
+                        self.store.update(finish_screened)
+                        small_gain_streak += 1
+                        self.store.update(
+                            lambda state: state["campaign"].update(
+                                consecutive_small_gains=small_gain_streak
+                            )
+                        )
+                        if (
+                            limits["convergence_patience"]
+                            and small_gain_streak >= limits["convergence_patience"]
+                        ):
+                            stop_reason = (
+                                f"converged: {small_gain_streak} consecutive candidates failed "
+                                "the fast/slow improvement gate"
+                            )
+                            break
+                        continue
+
+                    if mode == "kuairand":
+                        self._set_stage(
+                            number, "train",
+                            "Fast screen passed; running the slow April 22-28 confirmation evaluator.",
+                        )
                     proposal, evaluation, recovery_events = self._evaluate_with_recovery(
                         benchmark, proposal, number, workspace
                     )
+                    if screen_evaluation is not None:
+                        evaluation.resource_usage = combine_resource_usage(
+                            screen_evaluation.resource_usage, evaluation.resource_usage
+                        )
+                        recovery_events = screen_recovery_events + recovery_events
                     self._set_stage(number, "evaluate", "Validating metric bounds and comparing against the retained champion.")
                     metrics = evaluation.metrics()
-                    gain = round(metrics["primary"] - champion_before["primary"], 6)
-                    accepted = gain > 0
+                    raw_gain = metrics["primary"] - champion_before["primary"]
+                    gain = round(raw_gain, 6)
+                    secondary_safe = (
+                        metrics["gauc"] >= champion_before["gauc"] - 1e-12
+                        and metrics["ndcg5"] >= champion_before["ndcg5"] - 1e-12
+                    )
+                    accepted = raw_gain > 0 and (raw_gain >= 0.0001 or secondary_safe)
                     baseline_delta = round(metrics["primary"] - snapshot["metrics"]["baseline"]["primary"], 6)
 
                     self._set_stage(number, "reflect", "Recording the result, promotion decision, resources, and next-step evidence.")
@@ -581,6 +748,16 @@ class CampaignEngine:
                         "change_summary": proposal.change_summary, "response_id": proposal.response_id,
                         "experiment_type": proposal.experiment_type, "parameters": proposal.parameters,
                         "resource_usage": evaluation.resource_usage,
+                        "screen_metrics": screen_metrics,
+                        "screen_gain": screen_gain,
+                        "screen_passed": screen_passed,
+                        "confirmation_accessed": True,
+                        "secondary_safe": secondary_safe,
+                        "strategy": proposal.strategy,
+                        "operator": proposal.operator,
+                        "component": proposal.component,
+                        "parent_iteration": proposal.parent_iteration,
+                        "alternatives": proposal.alternatives,
                         "recovery_events": recovery_events, "budget_counted": True,
                         "code_diff": "candidate.diff" if not recovery_events else "retry-1/candidate.diff",
                     }
