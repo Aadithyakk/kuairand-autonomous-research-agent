@@ -1,0 +1,214 @@
+{
+  "campaign": "Parallel calibrated-ranking and interaction-model wave",
+  "date": "2026-08-30",
+  "decision": "retain_frozen_champion",
+  "frozen_champion": {
+    "primary": 0.6128580570220947,
+    "GAUC": 0.6823537349700928,
+    "nDCG@5": 0.5433623194694519
+  },
+  "protocol": {
+    "model_selection": "Use outcomes no later than 2022-04-14.",
+    "locked_train_only_screen": "2022-04-15..2022-04-21",
+    "confirmation": "2022-04-22..2022-04-28, opened only by RCR after its all-metric screen pass.",
+    "hidden_outcomes": "No 2022-04-29+ outcome field was parsed by any completed run.",
+    "promotion_gate": "Improve primary, GAUC, and nDCG@5; then survive a predeclared 5% frozen-champion residual and four actual-user-ID folds."
+  },
+  "totals": {
+    "methods_tested": 10,
+    "screen_survivors": 1,
+    "confirmed_standalone_improvements": 1,
+    "champion_promotions": 0,
+    "aggregate_trainer_wall_seconds": 346.197,
+    "aggregate_cpu_seconds": 501.143,
+    "aggregate_cpu_hours": 0.139206,
+    "gpu_hours": 0.0,
+    "largest_single_process_peak_rss_mb": 1490.812,
+    "note": "Trainer wall-seconds are summed across concurrent runs and are not end-to-end elapsed time. Process-level telemetry does not measure combined RAM across overlapping workers."
+  },
+  "experiments": [
+    {
+      "id": "rcr",
+      "method": "Regression-Compatible Ranking",
+      "status": "confirmed_base_gain_rejected_for_champion",
+      "screen_delta": {
+        "primary": 0.00018596649169921875,
+        "GAUC": 0.00015664100646972656,
+        "nDCG@5": 0.00021517276763916016
+      },
+      "confirmation_delta": {
+        "primary": 0.00011724233627319336,
+        "GAUC": 0.00011527538299560547,
+        "nDCG@5": 0.00011914968490600586
+      },
+      "champion_residual_delta": {
+        "primary": -0.000002384185791015625,
+        "GAUC": -0.0000036954879760742188,
+        "nDCG@5": -9.5367431640625e-7
+      },
+      "folds_all_metric_nonnegative": 1,
+      "resource_usage": {
+        "wall_seconds": 73.259,
+        "cpu_seconds": 110.936,
+        "cpu_hours": 0.030816,
+        "peak_rss_mb": 872.516,
+        "gpu_hours": 0.0
+      },
+      "evidence": [
+        "rcr-screen.json",
+        "rcr-confirmation.json",
+        "rcr-residual-audit.json"
+      ]
+    },
+    {
+      "id": "pdaom",
+      "method": "Personalized direct GAUC maximum-violation loss",
+      "status": "screen_rejected",
+      "screen_delta": {
+        "primary": -0.00012171268463134766,
+        "GAUC": -0.0003876686096191406,
+        "nDCG@5": 0.00014418363571166992
+      },
+      "resource_usage": {
+        "wall_seconds": 56.313,
+        "cpu_seconds": 64.109,
+        "cpu_hours": 0.017808,
+        "peak_rss_mb": 813.047,
+        "gpu_hours": 0.0
+      },
+      "evidence": ["pdaom-screen.json"]
+    },
+    {
+      "id": "sbcr_lite",
+      "method": "Self-Boosted Calibrated Ranking",
+      "status": "screen_rejected_zero_selected",
+      "screen_delta": {"primary": 0.0, "GAUC": 0.0, "nDCG@5": 0.0},
+      "resource_usage": {
+        "wall_seconds": 15.945,
+        "cpu_seconds": 17.659,
+        "cpu_hours": 0.004905,
+        "peak_rss_mb": 1490.812,
+        "gpu_hours": 0.0
+      },
+      "evidence": ["sbcr-screen.json"]
+    },
+    {
+      "id": "position_kd",
+      "method": "Position-aware knowledge distillation",
+      "status": "screen_rejected_zero_selected",
+      "screen_delta": {"primary": 0.0, "GAUC": 0.0, "nDCG@5": 0.0},
+      "best_nonzero_selection_primary_delta": -0.00015735626220703125,
+      "resource_usage": {
+        "wall_seconds": 16.557,
+        "cpu_seconds": 25.564,
+        "cpu_hours": 0.007101,
+        "peak_rss_mb": 865.016,
+        "gpu_hours": 0.0
+      },
+      "evidence": ["position-kd-plan.json", "position-kd-screen.json"]
+    },
+    {
+      "id": "cqe",
+      "method": "Conditional quantile watch-time estimation",
+      "status": "screen_rejected",
+      "screen_delta": {
+        "primary": -0.0004725456237792969,
+        "GAUC": -0.0005069971084594727,
+        "nDCG@5": -0.0004380345344543457
+      },
+      "resource_usage": {
+        "wall_seconds": 39.733,
+        "cpu_seconds": 59.438,
+        "cpu_hours": 0.016511,
+        "peak_rss_mb": 929.406,
+        "gpu_hours": 0.0
+      },
+      "evidence": ["cqe-screen.json"]
+    },
+    {
+      "id": "jrc",
+      "method": "Joint ranking and calibration",
+      "status": "screen_rejected",
+      "screen_delta": {
+        "primary": 0.000011622905731201172,
+        "GAUC": -0.00004601478576660156,
+        "nDCG@5": 0.00006920099258422852
+      },
+      "resource_usage": {
+        "wall_seconds": 29.352,
+        "cpu_seconds": 33.338,
+        "cpu_hours": 0.009261,
+        "peak_rss_mb": 851.281,
+        "gpu_hours": 0.0
+      },
+      "evidence": ["jrc-screen.json"]
+    },
+    {
+      "id": "confidence_ranking",
+      "method": "Heteroscedastic confidence-aware ranking",
+      "status": "screen_rejected",
+      "screen_delta": {
+        "primary": -0.004105508327484131,
+        "GAUC": -0.005167961120605469,
+        "nDCG@5": -0.003043055534362793
+      },
+      "resource_usage": {
+        "wall_seconds": 22.282,
+        "cpu_seconds": 28.577,
+        "cpu_hours": 0.007938,
+        "peak_rss_mb": 791.266,
+        "gpu_hours": 0.0
+      },
+      "evidence": ["confidence-plan.json", "confidence-screen.json"]
+    },
+    {
+      "id": "afn",
+      "method": "Adaptive Factorization Network",
+      "status": "architecture_selection_rejected",
+      "screen_delta": {"primary": 0.0, "GAUC": 0.0, "nDCG@5": 0.0},
+      "best_afn_selection_primary_delta": -0.008796334266662598,
+      "resource_usage": {
+        "wall_seconds": 24.097,
+        "cpu_seconds": 31.471,
+        "cpu_hours": 0.008742,
+        "peak_rss_mb": 977.656,
+        "gpu_hours": 0.0
+      },
+      "evidence": ["afn-screen.json"]
+    },
+    {
+      "id": "bbp_lite",
+      "method": "Behavior Bias-aware Projection",
+      "status": "screen_rejected_zero_selected",
+      "screen_delta": {"primary": 0.0, "GAUC": 0.0, "nDCG@5": 0.0},
+      "best_nonzero_selection_primary_delta": -0.00008249282836914062,
+      "resource_usage": {
+        "wall_seconds": 22.539,
+        "cpu_seconds": 32.129,
+        "cpu_hours": 0.008925,
+        "peak_rss_mb": 941.438,
+        "gpu_hours": 0.0
+      },
+      "evidence": ["bbp-plan.json", "bbp-screen.json"]
+    },
+    {
+      "id": "eulernet",
+      "method": "EulerNet complex-valued feature interactions",
+      "status": "screen_rejected",
+      "screen_delta": {
+        "primary": -0.0010496973991394043,
+        "GAUC": -0.0010486841201782227,
+        "nDCG@5": -0.001050710678100586
+      },
+      "resource_usage": {
+        "wall_seconds": 46.12,
+        "cpu_seconds": 97.922,
+        "cpu_hours": 0.027201,
+        "peak_rss_mb": 1089.375,
+        "gpu_hours": 0.0
+      },
+      "evidence": ["eulernet-screen.json"]
+    }
+  ],
+  "recommendation": "Keep the 0.612858057 champion. Retain RCR as the only validated backbone improvement, but do not blend it into the champion without a new source of complementary signal or a predeclared cross-fitted integration rule."
+}

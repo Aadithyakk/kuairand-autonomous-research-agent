@@ -1,0 +1,131 @@
+{
+  "alignment": {
+    "finite_scores": true,
+    "rows": 249694,
+    "sha256": "4102bd7a5647c29556a095965de2a4dc9a2f0b6e1967a1e56491836b61552de6"
+  },
+  "artifacts": {
+    "plan": "results/calibrated-ranking/bbp-plan.json",
+    "scores": "runtime/parallel-calibrated-ranking/bbp/screen-scores.npz",
+    "training_details": "runtime/parallel-calibrated-ranking/bbp/screen-training-details.json"
+  },
+  "experiment": "Behavior Bias-aware Projection lite",
+  "locked_screen": {
+    "acceptance_primary_gain": 0.0001,
+    "candidate_gains": {
+      "GAUC": 0.0,
+      "nDCG@5": 0.0,
+      "primary": 0.0
+    },
+    "candidate_metrics": {
+      "GAUC": 0.6637808084487915,
+      "nDCG@5": 0.5662849545478821,
+      "primary": 0.6150329113006592,
+      "rows": 249694,
+      "users": 24262
+    },
+    "control_metrics": {
+      "GAUC": 0.6637808084487915,
+      "nDCG@5": 0.5662849545478821,
+      "primary": 0.6150329113006592,
+      "rows": 249694,
+      "users": 24262
+    },
+    "evaluation": "2022-04-15..2022-04-21",
+    "refit": "2022-04-08..2022-04-14"
+  },
+  "merits_locked_confirmation": false,
+  "protocol": {
+    "bounded_penalty": "squared_cosine_similarity",
+    "confirmation_accessed": false,
+    "exact_lambda_zero_architecture_control": true,
+    "hidden_test_outcome_fields_accessed": false,
+    "identical_seed_initialization_and_batch_order": true,
+    "incidents": [],
+    "inference_logit": "relevance_only",
+    "lambda_grid_predeclared": [
+      0.0,
+      0.01,
+      0.05,
+      0.1,
+      0.2
+    ],
+    "lambda_locked_before_screen": true,
+    "training_logit": "relevance_plus_behavior_bias"
+  },
+  "resource_usage_total": {
+    "cpu_hours": 0.008925,
+    "cpu_seconds": 32.129,
+    "cpu_utilization_percent": 142.55,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 941.438,
+    "wall_seconds": 22.539
+  },
+  "rows": {
+    "core": 559379,
+    "locked_screen": 249694,
+    "selection": 332039
+  },
+  "selected_lambda": 0.0,
+  "selection": {
+    "evaluation": "2022-04-12..2022-04-14",
+    "scans": [
+      {
+        "lambda": 0.0,
+        "metrics": {
+          "GAUC": 0.6698365807533264,
+          "nDCG@5": 0.5577124953269958,
+          "primary": 0.6137745380401611,
+          "rows": 332039,
+          "users": 23066
+        }
+      },
+      {
+        "lambda": 0.01,
+        "metrics": {
+          "GAUC": 0.6694854497909546,
+          "nDCG@5": 0.557555079460144,
+          "primary": 0.6135202646255493,
+          "rows": 332039,
+          "users": 23066
+        }
+      },
+      {
+        "lambda": 0.05,
+        "metrics": {
+          "GAUC": 0.669809103012085,
+          "nDCG@5": 0.5575750470161438,
+          "primary": 0.613692045211792,
+          "rows": 332039,
+          "users": 23066
+        }
+      },
+      {
+        "lambda": 0.1,
+        "metrics": {
+          "GAUC": 0.6698278188705444,
+          "nDCG@5": 0.5573863983154297,
+          "primary": 0.6136071085929871,
+          "rows": 332039,
+          "users": 23066
+        }
+      },
+      {
+        "lambda": 0.2,
+        "metrics": {
+          "GAUC": 0.669602632522583,
+          "nDCG@5": 0.5567586421966553,
+          "primary": 0.6131806373596191,
+          "rows": 332039,
+          "users": 23066
+        }
+      }
+    ],
+    "training": "2022-04-08..2022-04-11",
+    "zero_preference": true
+  },
+  "status": "screen_rejected"
+}

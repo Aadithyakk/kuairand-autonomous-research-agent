@@ -1,0 +1,105 @@
+{
+  "alignment": {
+    "finite_scores": true,
+    "rows": 249694,
+    "sha256": "4102bd7a5647c29556a095965de2a4dc9a2f0b6e1967a1e56491836b61552de6"
+  },
+  "artifacts": {
+    "plan": "results/calibrated-ranking/position-kd-plan.json",
+    "scores": "runtime/parallel-calibrated-ranking/position-kd/screen-scores.npz",
+    "training_details": "runtime/parallel-calibrated-ranking/position-kd/screen-training-details.json"
+  },
+  "experiment": "position-aware logit knowledge distillation",
+  "merits_locked_confirmation": false,
+  "protocol": {
+    "confirmation_accessed": false,
+    "fixed_seed_order_and_backbone": true,
+    "hidden_test_outcome_fields_accessed": false,
+    "incidents": [],
+    "lambda_grid_predeclared": [
+      0.0,
+      0.02,
+      0.05,
+      0.1
+    ],
+    "screen": "2022-04-15..2022-04-21",
+    "student_fields": [
+      "user_id",
+      "video_id",
+      "author_id",
+      "tab"
+    ],
+    "student_only_at_inference": true,
+    "teacher_only_fields": [
+      "log1p_session_position",
+      "log1p_video_duration_seconds_z",
+      "log1p_elapsed_session_seconds"
+    ],
+    "training": "2022-04-08..2022-04-14",
+    "zero_preference": true
+  },
+  "resource_usage_total": {
+    "cpu_hours": 0.007101,
+    "cpu_seconds": 25.564,
+    "cpu_utilization_percent": 154.4,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 865.016,
+    "wall_seconds": 16.557
+  },
+  "rows": {
+    "screen": 249694,
+    "training": 891418
+  },
+  "scans": [
+    {
+      "lambda": 0.0,
+      "metrics": {
+        "GAUC": 0.6644330024719238,
+        "nDCG@5": 0.5669607520103455,
+        "primary": 0.615696907043457,
+        "rows": 249694,
+        "users": 24262
+      }
+    },
+    {
+      "lambda": 0.02,
+      "metrics": {
+        "GAUC": 0.6644092202186584,
+        "nDCG@5": 0.566612958908081,
+        "primary": 0.6155110597610474,
+        "rows": 249694,
+        "users": 24262
+      }
+    },
+    {
+      "lambda": 0.05,
+      "metrics": {
+        "GAUC": 0.6643676161766052,
+        "nDCG@5": 0.5667115449905396,
+        "primary": 0.61553955078125,
+        "rows": 249694,
+        "users": 24262
+      }
+    },
+    {
+      "lambda": 0.1,
+      "metrics": {
+        "GAUC": 0.6643286943435669,
+        "nDCG@5": 0.5664759278297424,
+        "primary": 0.615402340888977,
+        "rows": 249694,
+        "users": 24262
+      }
+    }
+  ],
+  "selected_lambda": 0.0,
+  "selection_gains": {
+    "GAUC": 0.0,
+    "nDCG@5": 0.0,
+    "primary": 0.0
+  },
+  "status": "screen_rejected"
+}

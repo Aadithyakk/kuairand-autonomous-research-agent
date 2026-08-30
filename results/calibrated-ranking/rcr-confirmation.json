@@ -1,0 +1,174 @@
+{
+  "artifacts": {
+    "scores": "runtime/parallel-calibrated-ranking/rcr/confirmation-scores.npz",
+    "script": "scripts/train_rcr_ranking.py"
+  },
+  "candidate": {
+    "alpha": 0.0005,
+    "checkpoint": "runtime/parallel-calibrated-ranking/rcr/confirmation-alpha-0p0005.pt",
+    "metrics": {
+      "GAUC": 0.6666797995567322,
+      "nDCG@5": 0.5350789427757263,
+      "primary": 0.6008793711662292,
+      "rows": 124909,
+      "users": 22377
+    },
+    "resource_usage": {
+      "cpu_hours": 0.003822,
+      "cpu_seconds": 13.758,
+      "cpu_utilization_percent": 178.57,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 872.516,
+      "wall_seconds": 7.705
+    },
+    "training_history": [
+      {
+        "BCE": 0.6050986182605121,
+        "ListCE(sigmoid)": 3.289288546176667,
+        "epoch": 1,
+        "loss": 0.6064406992695855
+      },
+      {
+        "BCE": 0.5413778603922391,
+        "ListCE(sigmoid)": 3.2279923993644983,
+        "epoch": 2,
+        "loss": 0.5427211512487831
+      },
+      {
+        "BCE": 0.5164109986301855,
+        "ListCE(sigmoid)": 3.2195372192572194,
+        "epoch": 3,
+        "loss": 0.5177625466323068
+      },
+      {
+        "BCE": 0.5028610690265682,
+        "ListCE(sigmoid)": 3.212683124745146,
+        "epoch": 4,
+        "loss": 0.5042159673592723
+      },
+      {
+        "BCE": 0.49583150879711124,
+        "ListCE(sigmoid)": 3.206306388192143,
+        "epoch": 5,
+        "loss": 0.49718673495536153
+      },
+      {
+        "BCE": 0.4903527699041028,
+        "ListCE(sigmoid)": 3.1886816396780895,
+        "epoch": 6,
+        "loss": 0.49170191934768187
+      }
+    ]
+  },
+  "control": {
+    "alpha": 0.0,
+    "checkpoint": "runtime/parallel-calibrated-ranking/rcr/confirmation-alpha-0p0.pt",
+    "metrics": {
+      "GAUC": 0.6665645241737366,
+      "nDCG@5": 0.5349597930908203,
+      "primary": 0.600762128829956,
+      "rows": 124909,
+      "users": 22377
+    },
+    "resource_usage": {
+      "cpu_hours": 0.003971,
+      "cpu_seconds": 14.296,
+      "cpu_utilization_percent": 174.12,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 795.453,
+      "wall_seconds": 8.211
+    },
+    "training_history": [
+      {
+        "BCE": 0.6051001946131388,
+        "ListCE(sigmoid)": 3.289305749514424,
+        "epoch": 1,
+        "loss": 0.6051001946131388
+      },
+      {
+        "BCE": 0.5413625255121407,
+        "ListCE(sigmoid)": 3.22802249759647,
+        "epoch": 2,
+        "loss": 0.5413625255121407
+      },
+      {
+        "BCE": 0.5164002167417648,
+        "ListCE(sigmoid)": 3.2195914670930685,
+        "epoch": 3,
+        "loss": 0.5164002167417648
+      },
+      {
+        "BCE": 0.5028280996261759,
+        "ListCE(sigmoid)": 3.2127614630029555,
+        "epoch": 4,
+        "loss": 0.5028280996261759
+      },
+      {
+        "BCE": 0.49583249227375004,
+        "ListCE(sigmoid)": 3.2062990716163147,
+        "epoch": 5,
+        "loss": 0.49583249227375004
+      },
+      {
+        "BCE": 0.49034884107028337,
+        "ListCE(sigmoid)": 3.188567782124729,
+        "epoch": 6,
+        "loss": 0.49034884107028337
+      }
+    ]
+  },
+  "deltas_vs_control": {
+    "GAUC": 0.00011527538299560547,
+    "nDCG@5": 0.00011914968490600586,
+    "primary": 0.00011724233627319336
+  },
+  "experiment": "locked RCR confirmation",
+  "locked_epoch_count": 6,
+  "matched_candidate_improves_all_metrics": true,
+  "paper": "https://arxiv.org/abs/2211.01494",
+  "protocol": {
+    "evaluation": "Apr22-28",
+    "hidden_test_outcomes_parsed": false,
+    "integrity_incidents": [],
+    "outcome_fields_parsed_only_for": "Apr22-28",
+    "retuning": false,
+    "train": "Apr8-21"
+  },
+  "recommendation": "reject; retain frozen champion",
+  "residual_audit": {
+    "all_four_folds_all_metrics_nonnegative": false,
+    "all_global_metrics_nonnegative": false,
+    "artifact": "results/calibrated-ranking/rcr-residual-audit.json",
+    "fixed_residual_gains": {
+      "GAUC": -3.6954879760742188e-06,
+      "nDCG@5": -9.5367431640625e-07,
+      "primary": -2.384185791015625e-06
+    },
+    "fixed_residual_metrics": {
+      "GAUC": 0.6823500394821167,
+      "nDCG@5": 0.5433613657951355,
+      "primary": 0.6128556728363037
+    },
+    "fixed_weight": 0.05,
+    "merits_promotion": false
+  },
+  "resource_usage_total": {
+    "cpu_hours": 0.010196,
+    "cpu_seconds": 36.706,
+    "cpu_utilization_percent": 149.74,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 872.516,
+    "wall_seconds": 24.514
+  },
+  "selected_alpha_locked": 0.0005,
+  "status": "confirmation_evaluated"
+}

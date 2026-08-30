@@ -71,3 +71,31 @@ screens and then reversed at confirmation. MMR produced a global confirmation
 micro-gain of `+0.0000126`, but failed the predeclared all-metric gate in two
 actual-user-ID folds. No candidate was promoted; the exact `0.612858057`
 champion remains frozen.
+
+## Calibrated-ranking and interaction wave
+
+The next parallel wave tested ten additional paper-guided changes with exact
+matched controls: RCR, personalized direct-GAUC optimization, SBCR-lite,
+position-aware distillation, conditional watch-time quantiles, JRC,
+confidence-aware ranking, AFN, behavior-bias projection, and EulerNet. Model
+selection used outcomes no later than April 14; April 15–21 was locked for
+screening. Only RCR passed that screen and was therefore allowed to read April
+22–28. No run parsed April 29+ outcomes.
+
+RCR at alpha `0.0005` was the only repeatable standalone improvement. It gained
+`+0.000186` primary on the screen and `+0.000117` on confirmation, with GAUC
+and nDCG@5 positive both times. Its predeclared 5% residual into the actual
+champion nevertheless lost `0.000002384` primary and regressed in three of four
+actual-user-ID folds, so it was not promoted. PDAOM traded `+0.000144` nDCG@5
+for `-0.000388` GAUC; JRC's locked primary gain shrank to `+0.000012` while
+GAUC fell. SBCR, position KD, AFN, and bias projection selected their zero or
+control arms. CQE, confidence ranking, and EulerNet all reversed or regressed
+on the locked screen.
+
+Tracked trainers used `346.197` aggregate wall-seconds and `501.143`
+CPU-seconds (`0.139206` CPU-hours), no GPU, and at most `1490.812` MB RAM in
+any one process. Because runs overlapped, aggregate trainer wall-time is not
+end-to-end elapsed time and process telemetry does not measure combined RAM
+across concurrent workers. The complete decision and per-method telemetry are
+in `results/calibrated-ranking/summary.json`. The exact `0.612858057` champion
+remains frozen.

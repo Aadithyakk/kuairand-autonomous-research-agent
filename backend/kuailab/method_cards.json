@@ -178,12 +178,122 @@
   {
     "id": "adaptive_factorization_network",
     "category": "model",
-    "status": "unattempted-priority",
+    "status": "attempted-rejected",
     "paper": "Adaptive Factorization Network: Learning Adaptive-Order Feature Interactions",
     "source": "https://arxiv.org/abs/1909.03276",
     "method": "Use logarithmic neural transformation layers to learn data-dependent interaction orders without explicitly enumerating feature crosses.",
     "fit": "Offers an interaction geometry distinct from the rejected attention, cross, masking, and bilinear families while preserving pointwise BCE.",
-    "smallest_ablation": "Compare a small AFN residual with an embedding-and-MLP control under identical seeds, temporal selection, and a bounded CPU budget.",
-    "risk": "Log-space transforms can be numerically fragile, and another neural interaction family may repeat the same train-only optimism seen in MaskNet and FinalMLP."
+    "smallest_ablation": "Completed a parameter-matched AFN-versus-MLP selection screen with identical seeds, embeddings, row order, and pointwise BCE.",
+    "risk": "The better AFN configuration lost 0.008796 primary during architecture selection. Numerical safeguards worked, so the loss is attributable to model fit rather than instability."
+  },
+  {
+    "id": "regression_compatible_ranking",
+    "category": "loss",
+    "status": "attempted-rejected",
+    "paper": "Regression-Compatible Listwise Ranking for CTR Prediction",
+    "source": "https://arxiv.org/abs/2211.01494",
+    "method": "Blend sigmoid-normalized ListCE into pointwise BCE at very low weight over complete user groups.",
+    "fit": "Preserves probability learning while adding an explicitly listwise ordering gradient.",
+    "smallest_ablation": "Alpha 0.0005 improved all metrics on both the April 15-21 screen and April 22-28 confirmation against exact alpha-zero controls.",
+    "risk": "The fixed 5% champion residual lost 0.000002384 primary and three of four user folds regressed. Keep as a validated backbone gain, not a champion component."
+  },
+  {
+    "id": "pdaom_direct_gauc",
+    "category": "loss",
+    "status": "attempted-rejected",
+    "paper": "Personalized Direct AUC Optimization",
+    "source": "https://arxiv.org/abs/2304.09176",
+    "method": "Penalize each user's maximum positive-negative score violation alongside BCE using complete user groups.",
+    "fit": "Directly targets the organizer's within-user GAUC component.",
+    "smallest_ablation": "Selected alpha 0.001 against an exact grouped alpha-zero control, then refit and evaluated on the locked train-only screen.",
+    "risk": "The locked result gained 0.000144 nDCG@5 but lost 0.000388 GAUC and 0.000122 primary."
+  },
+  {
+    "id": "self_boosted_calibrated_ranking",
+    "category": "loss",
+    "status": "attempted-rejected",
+    "paper": "Self-Boosted Calibrated Ranking",
+    "source": "https://arxiv.org/abs/2406.08010",
+    "method": "Use a frozen out-of-time teacher score as context for a bounded ranking correction and a stopped-gradient calibration head.",
+    "fit": "Tests whether the deployed champion's calibrated score distribution can guide a safer residual learner.",
+    "smallest_ablation": "Compared boost weights 0, 0.0025, 0.005, and 0.01 with identical student initialization and data order.",
+    "risk": "Every nonzero weight reduced all three selection metrics; zero was selected and confirmation stayed sealed."
+  },
+  {
+    "id": "position_aware_kd",
+    "category": "debiasing",
+    "status": "attempted-rejected",
+    "paper": "Position-aware Knowledge Distillation for CTR Prediction",
+    "source": "https://arxiv.org/abs/2204.00270",
+    "method": "Train a teacher with position, duration, and session-time bias features, then distill into an inference student that never sees those fields.",
+    "fit": "Attempts to retain useful preference knowledge while removing direct position dependence at inference.",
+    "smallest_ablation": "Compared KD weights 0, 0.02, 0.05, and 0.10 against the exact student control.",
+    "risk": "Every nonzero KD weight regressed; the least harmful still lost 0.000157 primary during selection."
+  },
+  {
+    "id": "conditional_watch_quantiles",
+    "category": "reward",
+    "status": "attempted-rejected",
+    "paper": "Conditional Quantile Estimation for Watch-Time Prediction",
+    "source": "https://arxiv.org/abs/2407.12223",
+    "method": "Predict a monotonic conditional watch-time quantile curve and derive the probability of crossing the organizer's long-view threshold.",
+    "fit": "Models the full watch-time distribution instead of a single binary or mean target.",
+    "smallest_ablation": "Selected a seven-quantile, 0.02 auxiliary-weight, 0.10 probability-blend configuration against a matched continuous-watch control.",
+    "risk": "A +0.001031 selection gain reversed to -0.000473 primary on the locked next-week screen."
+  },
+  {
+    "id": "joint_ranking_calibration",
+    "category": "loss",
+    "status": "attempted-rejected",
+    "paper": "Joint Optimization of Ranking and Calibration with Contextualized Hybrid Model",
+    "source": "https://arxiv.org/abs/2208.06164",
+    "method": "Use label-specific logits with a contextual listwise term while retaining a calibrated probability interpretation.",
+    "fit": "Targets the exact ranking-versus-calibration tension seen in prior pairwise failures.",
+    "smallest_ablation": "Selected lambda 0.0025 against an exact lambda-zero control and refit on April 9-14.",
+    "risk": "The locked gain shrank to 0.000012 primary, GAUC fell 0.000046, and calibration worsened."
+  },
+  {
+    "id": "confidence_aware_ranking",
+    "category": "loss",
+    "status": "attempted-rejected",
+    "paper": "Confidence Ranking for CTR Prediction",
+    "source": "https://arxiv.org/abs/2307.01206",
+    "method": "Learn heteroscedastic mean and uncertainty outputs, then rank with a conservative confidence-adjusted logit.",
+    "fit": "Tests whether uncertain rare-item score spikes are responsible for top-five errors.",
+    "smallest_ablation": "Selected a confidence penalty from 0, 0.1, 0.25, and 0.5 against a matched mean-only scorer.",
+    "risk": "The learned uncertainty was nondegenerate, but the locked candidate lost 0.004106 primary and both component metrics."
+  },
+  {
+    "id": "behavior_bias_projection",
+    "category": "debiasing",
+    "status": "attempted-rejected",
+    "paper": "Behavior bias-aware projection ablation",
+    "source": "results/calibrated-ranking/bbp-screen.json",
+    "method": "Penalize squared cosine alignment between relevance and outcome-free position, duration, and session-context representations.",
+    "fit": "Provides a representation-level alternative to neutralizing bias inputs or adversarial domain prediction.",
+    "smallest_ablation": "Compared orthogonality weights 0, 0.01, 0.05, 0.10, and 0.20 with relevance-only inference.",
+    "risk": "The penalty drove alignment near zero but every positive weight reduced primary, showing that the removed signal is rewarded by this benchmark."
+  },
+  {
+    "id": "eulernet_interactions",
+    "category": "model",
+    "status": "attempted-rejected",
+    "paper": "EulerNet: Adaptive Feature Interaction Learning via Euler's Formula",
+    "source": "https://arxiv.org/abs/2304.10711",
+    "method": "Learn compact complex-valued feature interactions using Euler-form magnitude and phase transformations.",
+    "fit": "Tests an interaction geometry distinct from cross, attention, masking, bilinear, and AFN models.",
+    "smallest_ablation": "Selected one Euler layer with eight output fields against a matched embedding-and-MLP control.",
+    "risk": "A +0.001400 selection gain reversed to -0.001050 primary on the locked next-week screen."
+  },
+  {
+    "id": "champion_ranking_distillation",
+    "category": "model",
+    "status": "unattempted-priority",
+    "paper": "Ranking Distillation: Learning Compact Ranking Models With High Performance for Recommender System",
+    "source": "https://arxiv.org/abs/1809.07428",
+    "method": "Train one compact student on long-view labels plus cross-fitted soft ranks and top-item order from the frozen heterogeneous champion.",
+    "fit": "The validated champion is an expensive ensemble; RCR shows that a neural ranker can improve internally but lacks complementary residual signal. Distillation instead asks the student to reproduce the champion directly.",
+    "smallest_ablation": "Compare a compact pointwise student with and without ranking distillation using strictly out-of-fold teacher scores, then audit score retention, latency, RAM, and all three organizer metrics.",
+    "risk": "Teacher predictions must be cross-fitted for training rows, and matching the champion is a deployment objective rather than evidence of a higher validation score."
   }
 ]

@@ -1,0 +1,430 @@
+{
+  "experiment": "compact JRC two-logit calibrated ranking",
+  "paper": {
+    "title": "Joint Optimization of Ranking and Calibration with Contextualized Hybrid Model",
+    "authors": "Xiang-Rong Sheng et al.",
+    "url": "https://arxiv.org/abs/2208.06164",
+    "faithful_core": "Two label-state logits; pointwise probability from click minus non-click; label-specific listwise softmax over every complete user context."
+  },
+  "status": "rejected_at_train_only_screen",
+  "protocol": {
+    "lambda_selection_fit": "2022-04-09..2022-04-11",
+    "lambda_selection_validation": "2022-04-12..2022-04-14",
+    "matched_refit": "2022-04-09..2022-04-14",
+    "locked_screen": "2022-04-15..2022-04-21",
+    "lambda_grid_predeclared": [
+      0.0,
+      0.001,
+      0.0025,
+      0.005
+    ],
+    "complete_user_groups": true,
+    "matched_initialization_seed_and_group_order": true,
+    "april_22_28_accessed": false,
+    "april_29_plus_outcomes_accessed": false,
+    "hidden_test_accessed": false
+  },
+  "data": {
+    "selection_fit_rows": 559379,
+    "selection_validation_rows": 332039,
+    "refit_rows": 891418,
+    "screen_rows": 249694,
+    "screen_users": 24262,
+    "selection_feature_dimension": 37735,
+    "refit_feature_dimension": 39174
+  },
+  "selection": {
+    "trials": [
+      {
+        "lambda": 0.0,
+        "metrics": {
+          "primary": 0.6100749373435974,
+          "gauc": 0.6662634015083313,
+          "ndcg5": 0.5538864731788635,
+          "users": 23066,
+          "rows": 332039,
+          "calibration_logloss": 0.5488778221842171,
+          "calibration_ece20": 0.05555252755167162
+        },
+        "training": {
+          "seed": 7331,
+          "epochs": 4,
+          "row_budget": 8192,
+          "ranking_lambda": 0.0,
+          "optimizer": "SparseAdam+Adam",
+          "learning_rate": 0.003,
+          "complete_user_groups": 23848,
+          "history": [
+            {
+              "epoch": 1,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.5988267588540275,
+              "point_ce": 0.5988267588540275,
+              "jrc_listwise": 3.648021445918687
+            },
+            {
+              "epoch": 2,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.5551254296523407,
+              "point_ce": 0.5551254296523407,
+              "jrc_listwise": 3.666245943927398
+            },
+            {
+              "epoch": 3,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.543781745988405,
+              "point_ce": 0.543781745988405,
+              "jrc_listwise": 3.6651634063809597
+            },
+            {
+              "epoch": 4,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.5124040786244349,
+              "point_ce": 0.5124040786244349,
+              "jrc_listwise": 3.658407860413497
+            }
+          ]
+        },
+        "delta_vs_lambda_zero": {
+          "primary": 0.0,
+          "gauc": 0.0,
+          "ndcg5": 0.0
+        },
+        "eligible": true
+      },
+      {
+        "lambda": 0.001,
+        "metrics": {
+          "primary": 0.6101287603378296,
+          "gauc": 0.6663925051689148,
+          "ndcg5": 0.5538650155067444,
+          "users": 23066,
+          "rows": 332039,
+          "calibration_logloss": 0.5487779088046766,
+          "calibration_ece20": 0.055251976193610976
+        },
+        "training": {
+          "seed": 7331,
+          "epochs": 4,
+          "row_budget": 8192,
+          "ranking_lambda": 0.001,
+          "optimizer": "SparseAdam+Adam",
+          "learning_rate": 0.003,
+          "complete_user_groups": 23848,
+          "history": [
+            {
+              "epoch": 1,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.6024701561039365,
+              "point_ce": 0.5988222006831222,
+              "jrc_listwise": 3.647954954186882
+            },
+            {
+              "epoch": 2,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.5587913058582765,
+              "point_ce": 0.5551261914569615,
+              "jrc_listwise": 3.665116527001306
+            },
+            {
+              "epoch": 3,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.5473418880346687,
+              "point_ce": 0.5436790778112899,
+              "jrc_listwise": 3.6628075739131334
+            },
+            {
+              "epoch": 4,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.5159625563863375,
+              "point_ce": 0.5123074409752976,
+              "jrc_listwise": 3.6551153559748335
+            }
+          ]
+        },
+        "delta_vs_lambda_zero": {
+          "primary": 5.3822994232177734e-05,
+          "gauc": 0.0001291036605834961,
+          "ndcg5": -2.1457672119140625e-05
+        },
+        "eligible": false
+      },
+      {
+        "lambda": 0.0025,
+        "metrics": {
+          "primary": 0.6102117896080017,
+          "gauc": 0.6663880348205566,
+          "ndcg5": 0.5540355443954468,
+          "users": 23066,
+          "rows": 332039,
+          "calibration_logloss": 0.5486616686702528,
+          "calibration_ece20": 0.0552693650889724
+        },
+        "training": {
+          "seed": 7331,
+          "epochs": 4,
+          "row_budget": 8192,
+          "ranking_lambda": 0.0025,
+          "optimizer": "SparseAdam+Adam",
+          "learning_rate": 0.003,
+          "complete_user_groups": 23848,
+          "history": [
+            {
+              "epoch": 1,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.6079359552669693,
+              "point_ce": 0.5988163082357023,
+              "jrc_listwise": 3.6478599334124175
+            },
+            {
+              "epoch": 2,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.5642848521768152,
+              "point_ce": 0.5551262561447072,
+              "jrc_listwise": 3.663439522836279
+            },
+            {
+              "epoch": 3,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.5527990077015086,
+              "point_ce": 0.5436514627764527,
+              "jrc_listwise": 3.659019260643694
+            },
+            {
+              "epoch": 4,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.5213524810882388,
+              "point_ce": 0.512227677917952,
+              "jrc_listwise": 3.6499208776109806
+            }
+          ]
+        },
+        "delta_vs_lambda_zero": {
+          "primary": 0.00013685226440429688,
+          "gauc": 0.0001246333122253418,
+          "ndcg5": 0.00014907121658325195
+        },
+        "eligible": true
+      },
+      {
+        "lambda": 0.005,
+        "metrics": {
+          "primary": 0.6101850271224976,
+          "gauc": 0.6663686037063599,
+          "ndcg5": 0.5540013909339905,
+          "users": 23066,
+          "rows": 332039,
+          "calibration_logloss": 0.5487496705258081,
+          "calibration_ece20": 0.0553108496621299
+        },
+        "training": {
+          "seed": 7331,
+          "epochs": 4,
+          "row_budget": 8192,
+          "ranking_lambda": 0.005,
+          "optimizer": "SparseAdam+Adam",
+          "learning_rate": 0.003,
+          "complete_user_groups": 23848,
+          "history": [
+            {
+              "epoch": 1,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.6170441402468027,
+              "point_ce": 0.5988056471719434,
+              "jrc_listwise": 3.6476990516590595
+            },
+            {
+              "epoch": 2,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.5734258556250078,
+              "point_ce": 0.5551219663061067,
+              "jrc_listwise": 3.66077795143962
+            },
+            {
+              "epoch": 3,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.5619231948680704,
+              "point_ce": 0.5436544272860176,
+              "jrc_listwise": 3.6537540862583113
+            },
+            {
+              "epoch": 4,
+              "complete_user_groups": 23848,
+              "batches": 69,
+              "loss": 0.5304604107914221,
+              "point_ce": 0.512242779946348,
+              "jrc_listwise": 3.643526214497187
+            }
+          ]
+        },
+        "delta_vs_lambda_zero": {
+          "primary": 0.00011008977890014648,
+          "gauc": 0.00010520219802856445,
+          "ndcg5": 0.00011491775512695312
+        },
+        "eligible": true
+      }
+    ],
+    "selected_lambda": 0.0025,
+    "rule": "Best primary among lambdas with nonnegative GAUC and nDCG@5 deltas; ties prefer the smaller lambda."
+  },
+  "locked_screen": {
+    "matched_lambda_zero_control": {
+      "primary": 0.6112704873085022,
+      "gauc": 0.6596747636795044,
+      "ndcg5": 0.5628662109375,
+      "users": 24262,
+      "rows": 249694,
+      "calibration_logloss": 0.5604228293541315,
+      "calibration_ece20": 0.05048453989629523
+    },
+    "candidate": {
+      "primary": 0.6112821102142334,
+      "gauc": 0.6596287488937378,
+      "ndcg5": 0.5629354119300842,
+      "users": 24262,
+      "rows": 249694,
+      "calibration_logloss": 0.5608042827658951,
+      "calibration_ece20": 0.05081994240770393
+    },
+    "delta": {
+      "primary": 1.1622905731201172e-05,
+      "gauc": -4.601478576660156e-05,
+      "ndcg5": 6.920099258422852e-05
+    },
+    "gate": "primary >= +0.0001 and GAUC > 0 and nDCG@5 > 0",
+    "passed": false,
+    "control_training": {
+      "seed": 12971,
+      "epochs": 4,
+      "row_budget": 8192,
+      "ranking_lambda": 0.0,
+      "optimizer": "SparseAdam+Adam",
+      "learning_rate": 0.003,
+      "complete_user_groups": 25151,
+      "history": [
+        {
+          "epoch": 1,
+          "complete_user_groups": 25151,
+          "batches": 110,
+          "loss": 0.5809128571431476,
+          "point_ce": 0.5809128571431476,
+          "jrc_listwise": 4.026747220883659
+        },
+        {
+          "epoch": 2,
+          "complete_user_groups": 25151,
+          "batches": 110,
+          "loss": 0.550839651706113,
+          "point_ce": 0.550839651706113,
+          "jrc_listwise": 4.039947741310752
+        },
+        {
+          "epoch": 3,
+          "complete_user_groups": 25151,
+          "batches": 110,
+          "loss": 0.5321912721179138,
+          "point_ce": 0.5321912721179138,
+          "jrc_listwise": 4.036411466433039
+        },
+        {
+          "epoch": 4,
+          "complete_user_groups": 25151,
+          "batches": 110,
+          "loss": 0.5068664281831587,
+          "point_ce": 0.5068664281831587,
+          "jrc_listwise": 4.030577620075289
+        }
+      ]
+    },
+    "candidate_training": {
+      "seed": 12971,
+      "epochs": 4,
+      "row_budget": 8192,
+      "ranking_lambda": 0.0025,
+      "optimizer": "SparseAdam+Adam",
+      "learning_rate": 0.003,
+      "complete_user_groups": 25151,
+      "history": [
+        {
+          "epoch": 1,
+          "complete_user_groups": 25151,
+          "batches": 110,
+          "loss": 0.5909672578439088,
+          "point_ce": 0.5809043652558635,
+          "jrc_listwise": 4.02515628834806
+        },
+        {
+          "epoch": 2,
+          "complete_user_groups": 25151,
+          "batches": 110,
+          "loss": 0.5609151284671253,
+          "point_ce": 0.5508426810124981,
+          "jrc_listwise": 4.028979137206307
+        },
+        {
+          "epoch": 3,
+          "complete_user_groups": 25151,
+          "batches": 110,
+          "loss": 0.5422314083532553,
+          "point_ce": 0.5321776997963183,
+          "jrc_listwise": 4.021483429760032
+        },
+        {
+          "epoch": 4,
+          "complete_user_groups": 25151,
+          "batches": 110,
+          "loss": 0.5169943558196456,
+          "point_ce": 0.5069568207225424,
+          "jrc_listwise": 4.015014275698146
+        }
+      ]
+    }
+  },
+  "confirmation": {
+    "opened": false,
+    "reason": "Train-only gate failed, so April 22-28 remained sealed."
+  },
+  "incidents": [
+    "The organizer file contains no April 8 rows; the requested April 8-11 fit is therefore the available April 9-11 data."
+  ],
+  "recommendation": "Reject compact JRC; do not use confirmation outcomes for this branch.",
+  "artifacts": {
+    "script": "scripts/train_jrc_ranking.py",
+    "scores": "runtime/parallel-calibrated-ranking/jrc/screen-scores.npz",
+    "report": "results/calibrated-ranking/jrc-screen.json"
+  },
+  "resource_usage": {
+    "wall_seconds": 29.352,
+    "train_seconds": 29.352,
+    "cpu_seconds": 33.338,
+    "cpu_hours": 0.009261,
+    "cpu_utilization_percent": 113.58,
+    "peak_rss_mb": 851.281,
+    "gpu_count": 0,
+    "gpu_seconds": 0.0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "hardware": {
+      "logical_cpu_count": 16,
+      "architecture": "arm64",
+      "processor": "arm"
+    }
+  }
+}

@@ -143,6 +143,20 @@ regressed in two user folds. This confirms that the differentiable top-five
 gradient contains signal, but not yet one that complements the much stronger
 frozen ensemble.
 
+A further parallel wave tested ten calibrated-ranking, debiasing, reward, and
+interaction methods against exact matched controls: RCR, personalized direct
+GAUC, SBCR-lite, position-aware KD, conditional watch-time quantiles, JRC,
+confidence-aware ranking, AFN, behavior-bias projection, and EulerNet. RCR was
+the only method to improve all three metrics on both the April 15–21 screen
+(`+0.000186` primary) and locked April 22–28 confirmation (`+0.000117`). Its
+fixed 5% residual into the actual champion still lost `0.000002384` primary and
+regressed in three of four user folds, so the exact `0.612858057` champion is
+unchanged. The other nine methods were rejected without opening confirmation.
+Tracked trainers used `346.197` aggregate wall-seconds, `0.139206` CPU-hours,
+no GPU, and at most `1490.812` MB RAM in one process. Full metrics, compute, and
+integrity evidence are in
+[`results/calibrated-ranking/summary.json`](results/calibrated-ranking/summary.json).
+
 One aborted FinalMLP preflight parsed a single April 29 row into transient
 memory before its date-boundary assertion stopped the process. That value was
 never printed, saved, scored, trained on, or used. The corrected clean process

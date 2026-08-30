@@ -1,0 +1,632 @@
+{
+  "experiment": "SBCR-lite shuffled self-boosted calibrated ranking",
+  "paper": {
+    "title": "A Self-boosted Framework for Calibrated Ranking",
+    "authors": "Shunyu Zhang et al.",
+    "url": "https://arxiv.org/abs/2406.08010",
+    "scope_note": "Small CPU ablation, not a production reproduction: teacher score-distribution context, sample-separable boost loss, and stopped-gradient calibration are retained."
+  },
+  "status": "rejected_at_train_only_screen",
+  "protocol": {
+    "teacher_fit_through": "2022-04-11",
+    "weight_selection_train": "2022-04-12..2022-04-13",
+    "weight_selection_validation": "2022-04-14",
+    "matched_refit": "2022-04-12..2022-04-14",
+    "locked_screen": "2022-04-15..2022-04-21",
+    "april_22_plus_accessed": false,
+    "hidden_test_accessed": false,
+    "weight_grid_predeclared": [
+      0.0,
+      0.0025,
+      0.005,
+      0.01
+    ],
+    "zero_preference": "ties on primary choose the smaller boost weight"
+  },
+  "data": {
+    "teacher_cache": "runtime/stacked-reranker/out-of-time-base-cutoff-20220411.npz",
+    "teacher_sha256": "d064bdd83de558372d3257407577e9e07eddaf08527665999bcfe254135495e4",
+    "teacher_rows": 581733,
+    "selection_train_rows": 260787,
+    "selection_validation_rows": 71252,
+    "refit_rows": 332039,
+    "screen_rows": 249694,
+    "screen_users": 24262,
+    "context_metadata": {
+      "selection_train": {
+        "users": 22179,
+        "mean_rows_per_user": 11.758284864060597,
+        "max_rows_per_user": 206,
+        "outcome_features": 0
+      },
+      "selection_valid": {
+        "users": 16910,
+        "mean_rows_per_user": 4.213601419278533,
+        "max_rows_per_user": 77,
+        "outcome_features": 0
+      },
+      "refit": {
+        "users": 23066,
+        "mean_rows_per_user": 14.395170380646839,
+        "max_rows_per_user": 283,
+        "outcome_features": 0
+      },
+      "screen": {
+        "users": 24262,
+        "mean_rows_per_user": 10.291567059599373,
+        "max_rows_per_user": 159,
+        "outcome_features": 0
+      }
+    },
+    "outcome_derived_context_features": 0
+  },
+  "selection": {
+    "trials": [
+      {
+        "boost_weight": 0.0,
+        "metrics": {
+          "primary": 0.5894405841827393,
+          "gauc": 0.6596970558166504,
+          "ndcg5": 0.5191841721534729,
+          "users": 16910,
+          "rows": 71252,
+          "calibration_logloss": 0.5346359267205729,
+          "calibration_ece20": 0.037312651678769855
+        },
+        "training": {
+          "seed": 4101,
+          "epochs": 8,
+          "batch_size": 8192,
+          "learning_rate": 0.003,
+          "correction_bound": 0.2,
+          "boost_weight": 0.0,
+          "point_bce_weight": 1.0,
+          "detached_calibration_bce_weight": 1.0,
+          "calibration_gradient_stopped_at_ranking_score": true,
+          "sample_level_shuffle": true,
+          "history": [
+            {
+              "epoch": 1,
+              "loss": 1.2853870324544865,
+              "point_bce": 0.6230338135439941,
+              "boost": 1.0496817472349145,
+              "calibration_bce": 0.662350602520582
+            },
+            {
+              "epoch": 2,
+              "loss": 1.2003433533881982,
+              "point_bce": 0.6100314811322392,
+              "boost": 1.0400723482946674,
+              "calibration_bce": 0.5903074224804565
+            },
+            {
+              "epoch": 3,
+              "loss": 1.1628795322840373,
+              "point_bce": 0.6060772807795304,
+              "boost": 1.0395276256713948,
+              "calibration_bce": 0.5567962626219614
+            },
+            {
+              "epoch": 4,
+              "loss": 1.1462592827868177,
+              "point_bce": 0.6039993557725956,
+              "boost": 1.039667796462286,
+              "calibration_bce": 0.5422529757274042
+            },
+            {
+              "epoch": 5,
+              "loss": 1.13867731995505,
+              "point_bce": 0.6026094598800622,
+              "boost": 1.0389099599993405,
+              "calibration_bce": 0.5360602281763881
+            },
+            {
+              "epoch": 6,
+              "loss": 1.1351168107069847,
+              "point_bce": 0.6015795301287946,
+              "boost": 1.0393595934470035,
+              "calibration_bce": 0.5335292255199132
+            },
+            {
+              "epoch": 7,
+              "loss": 1.1328119769705962,
+              "point_bce": 0.6008032514376594,
+              "boost": 1.0391483545690063,
+              "calibration_bce": 0.5320003184638036
+            },
+            {
+              "epoch": 8,
+              "loss": 1.131429317698402,
+              "point_bce": 0.6002118418656696,
+              "boost": 1.0395307634441857,
+              "calibration_bce": 0.5312087875914119
+            }
+          ]
+        },
+        "delta_vs_weight_zero": {
+          "primary": 0.0,
+          "gauc": 0.0,
+          "ndcg5": 0.0
+        },
+        "eligible": true
+      },
+      {
+        "boost_weight": 0.0025,
+        "metrics": {
+          "primary": 0.5894280672073364,
+          "gauc": 0.6596852540969849,
+          "ndcg5": 0.5191708207130432,
+          "users": 16910,
+          "rows": 71252,
+          "calibration_logloss": 0.534633884000022,
+          "calibration_ece20": 0.03731702472300887
+        },
+        "training": {
+          "seed": 4101,
+          "epochs": 8,
+          "batch_size": 8192,
+          "learning_rate": 0.003,
+          "correction_bound": 0.2,
+          "boost_weight": 0.0025,
+          "point_bce_weight": 1.0,
+          "detached_calibration_bce_weight": 1.0,
+          "calibration_gradient_stopped_at_ranking_score": true,
+          "sample_level_shuffle": true,
+          "history": [
+            {
+              "epoch": 1,
+              "loss": 1.2879978789636186,
+              "point_bce": 0.6230428328429972,
+              "boost": 1.049619898801768,
+              "calibration_bce": 0.6623283914113962
+            },
+            {
+              "epoch": 2,
+              "loss": 1.202931741894222,
+              "point_bce": 0.6100408792440417,
+              "boost": 1.0399460422096627,
+              "calibration_bce": 0.5902865574088341
+            },
+            {
+              "epoch": 3,
+              "loss": 1.1654731115003443,
+              "point_bce": 0.606082117704442,
+              "boost": 1.0393790939784746,
+              "calibration_bce": 0.5567865415621293
+            },
+            {
+              "epoch": 4,
+              "loss": 1.1488548440198956,
+              "point_bce": 0.604000742324139,
+              "boost": 1.0394993699097448,
+              "calibration_bce": 0.5422483862154678
+            },
+            {
+              "epoch": 5,
+              "loss": 1.1412778784451847,
+              "point_bce": 0.60261275409199,
+              "boost": 1.0387315924222935,
+              "calibration_bce": 0.5360606467539584
+            },
+            {
+              "epoch": 6,
+              "loss": 1.13771738645133,
+              "point_bce": 0.6015820493530342,
+              "boost": 1.0391659578906247,
+              "calibration_bce": 0.5335293651649242
+            },
+            {
+              "epoch": 7,
+              "loss": 1.135413282534776,
+              "point_bce": 0.6008069470399139,
+              "boost": 1.0389468079611397,
+              "calibration_bce": 0.5320005668072336
+            },
+            {
+              "epoch": 8,
+              "loss": 1.1340318331321688,
+              "point_bce": 0.6002152315636042,
+              "boost": 1.0393139077277322,
+              "calibration_bce": 0.5312096068688387
+            }
+          ]
+        },
+        "delta_vs_weight_zero": {
+          "primary": -1.2516975402832031e-05,
+          "gauc": -1.1801719665527344e-05,
+          "ndcg5": -1.33514404296875e-05
+        },
+        "eligible": false
+      },
+      {
+        "boost_weight": 0.005,
+        "metrics": {
+          "primary": 0.5894203782081604,
+          "gauc": 0.6596773266792297,
+          "ndcg5": 0.5191634297370911,
+          "users": 16910,
+          "rows": 71252,
+          "calibration_logloss": 0.5346338046070931,
+          "calibration_ece20": 0.03730529491930639
+        },
+        "training": {
+          "seed": 4101,
+          "epochs": 8,
+          "batch_size": 8192,
+          "learning_rate": 0.003,
+          "correction_bound": 0.2,
+          "boost_weight": 0.005,
+          "point_bce_weight": 1.0,
+          "detached_calibration_bce_weight": 1.0,
+          "calibration_gradient_stopped_at_ranking_score": true,
+          "sample_level_shuffle": true,
+          "history": [
+            {
+              "epoch": 1,
+              "loss": 1.2906098900666052,
+              "point_bce": 0.6230515382210504,
+              "boost": 1.0495620273046533,
+              "calibration_bce": 0.6623079256422341
+            },
+            {
+              "epoch": 2,
+              "loss": 1.2055181069666947,
+              "point_bce": 0.6100499496739459,
+              "boost": 1.0398186058074683,
+              "calibration_bce": 0.5902646194764614
+            },
+            {
+              "epoch": 3,
+              "loss": 1.1680638147378584,
+              "point_bce": 0.6060858349373129,
+              "boost": 1.0392247261070702,
+              "calibration_bce": 0.5567758375137414
+            },
+            {
+              "epoch": 4,
+              "loss": 1.1514471897493832,
+              "point_bce": 0.604001473293157,
+              "boost": 1.0393323355730706,
+              "calibration_bce": 0.542242097150065
+            },
+            {
+              "epoch": 5,
+              "loss": 1.143876392986052,
+              "point_bce": 0.6026164096764611,
+              "boost": 1.0385498266785962,
+              "calibration_bce": 0.5360595983951838
+            },
+            {
+              "epoch": 6,
+              "loss": 1.1403192948852923,
+              "point_bce": 0.6015852919312359,
+              "boost": 1.0389763941734644,
+              "calibration_bce": 0.533531055965579
+            },
+            {
+              "epoch": 7,
+              "loss": 1.1380178453457048,
+              "point_bce": 0.6008115320709939,
+              "boost": 1.0387503930268753,
+              "calibration_bce": 0.5320041453842874
+            },
+            {
+              "epoch": 8,
+              "loss": 1.136634086255856,
+              "point_bce": 0.6002192983016634,
+              "boost": 1.039096020501941,
+              "calibration_bce": 0.5312106005495105
+            }
+          ]
+        },
+        "delta_vs_weight_zero": {
+          "primary": -2.0205974578857422e-05,
+          "gauc": -1.9729137420654297e-05,
+          "ndcg5": -2.0742416381835938e-05
+        },
+        "eligible": false
+      },
+      {
+        "boost_weight": 0.01,
+        "metrics": {
+          "primary": 0.5894122123718262,
+          "gauc": 0.65966796875,
+          "ndcg5": 0.5191565155982971,
+          "users": 16910,
+          "rows": 71252,
+          "calibration_logloss": 0.5346373057213029,
+          "calibration_ece20": 0.03733410559001548
+        },
+        "training": {
+          "seed": 4101,
+          "epochs": 8,
+          "batch_size": 8192,
+          "learning_rate": 0.003,
+          "correction_bound": 0.2,
+          "boost_weight": 0.01,
+          "point_bce_weight": 1.0,
+          "detached_calibration_bce_weight": 1.0,
+          "calibration_gradient_stopped_at_ranking_score": true,
+          "sample_level_shuffle": true,
+          "history": [
+            {
+              "epoch": 1,
+              "loss": 1.2958350238892495,
+              "point_bce": 0.6230701610340326,
+              "boost": 1.0494484439300067,
+              "calibration_bce": 0.6622677783831179
+            },
+            {
+              "epoch": 2,
+              "loss": 1.2106921832422266,
+              "point_bce": 0.610069110658906,
+              "boost": 1.0395685474142313,
+              "calibration_bce": 0.5902229476515436
+            },
+            {
+              "epoch": 3,
+              "loss": 1.173244917825663,
+              "point_bce": 0.606095061275645,
+              "boost": 1.0389189517359922,
+              "calibration_bce": 0.5567546562570853
+            },
+            {
+              "epoch": 4,
+              "loss": 1.156631771463606,
+              "point_bce": 0.6040049714723816,
+              "boost": 1.039004083891319,
+              "calibration_bce": 0.542229794976009
+            },
+            {
+              "epoch": 5,
+              "loss": 1.1490698033081606,
+              "point_bce": 0.602623796656326,
+              "boost": 1.0382215167011448,
+              "calibration_bce": 0.5360561239001586
+            },
+            {
+              "epoch": 6,
+              "loss": 1.14551502282145,
+              "point_bce": 0.6015921487751802,
+              "boost": 1.0386075214935262,
+              "calibration_bce": 0.5335287144076901
+            },
+            {
+              "epoch": 7,
+              "loss": 1.1432179134252913,
+              "point_bce": 0.6008206444351303,
+              "boost": 1.0383623924764303,
+              "calibration_bce": 0.5320051967988665
+            },
+            {
+              "epoch": 8,
+              "loss": 1.1418336618700269,
+              "point_bce": 0.600227640284674,
+              "boost": 1.0386745747137696,
+              "calibration_bce": 0.5312105566320909
+            }
+          ]
+        },
+        "delta_vs_weight_zero": {
+          "primary": -2.8371810913085938e-05,
+          "gauc": -2.9087066650390625e-05,
+          "ndcg5": -2.765655517578125e-05
+        },
+        "eligible": false
+      }
+    ],
+    "selected_boost_weight": 0.0,
+    "rule": "Best primary among arms with nonnegative GAUC and nDCG@5 deltas versus weight zero; ties prefer the smaller weight."
+  },
+  "locked_screen": {
+    "frozen_teacher_reference": {
+      "primary": 0.6054635047912598,
+      "gauc": 0.6509271264076233,
+      "ndcg5": 0.5599998831748962,
+      "users": 24262,
+      "rows": 249694
+    },
+    "matched_control": {
+      "primary": 0.6058133840560913,
+      "gauc": 0.651390552520752,
+      "ndcg5": 0.5602361559867859,
+      "users": 24262,
+      "rows": 249694,
+      "calibration_logloss": 0.5602994704395315,
+      "calibration_ece20": 0.01345778961796992
+    },
+    "control_delta_vs_frozen_teacher": {
+      "primary": 0.00034987926483154297,
+      "gauc": 0.0004634261131286621,
+      "ndcg5": 0.00023627281188964844
+    },
+    "candidate": {
+      "primary": 0.6058133840560913,
+      "gauc": 0.651390552520752,
+      "ndcg5": 0.5602361559867859,
+      "users": 24262,
+      "rows": 249694,
+      "calibration_logloss": 0.5602994704395315,
+      "calibration_ece20": 0.01345778961796992
+    },
+    "delta": {
+      "primary": 0.0,
+      "gauc": 0.0,
+      "ndcg5": 0.0
+    },
+    "gate": "primary >= +0.0001 and GAUC > 0 and nDCG@5 > 0",
+    "passed": false,
+    "control_training": {
+      "seed": 9127,
+      "epochs": 8,
+      "batch_size": 8192,
+      "learning_rate": 0.003,
+      "correction_bound": 0.2,
+      "boost_weight": 0.0,
+      "point_bce_weight": 1.0,
+      "detached_calibration_bce_weight": 1.0,
+      "calibration_gradient_stopped_at_ranking_score": true,
+      "sample_level_shuffle": true,
+      "history": [
+        {
+          "epoch": 1,
+          "loss": 1.226505895992117,
+          "point_bce": 0.6152773867263737,
+          "boost": 1.0402222540697532,
+          "calibration_bce": 0.6112252212427294
+        },
+        {
+          "epoch": 2,
+          "loss": 1.1626686150303913,
+          "point_bce": 0.6043129366124437,
+          "boost": 1.0362275537625332,
+          "calibration_bce": 0.5583500982603964
+        },
+        {
+          "epoch": 3,
+          "loss": 1.1435330418730683,
+          "point_bce": 0.6012868271180872,
+          "boost": 1.035911726645497,
+          "calibration_bce": 0.5422389742747477
+        },
+        {
+          "epoch": 4,
+          "loss": 1.1354007584633812,
+          "point_bce": 0.5995864746179175,
+          "boost": 1.0363225687451967,
+          "calibration_bce": 0.5358062127182226
+        },
+        {
+          "epoch": 5,
+          "loss": 1.1320612074257583,
+          "point_bce": 0.5984606867182803,
+          "boost": 1.0362249579727945,
+          "calibration_bce": 0.5335919337261887
+        },
+        {
+          "epoch": 6,
+          "loss": 1.1297986368585573,
+          "point_bce": 0.5976669612328543,
+          "boost": 1.0367858588904297,
+          "calibration_bce": 0.5321226759179848
+        },
+        {
+          "epoch": 7,
+          "loss": 1.1282064015554434,
+          "point_bce": 0.5971184511444897,
+          "boost": 1.0369140131680863,
+          "calibration_bce": 0.5310786378800497
+        },
+        {
+          "epoch": 8,
+          "loss": 1.1272265413695333,
+          "point_bce": 0.5967541344762733,
+          "boost": 1.0375678915322895,
+          "calibration_bce": 0.5304628009396393
+        }
+      ]
+    },
+    "candidate_training": {
+      "seed": 9127,
+      "epochs": 8,
+      "batch_size": 8192,
+      "learning_rate": 0.003,
+      "correction_bound": 0.2,
+      "boost_weight": 0.0,
+      "point_bce_weight": 1.0,
+      "detached_calibration_bce_weight": 1.0,
+      "calibration_gradient_stopped_at_ranking_score": true,
+      "sample_level_shuffle": true,
+      "history": [
+        {
+          "epoch": 1,
+          "loss": 1.226505895992117,
+          "point_bce": 0.6152773867263737,
+          "boost": 1.0402222540697532,
+          "calibration_bce": 0.6112252212427294
+        },
+        {
+          "epoch": 2,
+          "loss": 1.1626686150303913,
+          "point_bce": 0.6043129366124437,
+          "boost": 1.0362275537625332,
+          "calibration_bce": 0.5583500982603964
+        },
+        {
+          "epoch": 3,
+          "loss": 1.1435330418730683,
+          "point_bce": 0.6012868271180872,
+          "boost": 1.035911726645497,
+          "calibration_bce": 0.5422389742747477
+        },
+        {
+          "epoch": 4,
+          "loss": 1.1354007584633812,
+          "point_bce": 0.5995864746179175,
+          "boost": 1.0363225687451967,
+          "calibration_bce": 0.5358062127182226
+        },
+        {
+          "epoch": 5,
+          "loss": 1.1320612074257583,
+          "point_bce": 0.5984606867182803,
+          "boost": 1.0362249579727945,
+          "calibration_bce": 0.5335919337261887
+        },
+        {
+          "epoch": 6,
+          "loss": 1.1297986368585573,
+          "point_bce": 0.5976669612328543,
+          "boost": 1.0367858588904297,
+          "calibration_bce": 0.5321226759179848
+        },
+        {
+          "epoch": 7,
+          "loss": 1.1282064015554434,
+          "point_bce": 0.5971184511444897,
+          "boost": 1.0369140131680863,
+          "calibration_bce": 0.5310786378800497
+        },
+        {
+          "epoch": 8,
+          "loss": 1.1272265413695333,
+          "point_bce": 0.5967541344762733,
+          "boost": 1.0375678915322895,
+          "calibration_bce": 0.5304628009396393
+        }
+      ]
+    }
+  },
+  "incidents": [
+    "The pre-existing frozen-teacher NPZ has no companion provenance manifest; its training cutoff is encoded in the filename. Exact date-filtered row-count/order alignment and finite values were verified before use.",
+    "The pre-screen selector preferred the exact zero-weight arm; the locked screen was still executed to preserve the predeclared protocol."
+  ],
+  "confirmation": {
+    "opened": false,
+    "reason": "Train-only gate failed, so April 22-28 remained sealed."
+  },
+  "recommendation": "Reject SBCR-lite and do not open April 22-28 for this branch.",
+  "artifacts": {
+    "script": "scripts/train_sbcr_lite.py",
+    "scores": "runtime/parallel-calibrated-ranking/sbcr/screen-scores.npz",
+    "report": "results/calibrated-ranking/sbcr-screen.json"
+  },
+  "resource_usage": {
+    "wall_seconds": 15.945,
+    "train_seconds": 15.945,
+    "cpu_seconds": 17.659,
+    "cpu_hours": 0.004905,
+    "cpu_utilization_percent": 110.75,
+    "peak_rss_mb": 1490.812,
+    "gpu_count": 0,
+    "gpu_seconds": 0.0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "hardware": {
+      "logical_cpu_count": 16,
+      "architecture": "arm64",
+      "processor": "arm"
+    }
+  }
+}

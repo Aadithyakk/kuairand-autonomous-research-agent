@@ -1,0 +1,31 @@
+{
+  "experiment": "Position-aware logit knowledge distillation",
+  "created_before_screen_execution": true,
+  "teacher_bias_only_features": [
+    "log1p_session_position",
+    "log1p_video_duration_seconds_z",
+    "log1p_elapsed_session_seconds"
+  ],
+  "student_features": [
+    "user_id",
+    "video_id",
+    "author_id",
+    "tab"
+  ],
+  "student_inference_only": true,
+  "distillation_temperature": 2.0,
+  "lambda_grid": [
+    0.0,
+    0.02,
+    0.05,
+    0.1
+  ],
+  "selection": "maximum primary on Apr15-21; exact ties prefer smaller lambda; zero retained unless selected primary gain is at least 0.0001 and GAUC and nDCG@5 both strictly improve",
+  "minimum_primary_gain": 0.0001,
+  "fixed_seed": 260833,
+  "fixed_epochs": 4,
+  "fixed_champion_blend_weight": 0.05,
+  "confirmation": "If and only if the screen passes, refit the same teacher/control/selected student on Apr8-21 and score Apr22-28 once without retuning; audit a fixed 0.05 within-user-rank residual against the frozen champion and four actual-user-ID modulo folds.",
+  "promotion_rule": "overall champion residual must strictly improve primary, GAUC, and nDCG@5 and no metric may regress in any of four user folds",
+  "hidden_test_policy": "Never parse Apr29+ outcome fields."
+}

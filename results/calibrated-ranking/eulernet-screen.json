@@ -1,0 +1,376 @@
+{
+  "architecture_selection_runs": [
+    {
+      "active_parameters": 499711,
+      "architecture": {
+        "layer_norm": true,
+        "order_fields": [
+          6
+        ]
+      },
+      "architecture_index": 0,
+      "deltas_vs_control": {
+        "GAUC": 0.0006055831909179688,
+        "nDCG@5": 0.00012505054473876953,
+        "primary": 0.00036537647247314453
+      },
+      "parameter_ratio_vs_control": 1.0063213391008756,
+      "resource_usage": {
+        "cpu_hours": 0.003566,
+        "cpu_seconds": 12.839,
+        "cpu_utilization_percent": 298.84,
+        "device": "cpu",
+        "gpu_count": 0,
+        "gpu_hours": 0.0,
+        "nonfinite_batches": 0,
+        "peak_gpu_memory_mb": 0.0,
+        "peak_rss_mb": 784.734,
+        "wall_seconds": 4.296
+      },
+      "selection_metrics": {
+        "GAUC": 0.670271098613739,
+        "nDCG@5": 0.5572035312652588,
+        "primary": 0.6137373447418213,
+        "rows": 332039,
+        "users": 23066
+      },
+      "training_history": [
+        {
+          "epoch": 1,
+          "loss": 0.5756988240324933,
+          "nonfinite_batches": 0
+        },
+        {
+          "epoch": 2,
+          "loss": 0.5020997666794321,
+          "nonfinite_batches": 0
+        },
+        {
+          "epoch": 3,
+          "loss": 0.4938464169053064,
+          "nonfinite_batches": 0
+        },
+        {
+          "epoch": 4,
+          "loss": 0.48940977713336115,
+          "nonfinite_batches": 0
+        }
+      ]
+    },
+    {
+      "active_parameters": 506839,
+      "architecture": {
+        "layer_norm": true,
+        "order_fields": [
+          6,
+          4
+        ]
+      },
+      "architecture_index": 1,
+      "deltas_vs_control": {
+        "GAUC": -0.001423656940460205,
+        "nDCG@5": -0.0011698603630065918,
+        "primary": -0.0012967586517333984
+      },
+      "parameter_ratio_vs_control": 1.0206757529623096,
+      "resource_usage": {
+        "cpu_hours": 0.005662,
+        "cpu_seconds": 20.384,
+        "cpu_utilization_percent": 299.84,
+        "device": "cpu",
+        "gpu_count": 0,
+        "gpu_hours": 0.0,
+        "nonfinite_batches": 0,
+        "peak_gpu_memory_mb": 0.0,
+        "peak_rss_mb": 913.391,
+        "wall_seconds": 6.798
+      },
+      "selection_metrics": {
+        "GAUC": 0.6682418584823608,
+        "nDCG@5": 0.5559086203575134,
+        "primary": 0.6120752096176147,
+        "rows": 332039,
+        "users": 23066
+      },
+      "training_history": [
+        {
+          "epoch": 1,
+          "loss": 0.5902189335961273,
+          "nonfinite_batches": 0
+        },
+        {
+          "epoch": 2,
+          "loss": 0.5032684859158336,
+          "nonfinite_batches": 0
+        },
+        {
+          "epoch": 3,
+          "loss": 0.49302664960640064,
+          "nonfinite_batches": 0
+        },
+        {
+          "epoch": 4,
+          "loss": 0.48594156555507495,
+          "nonfinite_batches": 0
+        }
+      ]
+    },
+    {
+      "active_parameters": 502697,
+      "architecture": {
+        "layer_norm": false,
+        "order_fields": [
+          8
+        ]
+      },
+      "architecture_index": 2,
+      "deltas_vs_control": {
+        "GAUC": 0.0019035935401916504,
+        "nDCG@5": 0.0008955001831054688,
+        "primary": 0.0013995766639709473
+      },
+      "parameter_ratio_vs_control": 1.0123345657830083,
+      "resource_usage": {
+        "cpu_hours": 0.003589,
+        "cpu_seconds": 12.92,
+        "cpu_utilization_percent": 302.12,
+        "device": "cpu",
+        "gpu_count": 0,
+        "gpu_hours": 0.0,
+        "nonfinite_batches": 0,
+        "peak_gpu_memory_mb": 0.0,
+        "peak_rss_mb": 936.844,
+        "wall_seconds": 4.276
+      },
+      "selection_metrics": {
+        "GAUC": 0.6715691089630127,
+        "nDCG@5": 0.5579739809036255,
+        "primary": 0.6147715449333191,
+        "rows": 332039,
+        "users": 23066
+      },
+      "training_history": [
+        {
+          "epoch": 1,
+          "loss": 0.6008799447529558,
+          "nonfinite_batches": 0
+        },
+        {
+          "epoch": 2,
+          "loss": 0.5173475699148317,
+          "nonfinite_batches": 0
+        },
+        {
+          "epoch": 3,
+          "loss": 0.495231313549954,
+          "nonfinite_batches": 0
+        },
+        {
+          "epoch": 4,
+          "loss": 0.48972506410833716,
+          "nonfinite_batches": 0
+        }
+      ]
+    }
+  ],
+  "artifacts": {
+    "scores": "runtime/parallel-calibrated-ranking/eulernet/screen-scores.npz",
+    "script": "scripts/train_eulernet_interactions.py"
+  },
+  "candidate": {
+    "active_parameters": 521404,
+    "checkpoint": "runtime/parallel-calibrated-ranking/eulernet/screen-euler.pt",
+    "metrics": {
+      "GAUC": 0.664129912853241,
+      "nDCG@5": 0.5661012530326843,
+      "primary": 0.6151155829429626,
+      "rows": 249694,
+      "users": 24262
+    },
+    "mode": "euler",
+    "resource_usage": {
+      "cpu_hours": 0.005809,
+      "cpu_seconds": 20.911,
+      "cpu_utilization_percent": 297.61,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "nonfinite_batches": 0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 1089.375,
+      "wall_seconds": 7.027
+    },
+    "training_history": [
+      {
+        "epoch": 1,
+        "loss": 0.583651982863015,
+        "nonfinite_batches": 0
+      },
+      {
+        "epoch": 2,
+        "loss": 0.5049208276862398,
+        "nonfinite_batches": 0
+      },
+      {
+        "epoch": 3,
+        "loss": 0.49545715653568234,
+        "nonfinite_batches": 0
+      },
+      {
+        "epoch": 4,
+        "loss": 0.4925477977739562,
+        "nonfinite_batches": 0
+      }
+    ]
+  },
+  "control": {
+    "active_parameters": 515279,
+    "checkpoint": "runtime/parallel-calibrated-ranking/eulernet/screen-control.pt",
+    "metrics": {
+      "GAUC": 0.6651785969734192,
+      "nDCG@5": 0.5671519637107849,
+      "primary": 0.616165280342102,
+      "rows": 249694,
+      "users": 24262
+    },
+    "mode": "control",
+    "resource_usage": {
+      "cpu_hours": 0.001387,
+      "cpu_seconds": 4.992,
+      "cpu_utilization_percent": 174.44,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "nonfinite_batches": 0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 1077.969,
+      "wall_seconds": 2.862
+    },
+    "training_history": [
+      {
+        "epoch": 1,
+        "loss": 0.6163944705910639,
+        "nonfinite_batches": 0
+      },
+      {
+        "epoch": 2,
+        "loss": 0.5088046975092057,
+        "nonfinite_batches": 0
+      },
+      {
+        "epoch": 3,
+        "loss": 0.4967049918043504,
+        "nonfinite_batches": 0
+      },
+      {
+        "epoch": 4,
+        "loss": 0.4929600297857862,
+        "nonfinite_batches": 0
+      }
+    ]
+  },
+  "control_selection_metrics": {
+    "GAUC": 0.669665515422821,
+    "nDCG@5": 0.55707848072052,
+    "primary": 0.6133719682693481,
+    "rows": 332039,
+    "users": 23066
+  },
+  "deltas_vs_control": {
+    "GAUC": -0.0010486841201782227,
+    "nDCG@5": -0.001050710678100586,
+    "primary": -0.0010496973991394043
+  },
+  "experiment": "compact EulerNet complex-valued feature interactions",
+  "locked_epoch_count": 4,
+  "matched_configuration": {
+    "batch_size": 8192,
+    "bounded_log_modulus": [
+      -6.0,
+      6.0
+    ],
+    "control": "embedding plus MLP",
+    "dropout": 0.05,
+    "embedding_dim": 12,
+    "fields": [
+      "user_id",
+      "video_id",
+      "author_id",
+      "tab",
+      "dur_bucket"
+    ],
+    "hidden": 64,
+    "learning_rate": 0.001,
+    "objective": "pointwise BCE",
+    "same_embedding_initialization_and_row_order": true,
+    "seed": 260830,
+    "weight_decay": 1e-06
+  },
+  "merits_confirmation": false,
+  "paper": "https://arxiv.org/abs/2304.10711",
+  "predeclared_architecture_grid": [
+    {
+      "layer_norm": true,
+      "order_fields": [
+        6
+      ]
+    },
+    {
+      "layer_norm": true,
+      "order_fields": [
+        6,
+        4
+      ]
+    },
+    {
+      "layer_norm": false,
+      "order_fields": [
+        8
+      ]
+    }
+  ],
+  "protocol": {
+    "apr22_plus_file_opened": false,
+    "architecture_selection": "Apr12-14",
+    "hidden_test_outcomes_parsed": false,
+    "integrity_incidents": [],
+    "nonfinite_incidents": [],
+    "refit": "Apr8-14",
+    "screen": "Apr15-21",
+    "selection_fit": "Apr8-11"
+  },
+  "recommendation": "reject EulerNet; do not access Apr22+",
+  "resources": {
+    "control_epoch_selection": {
+      "cpu_hours": 0.003112,
+      "cpu_seconds": 11.202,
+      "cpu_utilization_percent": 136.55,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "nonfinite_batches": 0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 751.797,
+      "wall_seconds": 8.204
+    },
+    "total": {
+      "cpu_hours": 0.027201,
+      "cpu_seconds": 97.922,
+      "cpu_utilization_percent": 212.32,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 1089.375,
+      "wall_seconds": 46.12
+    }
+  },
+  "selected_architecture": {
+    "layer_norm": false,
+    "order_fields": [
+      8
+    ]
+  },
+  "selected_architecture_index": 2,
+  "status": "screen_rejected"
+}
