@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import json
 import os
+import ssl
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from typing import Any
+
+import certifi
 
 
 @dataclass
@@ -63,6 +66,12 @@ class OpenAIProvider:
     def __init__(self, model: str, reasoning_effort: str):
         self.model = model
         self.reasoning_effort = reasoning_effort
+
+    @staticmethod
+    def _ssl_context() -> ssl.SSLContext:
+        """Build a verified TLS context, respecting an operator-supplied CA bundle."""
+        cafile = os.getenv("SSL_CERT_FILE") or certifi.where()
+        return ssl.create_default_context(cafile=cafile)
 
     @staticmethod
     def _output_text(response: dict) -> str:
@@ -145,11 +154,13 @@ class OpenAIProvider:
             method="POST",
         )
         try:
-            with urllib.request.urlopen(request, timeout=180) as result:
+            with urllib.request.urlopen(request, timeout=180, context=self._ssl_context()) as result:
                 response = json.loads(result.read().decode("utf-8"))
         except urllib.error.HTTPError as error:
             detail = error.read().decode("utf-8", errors="replace")[:800]
             raise RuntimeError(f"OpenAI Responses API failed ({error.code}): {detail}") from error
+        except urllib.error.URLError as error:
+            raise RuntimeError(f"OpenAI Responses API secure connection failed: {error.reason}") from error
         payload = json.loads(self._output_text(response))
         raw_usage = response.get("usage", {})
         output_details = raw_usage.get("output_tokens_details", {})

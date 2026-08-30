@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import ssl
 import tempfile
 import time
 import unittest
@@ -34,6 +35,11 @@ class CoreTests(unittest.TestCase):
     def test_responses_output_text_fallback(self):
         response = {"output": [{"content": [{"type": "output_text", "text": "{\"ok\":true}"}]}]}
         self.assertEqual(OpenAIProvider._output_text(response), '{"ok":true}')
+
+    def test_openai_provider_uses_verified_tls_context(self):
+        context = OpenAIProvider._ssl_context()
+        self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED)
+        self.assertTrue(context.check_hostname)
 
     def test_pairwise_sampler_uses_same_user_logged_negatives(self):
         users = ["u1", "u1", "u1", "u2", "u2", "u3"]
