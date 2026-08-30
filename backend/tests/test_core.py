@@ -14,6 +14,7 @@ from backend.kuailab.champion import blend_with_champion, load_champion_scores, 
 from backend.kuailab.config import Settings
 from backend.kuailab.engine import CampaignEngine
 from backend.kuailab.provider import DemoProvider, OpenAIProvider
+from backend.kuailab.ordinal import build_ordinal_watch_labels
 from backend.kuailab.pairwise import sample_pair_indices
 from backend.kuailab.resources import normalize_resource_usage
 from backend.kuailab.rad import build_rad_labels
@@ -125,6 +126,17 @@ class CoreTests(unittest.TestCase):
         self.assertGreater(labels[1], labels[0])
         self.assertGreater(labels[2], labels[3])
         self.assertEqual(stats["duration_bins"], 2)
+
+    def test_ordinal_watch_labels_are_nested_and_duration_capped(self):
+        rows = [
+            (20220408, "u1", "v1", "a1", "0", 10_000.0, 0, 8, 1_000, 4_000.0),
+            (20220408, "u1", "v2", "a1", "0", 30_000.0, 1, 8, 2_000, 14_000.0),
+        ]
+        labels, stats = build_ordinal_watch_labels(rows)
+        np.testing.assert_array_equal(labels[0], [1.0, 0.0, 0.0])
+        np.testing.assert_array_equal(labels[1], [1.0, 1.0, 1.0])
+        self.assertEqual(labels.shape, (2, 3))
+        self.assertEqual(stats["thresholds"], [0.25, 0.5, 0.75])
 
     def test_synthetic_failure_is_visible(self):
         proposal = DemoProvider().propose({"iteration": 4, "epsilon": 0.002, "steering": None})

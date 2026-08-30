@@ -102,9 +102,11 @@ class WeightedFM(baseline_module.FM):
         super().__init__(*args, **kwargs)
         self.positive_weight = positive_weight
 
-    def step(self, X, y):
+    def step(self, X, y, sample_weights=None):
         z, E, S = self.logits(X)
         weights = np.where(y > 0.5, self.positive_weight, 1.0).astype(np.float32)
+        if sample_weights is not None:
+            weights *= np.asarray(sample_weights, dtype=np.float32)
         g = ((baseline_module.sigmoid(z) - y) * weights / weights.sum()).astype(np.float32)
         gV = np.zeros_like(self.V)
         gW = np.zeros_like(self.W)
@@ -159,19 +161,28 @@ class PairwiseFM(WeightedFM):
 def train_one(
     train_x, train_y, valid_x, valid_y, valid_users, dimension: int, output_dir: Path,
     parameters: dict, seed: int, positive_weight: float, checkpoint_prefix: str = "checkpoint",
+    train_weights: np.ndarray | None = None,
 ):
     k = max(4, min(int(parameters.get("k", 16)), 32))
     lr = max(0.0001, min(float(parameters.get("lr", 0.001)), 0.01))
     epochs = max(5, min(int(parameters.get("epochs", 40)), 60))
     batch = max(2048, min(int(parameters.get("batch_size", 8192)), 32768))
     patience = max(2, min(int(parameters.get("patience", 4)), 8))
+    fixed_epochs = bool(parameters.get("fixed_epochs", False))
     model = WeightedFM(dimension, k=k, lr=lr, seed=seed, positive_weight=positive_weight)
     random = np.random.default_rng(seed)
     best_score, best_state, bad = -1.0, None, 0
     history = []
     for epoch in range(1, epochs + 1):
         order = random.permutation(len(train_y))
-        losses = [model.step(train_x[order[start:start + batch]], train_y[order[start:start + batch]]) for start in range(0, len(order), batch)]
+        losses = [
+            model.step(
+                train_x[order[start:start + batch]],
+                train_y[order[start:start + batch]],
+                None if train_weights is None else train_weights[order[start:start + batch]],
+            )
+            for start in range(0, len(order), batch)
+        ]
         scores = model.predict(valid_x)
         metrics = evaluate_module.evaluate(valid_users, valid_y, scores)
         history.append({
@@ -179,7 +190,10 @@ def train_one(
             "nDCG@5": float(metrics["nDCG@5"]), "primary": float(metrics["primary"]),
             "users": int(metrics["users"]), "rows": int(metrics["rows"]),
         })
-        if metrics["primary"] > best_score + 1e-5:
+        if fixed_epochs:
+            best_score = float(metrics["primary"])
+            best_state = (model.V.copy(), model.W.copy(), np.float32(model.b), scores.copy())
+        elif metrics["primary"] > best_score + 1e-5:
             best_score, bad = metrics["primary"], 0
             best_state = (model.V.copy(), model.W.copy(), np.float32(model.b), scores.copy())
         else:
@@ -190,7 +204,13 @@ def train_one(
         raise RuntimeError("FM training produced no checkpoint")
     model.V, model.W, model.b, best_scores = best_state
     np.savez_compressed(output_dir / f"{checkpoint_prefix}-seed-{seed}.npz", V=model.V, W=model.W, b=model.b)
-    return best_scores, {"objective": "weighted_bce", "seed": seed, "positive_weight": positive_weight, "epochs": history}
+    return best_scores, {
+        "objective": "recency_weighted_bce" if train_weights is not None else "weighted_bce",
+        "seed": seed,
+        "positive_weight": positive_weight,
+        "fixed_epochs": fixed_epochs,
+        "epochs": history,
+    }
 
 
 def train_pairwise(
@@ -256,6 +276,8 @@ def train_fm(
         "temporal_deepfm_blend": "fm_temporal_deep_blend",
         "slate_context_deepfm": "fm_slate_deep",
         "rad_deepfm": "fm_rad_deep",
+        "ordinal_watch_deepfm": "fm_ordinal_deep",
+        "profile_deepfm": "fm_profile_deep",
     }
     candidate_family = str(parameters.get("champion_candidate_family", "pointwise_fm"))
     if requested_champion_mode and candidate_family not in champion_families:
@@ -271,12 +293,24 @@ def train_fm(
     ensemble_types = {
         "fm_ensemble", "fm_pairwise_blend", "fm_deep_blend",
         "fm_temporal_deep_blend", "fm_slate_deep",
-        "fm_rad_deep",
+        "fm_rad_deep", "fm_ordinal_deep", "fm_profile_deep",
     }
     seeds = parameters.get("ensemble_seeds", [seed]) if training_type in ensemble_types else [seed]
     seeds = [int(value) for value in seeds[:3]]
     positive_weight = float(parameters.get("positive_weight", 1.0))
     positive_weight = max(1.0, min(positive_weight, 10.0))
+    recency_half_life_days = max(
+        0.0, min(float(parameters.get("recency_half_life_days", 0.0)), 60.0)
+    )
+    train_weights = None
+    if recency_half_life_days > 0:
+        train_dates = np.asarray([int(row[0]) for row in splits["train"]], dtype=np.int32)
+        maximum_train_date = int(train_dates.max())
+        train_weights = np.exp2(
+            -(maximum_train_date - train_dates).astype(np.float32)
+            / recency_half_life_days
+        )
+        train_weights /= max(float(train_weights.mean()), 1e-8)
     predictions, histories, pairwise_histories, deep_histories, temporal_histories = [], [], [], [], []
     rad_histories = []
     if training_type == "fm_slate_deep":
@@ -292,6 +326,36 @@ def train_fm(
             slate_predictions.append(within_user_rank(valid_users, slate_scores))
             deep_histories.append(slate_history)
         best_scores = np.mean(np.stack(slate_predictions), axis=0)
+        blend_weight = 0.0
+        deep_blend_weight = 0.0
+    elif training_type == "fm_ordinal_deep":
+        from backend.kuailab.ordinal import train_ordinal_deepfm
+
+        ordinal_predictions = []
+        for model_seed in seeds:
+            ordinal_parameters = {**parameters, "deep_seed": model_seed}
+            ordinal_scores, ordinal_history = train_ordinal_deepfm(
+                splits, encoded, dimension, output_dir, ordinal_parameters,
+                evaluate_module.evaluate,
+            )
+            ordinal_predictions.append(within_user_rank(valid_users, ordinal_scores))
+            deep_histories.append(ordinal_history)
+        best_scores = np.mean(np.stack(ordinal_predictions), axis=0)
+        blend_weight = 0.0
+        deep_blend_weight = 0.0
+    elif training_type == "fm_profile_deep":
+        from backend.kuailab.ordinal import train_profile_deepfm
+
+        profile_predictions = []
+        for model_seed in seeds:
+            profile_parameters = {**parameters, "deep_seed": model_seed}
+            profile_scores, profile_history = train_profile_deepfm(
+                splits, encoded, dimension, output_dir, profile_parameters,
+                evaluate_module.evaluate,
+            )
+            profile_predictions.append(within_user_rank(valid_users, profile_scores))
+            deep_histories.append(profile_history)
+        best_scores = np.mean(np.stack(profile_predictions), axis=0)
         blend_weight = 0.0
         deep_blend_weight = 0.0
     elif training_type == "fm_rad_deep":
@@ -311,7 +375,11 @@ def train_fm(
         deep_blend_weight = 0.0
     elif training_type != "fm_pairwise":
         for model_seed in seeds:
-            scores, history = train_one(train_x, train_y, valid_x, valid_y, valid_users, dimension, output_dir, parameters, model_seed, positive_weight)
+            scores, history = train_one(
+                train_x, train_y, valid_x, valid_y, valid_users, dimension,
+                output_dir, parameters, model_seed, positive_weight,
+                train_weights=train_weights,
+            )
             predictions.append(scores)
             histories.append(history)
     if training_type in {"fm_pairwise", "fm_pairwise_blend", "fm_deep_blend", "fm_temporal_deep_blend"}:
@@ -326,7 +394,9 @@ def train_fm(
             blend_weight = max(0.0, min(float(parameters.get("blend_weight", 0.455)), 1.0))
             pointwise_scores = np.mean(np.stack(predictions), axis=0)
             best_scores = (1.0 - blend_weight) * pointwise_scores + blend_weight * pairwise_scores
-    elif training_type not in {"fm_slate_deep", "fm_rad_deep"}:
+    elif training_type not in {
+        "fm_slate_deep", "fm_rad_deep", "fm_ordinal_deep", "fm_profile_deep",
+    }:
         blend_weight = 0.0
         best_scores = np.mean(np.stack(predictions), axis=0)
     if training_type in {"fm_deep_blend", "fm_temporal_deep_blend"}:
@@ -351,6 +421,7 @@ def train_fm(
             temporal_train_x, temporal_train_y, temporal_valid_x, temporal_valid_y,
             temporal_valid_users, temporal_dimension, output_dir, parameters, seed,
             positive_weight, checkpoint_prefix="temporal-checkpoint",
+            train_weights=train_weights,
         )
         temporal_history["features"] = ["hour", "daypart", "weekday"]
         temporal_histories.append(temporal_history)
@@ -393,6 +464,7 @@ def train_fm(
         "blend_weight": blend_weight if training_type in {"fm_pairwise_blend", "fm_deep_blend", "fm_temporal_deep_blend"} else None,
         "deep_blend_weight": deep_blend_weight if training_type in {"fm_deep_blend", "fm_temporal_deep_blend"} else None,
         "temporal_blend_weight": temporal_blend_weight if training_type == "fm_temporal_deep_blend" else None,
+        "recency_half_life_days": recency_half_life_days or None,
         "runs": histories,
         "pairwise_runs": pairwise_histories,
         "deep_runs": deep_histories,

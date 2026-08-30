@@ -30,11 +30,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "artifact", type=Path, nargs="+",
-        help="One or more .npz files with candidate_scores; multiple seeds are rank-ensembled.",
+        help=(
+            "One or more .npz files with candidate_scores or scores; multiple "
+            "seeds are rank-ensembled."
+        ),
     )
     parser.add_argument("--output", type=Path)
     parser.add_argument(
-        "--gate", choices=("all", "sessions-7plus"), default="all",
+        "--gate",
+        choices=(
+            "all", "long-video", "low-training-history", "sessions-7plus",
+            "slate-6plus",
+        ),
+        default="all",
         help="Apply the residual only to a pre-specified outcome-free regime.",
     )
     args = parser.parse_args()
@@ -46,7 +54,8 @@ def main() -> int:
     candidates = []
     for artifact in args.artifact:
         with np.load(artifact, allow_pickle=False) as archive:
-            scores = np.asarray(archive["candidate_scores"], dtype=np.float64)
+            score_key = "candidate_scores" if "candidate_scores" in archive else "scores"
+            scores = np.asarray(archive[score_key], dtype=np.float64)
         candidates.append(within_user_rank(valid_users, scores))
     candidate = within_user_rank(valid_users, np.mean(np.stack(candidates), axis=0))
     folds = np.asarray([user_fold(str(user)) for user in valid_users], dtype=np.int8)
@@ -64,6 +73,33 @@ def main() -> int:
             )
             if session_count >= 7:
                 gate[[index for _, index in ordered]] = 1.0
+    elif args.gate == "slate-6plus":
+        user_counts: dict[str, int] = {}
+        for user in valid_users:
+            user_key = str(user)
+            user_counts[user_key] = user_counts.get(user_key, 0) + 1
+        gate = np.asarray(
+            [user_counts[str(user)] >= 6 for user in valid_users],
+            dtype=np.float64,
+        )
+    elif args.gate == "long-video":
+        gate = np.asarray(
+            [float(row[5]) >= 18_000.0 for row in splits["valid"]],
+            dtype=np.float64,
+        )
+    elif args.gate == "low-training-history":
+        training_counts: dict[str, int] = {}
+        for row in splits["train"]:
+            user_key = str(row[1])
+            training_counts[user_key] = training_counts.get(user_key, 0) + 1
+        validation_user_counts = {
+            str(user): training_counts.get(str(user), 0) for user in valid_users
+        }
+        threshold = float(np.quantile(list(validation_user_counts.values()), 0.25))
+        gate = np.asarray(
+            [validation_user_counts[str(user)] <= threshold for user in valid_users],
+            dtype=np.float64,
+        )
     grid = np.round(np.linspace(-0.25, 0.25, 101), 6)
 
     def metrics(mask: np.ndarray, weight: float) -> dict:

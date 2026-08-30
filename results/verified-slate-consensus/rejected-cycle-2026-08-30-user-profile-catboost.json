@@ -1,0 +1,58 @@
+{
+  "artifacts": [
+    "runtime/batch-slate-meta-catboost-s751-user-profile.npz"
+  ],
+  "gate": "all",
+  "gated_rows": 124909,
+  "champion_primary": 0.6128580570220947,
+  "candidate_primary": 0.6049067974090576,
+  "protocol": "four actual-user-ID folds; select on three, report held-out fourth; zero-preferring grid",
+  "selected_weights": [
+    0.085,
+    -0.13,
+    -0.13,
+    0.095
+  ],
+  "folds": [
+    {
+      "fold": 0,
+      "selected_weight": 0.085,
+      "selection_gain": 7.68899917602539e-06,
+      "holdout_gain": 9.357929229736328e-06,
+      "holdout_gauc_gain": -2.390146255493164e-05,
+      "holdout_ndcg5_gain": 4.267692565917969e-05
+    },
+    {
+      "fold": 1,
+      "selected_weight": -0.13,
+      "selection_gain": 3.6716461181640625e-05,
+      "holdout_gain": -2.7298927307128906e-05,
+      "holdout_gauc_gain": 4.744529724121094e-05,
+      "holdout_ndcg5_gain": -0.00010192394256591797
+    },
+    {
+      "fold": 2,
+      "selected_weight": -0.13,
+      "selection_gain": 2.3603439331054688e-05,
+      "holdout_gain": 1.1563301086425781e-05,
+      "holdout_gauc_gain": -3.701448440551758e-05,
+      "holdout_ndcg5_gain": 6.014108657836914e-05
+    },
+    {
+      "fold": 3,
+      "selected_weight": 0.095,
+      "selection_gain": 2.3245811462402344e-05,
+      "holdout_gain": -1.817941665649414e-05,
+      "holdout_gauc_gain": 1.52587890625e-05,
+      "holdout_ndcg5_gain": -5.161762237548828e-05
+    }
+  ],
+  "fixed_weight": -0.019999999999999997,
+  "fixed_metrics": {
+    "primary": 0.6128580570220947,
+    "gauc": 0.6823537349700928,
+    "ndcg5": 0.5433623194694519
+  },
+  "fixed_gain": 0.0,
+  "all_holdout_folds_nonnegative": false
+}

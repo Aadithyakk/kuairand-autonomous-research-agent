@@ -571,7 +571,7 @@ class CampaignEngine:
                                 "fm_pairwise_blend": "Blend a 1-3 seed weighted-FM ensemble with one independently trained BPR FM",
                                 "fm_deep_blend": "Blend weighted FM, BPR FM, and a nonlinear DeepFM trained with weighted BCE",
                                 "fm_temporal_deep_blend": "Add a small globally standardized clock-context FM to the weighted FM, BPR, and DeepFM blend",
-                                "champion_residual_blend": "Retrain one typed pointwise/pairwise/DeepFM/RAD/full-slate candidate, convert both predictions to stable within-user ranks, and blend or extrapolate it at weight [-0.25,0.25] from the checksum-verified 0.612858 frozen champion. rad_deepfm builds train-only user-duration/video watch-time quantiles, selects epochs out of time, refits, and ranks only with long_view. slate_context_deepfm selects epochs out of time on matched seven-day slates, refits April 8-21, and uses outcome-free whole-user slate/session/repeat context"
+                                "champion_residual_blend": "Retrain one typed pointwise/pairwise/DeepFM/RAD/ordinal/profile/full-slate candidate, convert both predictions to stable within-user ranks, and blend or extrapolate it at weight [-0.25,0.25] from the checksum-verified 0.612858 frozen champion. RAD, ordinal-watch, profile-embedding, and slate-context variants select epochs out of time and refit before confirmation; consult exhausted method cards before choosing one."
                             },
                             "defaults": {
                                 "k": 16, "lr": 0.001, "epochs": 40, "batch_size": 8192, "patience": 4,

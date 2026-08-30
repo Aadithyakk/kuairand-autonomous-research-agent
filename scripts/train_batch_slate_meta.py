@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT / "runtime" / "xgboost-venv"))
 from catboost import CatBoostClassifier, CatBoostRanker, Pool
 from sklearn.linear_model import LogisticRegression
 
+from backend.kuailab.champion import within_user_rank
 from backend.kuailab.resources import ProcessResourceTracker
 from scripts import kuairand_runner as runner
 
@@ -27,8 +28,21 @@ from scripts import kuairand_runner as runner
 parser = argparse.ArgumentParser()
 parser.add_argument("--residual-baseline", action="store_true")
 parser.add_argument(
+    "--include-user-features",
+    action="store_true",
+    help="Join the organizer-supplied static user profile fields.",
+)
+parser.add_argument(
+    "--include-user-id",
+    action="store_true",
+    help="Expose user_id to the pointwise tree for user-specific interactions.",
+)
+parser.add_argument(
     "--ranker-objective",
-    choices=("PairLogitPairwise", "QuerySoftMax", "YetiRankPairwise"),
+    choices=(
+        "PairLogitPairwise", "QuerySoftMax", "StochasticRank", "YetiRank",
+        "YetiRankPairwise",
+    ),
     default="",
 )
 parser.add_argument("--ranker-iterations", type=int, default=500)
@@ -36,6 +50,20 @@ parser.add_argument("--ranker-depth", type=int, default=8)
 parser.add_argument("--ranker-learning-rate", type=float, default=0.04)
 parser.add_argument("--ranker-l2", type=float, default=12.0)
 parser.add_argument("--ranker-seed", type=int, default=769)
+parser.add_argument(
+    "--ranker-from-scratch",
+    action="store_true",
+    help="Train a CatBoost ranker without the frozen base prediction as baseline.",
+)
+parser.add_argument(
+    "--minimum-holdout-gain",
+    type=float,
+    default=None,
+    help=(
+        "Stop before confirmation unless the best Apr 20-21 blend improves "
+        "the frozen base by at least this much."
+    ),
+)
 parser.add_argument(
     "--xgboost-ranker",
     action="store_true",
@@ -52,6 +80,8 @@ parser.add_argument(
 args = parser.parse_args()
 if args.xgboost_ranker and args.ranker_objective:
     parser.error("--xgboost-ranker and --ranker-objective are mutually exclusive")
+if args.xgboost_ranker and args.ranker_from_scratch:
+    parser.error("--ranker-from-scratch currently applies only to CatBoost rankers")
 if args.xgboost_ranker:
     try:
         from xgboost import XGBRanker
@@ -154,6 +184,41 @@ frame = (
         .fill_nan(0).fill_null(0).alias("stat_share_rate"),
     ])
 )
+user_categorical: list[str] = []
+user_numeric: list[str] = []
+if args.include_user_features:
+    user_categorical = [
+        "user_active_degree", "is_lowactive_period", "is_live_streamer",
+        "is_video_author", "follow_user_num_range", "fans_user_num_range",
+        "friend_user_num_range", "register_days_range",
+        *[f"onehot_feat{index}" for index in range(18)],
+    ]
+    user_numeric = [
+        "log_follow_user_num", "log_fans_user_num", "log_friend_user_num",
+        "log_register_days",
+    ]
+    user_features = (
+        pl.read_csv(data_dir / "user_features_pure.csv")
+        .with_columns(pl.col("user_id").cast(pl.String))
+        .select([
+            "user_id", *user_categorical, "follow_user_num", "fans_user_num",
+            "friend_user_num", "register_days",
+        ])
+    )
+    frame = frame.join(user_features, on="user_id", how="left").with_columns([
+        *[
+            pl.col(name).cast(pl.String).fill_null("UNK").alias(name)
+            for name in user_categorical
+        ],
+        pl.col("follow_user_num").fill_null(0).clip(0, None).log1p()
+        .alias("log_follow_user_num"),
+        pl.col("fans_user_num").fill_null(0).clip(0, None).log1p()
+        .alias("log_fans_user_num"),
+        pl.col("friend_user_num").fill_null(0).clip(0, None).log1p()
+        .alias("log_friend_user_num"),
+        pl.col("register_days").fill_null(0).clip(0, None).log1p()
+        .alias("log_register_days"),
+    ])
 
 # Normalize the base prediction in exactly the metric's ranking unit.
 frame = frame.with_columns([
@@ -270,8 +335,10 @@ frame = frame.sort(["batch", "batch_row"])
 categorical = [
     "video_id", "author_id", "music_id", "tag", "video_type", "upload_type",
     "tab", "duration_bucket", "threshold_bucket", "daypart", "visible_status",
-    "music_type",
+    "music_type", *user_categorical,
 ]
+if args.include_user_id:
+    categorical.append("user_id")
 numeric = [
     "base_rank_fraction", "log_duration", "log_show", "log_play",
     "stat_long_rate", "stat_long_user_rate", "stat_valid_rate",
@@ -282,6 +349,7 @@ numeric = [
     "log_session_position", "video_occurrence_fraction",
     "author_occurrence_fraction", "type_score_loo", "author_score_loo",
     "date_tab_score_loo", "neighbor_base_score",
+    *user_numeric,
 ]
 
 feature_data: dict[str, np.ndarray] = {}
@@ -314,8 +382,12 @@ def query_order(indices: np.ndarray) -> np.ndarray:
 
 
 if catboost_ranker_mode:
+    catboost_loss = {
+        "StochasticRank": "StochasticRank:metric=NDCG;top=5",
+        "YetiRank": "YetiRank:mode=NDCG;top=5",
+    }.get(args.ranker_objective, args.ranker_objective)
     parameters = dict(
-        loss_function=args.ranker_objective, eval_metric="NDCG:top=5",
+        loss_function=catboost_loss, eval_metric="NDCG:top=5",
         iterations=args.ranker_iterations, depth=args.ranker_depth,
         learning_rate=args.ranker_learning_rate, l2_leaf_reg=args.ranker_l2,
         random_seed=args.ranker_seed, thread_count=8, random_strength=0.25,
@@ -327,12 +399,12 @@ if catboost_ranker_mode:
     fit_pool = Pool(
         features.iloc[fit], label=y[fit], cat_features=categorical,
         feature_names=list(features.columns), group_id=users[fit],
-        baseline=base_logit[fit],
+        baseline=None if args.ranker_from_scratch else base_logit[fit],
     )
     holdout_pool = Pool(
         features.iloc[holdout], label=y[holdout], cat_features=categorical,
         feature_names=list(features.columns), group_id=users[holdout],
-        baseline=base_logit[holdout],
+        baseline=None if args.ranker_from_scratch else base_logit[holdout],
     )
     model = CatBoostRanker(**parameters)
 elif xgboost_ranker_mode:
@@ -407,13 +479,39 @@ holdout_metrics = runner.evaluate_module.evaluate(
     users[holdout].tolist(), y[holdout], holdout_scores,
 )
 holdout_base = frame["base_rank_fraction"].to_numpy()[holdout]
+holdout_base_metrics = runner.evaluate_module.evaluate(
+    users[holdout].tolist(), y[holdout], holdout_base,
+)
 holdout_blends = []
+holdout_blend_scores = (
+    within_user_rank(users[holdout].tolist(), holdout_scores)
+    if ranker_mode else holdout_scores
+)
 for alpha in np.arange(0.0, 1.001, 0.02):
-    score = (1.0 - alpha) * holdout_base + alpha * holdout_scores
+    score = (1.0 - alpha) * holdout_base + alpha * holdout_blend_scores
     metrics = runner.evaluate_module.evaluate(users[holdout].tolist(), y[holdout], score)
     holdout_blends.append((float(metrics["primary"]), float(alpha), metrics))
 holdout_best = max(holdout_blends, key=lambda value: value[0])
-print("HOLDOUT", holdout_metrics, "BLEND", holdout_best, "TREES", trees, flush=True)
+holdout_gain = holdout_best[0] - float(holdout_base_metrics["primary"])
+print(
+    "HOLDOUT", holdout_metrics, "BASE", holdout_base_metrics,
+    "BLEND", holdout_best, "GAIN", holdout_gain, "TREES", trees,
+    flush=True,
+)
+if (
+    args.minimum_holdout_gain is not None
+    and holdout_gain < args.minimum_holdout_gain
+):
+    print(
+        "SCREEN_REJECTED",
+        {
+            "holdout_gain": holdout_gain,
+            "minimum_holdout_gain": args.minimum_holdout_gain,
+            "resource_usage": tracker.finish(),
+        },
+        flush=True,
+    )
+    raise SystemExit(2)
 
 final_parameters = dict(parameters)
 final_indices = query_order(meta_indices) if ranker_mode else meta_indices
@@ -446,7 +544,8 @@ else:
         group_id=users[final_indices] if ranker_mode else None,
         baseline=(
             base_logit[final_indices]
-            if ranker_mode or residual_mode else None
+            if (ranker_mode and not args.ranker_from_scratch) or residual_mode
+            else None
         ),
     ))
     valid_pool = Pool(
@@ -454,7 +553,8 @@ else:
         feature_names=list(features.columns),
         baseline=(
             base_logit[valid_indices]
-            if ranker_mode or residual_mode else None
+            if (ranker_mode and not args.ranker_from_scratch) or residual_mode
+            else None
         ),
     )
     scores = (
@@ -477,6 +577,10 @@ artifact_stem = (
         )
     )
 )
+if args.include_user_features:
+    artifact_stem = f"{artifact_stem}-user-profile"
+if args.include_user_id:
+    artifact_stem = f"{artifact_stem}-user-id"
 np.savez_compressed(
     ROOT / "runtime" / f"{artifact_stem}.npz", scores=scores,
     holdout_scores=holdout_scores, holdout_alpha=holdout_best[1], trees=trees,

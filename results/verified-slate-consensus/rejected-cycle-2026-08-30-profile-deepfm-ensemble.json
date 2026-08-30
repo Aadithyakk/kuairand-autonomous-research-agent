@@ -1,0 +1,58 @@
+{
+  "artifacts": [
+    "runtime/manual-profile-deepfm-ensemble-confirm/champion-residual-scores.npz"
+  ],
+  "gate": "all",
+  "gated_rows": 124909,
+  "champion_primary": 0.6128580570220947,
+  "candidate_primary": 0.6045086979866028,
+  "protocol": "four actual-user-ID folds; select on three, report held-out fourth; zero-preferring grid",
+  "selected_weights": [
+    -0.25,
+    -0.185,
+    0.09,
+    0.145
+  ],
+  "folds": [
+    {
+      "fold": 0,
+      "selected_weight": -0.25,
+      "selection_gain": 3.504753112792969e-05,
+      "holdout_gain": -0.0002766251564025879,
+      "holdout_gauc_gain": -0.0002517104148864746,
+      "holdout_ndcg5_gain": -0.00030153989791870117
+    },
+    {
+      "fold": 1,
+      "selected_weight": -0.185,
+      "selection_gain": 7.31348991394043e-05,
+      "holdout_gain": -0.00017410516738891602,
+      "holdout_gauc_gain": -0.00011020898818969727,
+      "holdout_ndcg5_gain": -0.00023794174194335938
+    },
+    {
+      "fold": 2,
+      "selected_weight": 0.09,
+      "selection_gain": 1.2874603271484375e-05,
+      "holdout_gain": -3.0517578125e-05,
+      "holdout_gauc_gain": -2.3365020751953125e-05,
+      "holdout_ndcg5_gain": -3.7670135498046875e-05
+    },
+    {
+      "fold": 3,
+      "selected_weight": 0.145,
+      "selection_gain": 1.633167266845703e-05,
+      "holdout_gain": -0.00011408329010009766,
+      "holdout_gauc_gain": -7.349252700805664e-05,
+      "holdout_ndcg5_gain": -0.00015473365783691406
+    }
+  ],
+  "fixed_weight": -0.049999999999999996,
+  "fixed_metrics": {
+    "primary": 0.6128572225570679,
+    "gauc": 0.6823520660400391,
+    "ndcg5": 0.5433623194694519
+  },
+  "fixed_gain": -8.344650268554688e-07,
+  "all_holdout_folds_nonnegative": false
+}

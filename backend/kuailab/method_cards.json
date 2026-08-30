@@ -22,6 +22,39 @@
     "risk": "Requires aligned out-of-time scores for every component and strict cross-fitting to avoid a flexible stacker leak."
   },
   {
+    "id": "direct_ndcg_catboost",
+    "category": "loss",
+    "status": "attempted-rejected",
+    "paper": "CatBoost ranking objectives",
+    "source": "https://catboost.ai/en/docs/concepts/loss-functions-ranking",
+    "method": "Optimize direct YetiRank NDCG or StochasticRank NDCG@5 instead of pairwise YetiRank.",
+    "fit": "Targets the official top-five metric without changing the frozen batch-slate features.",
+    "smallest_ablation": "Completed with YetiRank:mode=NDCG;top=5 and StochasticRank:metric=NDCG;top=5, both residual-initialized and from-scratch where appropriate.",
+    "risk": "Both objectives gained about 0.003-0.004 on April 20-21 but reversed below 0.6119 on April 22-28; held-out residual folds disagreed."
+  },
+  {
+    "id": "ordinal_watch_progress",
+    "category": "reward",
+    "status": "attempted-rejected",
+    "paper": "DeepFM: A Factorization-Machine based Neural Network for CTR Prediction",
+    "source": "https://arxiv.org/abs/1703.04247",
+    "method": "Add nested 25/50/75 percent progress-to-long-view binary auxiliary heads and discard them at inference.",
+    "fit": "Gives near-threshold watch outcomes denser ordered supervision than a single hard long_view label.",
+    "smallest_ablation": "Completed with temporal epoch selection, full refit, global residual audit, and an 18-second long-video gate.",
+    "risk": "The screen reached 0.615249, but the fixed confirmation blend scored 0.612857 and both residual audits retained regressing folds."
+  },
+  {
+    "id": "static_user_profile_interactions",
+    "category": "features",
+    "status": "attempted-rejected",
+    "paper": "CAAFE: Context-Aware Automated Feature Engineering for Tabular Datasets",
+    "source": "https://arxiv.org/abs/2305.03403",
+    "method": "Join organizer user attributes and learn profile-item interactions in CatBoost and DeepFM.",
+    "fit": "The starter encoder omits all user profile columns, making this a genuine semantic feature ablation.",
+    "smallest_ablation": "Completed with profile CatBoost, profile plus user-ID CatBoost, one-seed profile DeepFM, low-history routing, and a three-seed profile ensemble.",
+    "risk": "The best fixed micro-gain was 0.612877, but held-out user folds regressed; do not promote or repeat without a materially different validation protocol."
+  },
+  {
     "id": "cdr_debiasing",
     "category": "loss",
     "status": "research-only",
