@@ -1,7 +1,7 @@
 {
-  "title": "Joint user-balanced-tree and watch-ratio residual over the neighbor-corrected slate consensus",
+  "title": "Single-session YetiRank routing over the jointly corrected slate consensus",
   "experiment_type": "offline_slate_reranking",
-  "hypothesis": "The user-balanced CatBoost and frozen watch-ratio DeepFM make complementary near-tie errors. Selecting their small residual weights jointly can preserve the calibrated neighbor-corrected ensemble while recovering orderings that neither residual can improve stably alone.",
+  "hypothesis": "A listwise-style YetiRank model is globally less calibrated than the consensus but may be a better expert for the narrow regime where a user's complete supplied slate is one contiguous session. An outcome-free hard gate can capture that specialization without perturbing other users.",
   "protocol": {
     "train_dates": "2022-04-08 through 2022-04-21",
     "validation_dates": "2022-04-22 through 2022-04-28",
@@ -12,7 +12,8 @@
     "selection": "Tune each scalar only on disjoint user folds. The first eight stages use two user-parity folds; the remaining conditional, temporal, training-prior, confidence-gated, structural-routing, coverage-routing, and user-neighbor stages use four user-id-modulo folds. Screen neighbor count, similarity profile, power, and smoothing on an April 8-18 to April 19-21 temporal split. Fit the user-balanced tree through April 19 and select its tree count on April 20-21. Jointly search only the final CatBoost and frozen watch-ratio DeepFM scalars on four folds assigned by actual user_id modulo four; require all fold-selected pairs to agree and all held-out folds to improve.",
     "coverage_threshold_protocol": "Compute the low-rate threshold as the row-weighted first quartile of Bayesian-smoothed April 8-21 user long-view rates. Mark prior-video coverage when a validation user-video identifier pair occurred in April 8-21; validation labels are never accessed.",
     "user_neighbor_protocol": "Use cosine similarity over binary April 8-21 user-item exposures, retain 60 other users, square nonnegative similarities, estimate target-item long-view rates from those neighbors with smoothing 8 toward a smoothing-20 training item prior, and add only the within-user ordinal rank at weight 0.002.",
-    "terminal_joint_protocol": "Fit a seed-239 pointwise CatBoost through April 19 with each row weighted by (mean user row count / user row count)^0.5, normalize weights to mean one, early-stop on April 20-21, and retain 165 trees. Pair its within-user ordinal rank with the frozen watch-ratio DeepFM rank. A two-dimensional grid from -0.00125 to 0.004375 in steps of 0.000625 selected (0.001875, 0.001875) in every actual-user-ID fold. Neither component is accepted as a terminal residual by itself."
+    "terminal_joint_protocol": "Fit a seed-239 pointwise CatBoost through April 19 with each row weighted by (mean user row count / user row count)^0.5, normalize weights to mean one, early-stop on April 20-21, and retain 165 trees. Pair its within-user ordinal rank with the frozen watch-ratio DeepFM rank. A two-dimensional grid from -0.00125 to 0.004375 in steps of 0.000625 selected (0.001875, 0.001875) in every actual-user-ID fold. Neither component is accepted as a terminal residual by itself.",
+    "single_session_yeti_protocol": "Train CatBoost YetiRankPairwise on April 14-19 batch-slate features with the out-of-time base as baseline, early-stop on April 20-21 at 72 trees, refit on April 14-21, and route only users whose complete evaluation slate has one session under a 30-minute gap rule. Search the semantic convex range [0,1]; all four actual-user-ID folds selected full replacement."
   },
   "features": {
     "token_personal_mean": "Within-user standardized mean across an item's tag tokens of log1p(user-slate token count) - 0.25 * log1p(global-slate token count).",
@@ -44,7 +45,8 @@
     "prior_video_batch_extrapolation": "For validation users having at least one exact user-video pair seen in April 8-21 training, extrapolate 0.03 away from the frozen temporal batch-slate CatBoost rank. The gate checks identifiers only.",
     "training_user_neighbor_positive_cf": "Within-user ordinal rank of a 60-neighbor collaborative estimate built from binary April 8-21 exposure overlap and other users' April 8-21 long-view outcomes. The historical artifact key contains 'positive', but similarity is exposure-only; outcomes enter only the neighbor target estimate.",
     "joint_training_user_balanced_catboost": "Within-user ordinal rank of a pointwise CatBoost trained only on April 9-19 outcomes with square-root inverse user-activity weights and early-stopped on April 20-21.",
-    "joint_watch_ratio_deepfm": "Within-user ordinal rank of the frozen DeepFM trained on April 9-21 with continuous watch-ratio auxiliary supervision. It is jointly weighted with the user-balanced tree rather than accepted alone."
+    "joint_watch_ratio_deepfm": "Within-user ordinal rank of the frozen DeepFM trained on April 9-21 with continuous watch-ratio auxiliary supervision. It is jointly weighted with the user-balanced tree rather than accepted alone.",
+    "single_session_yeti_rank": "Within-user ordinal rank of a 72-tree YetiRankPairwise batch-slate model, used only when all supplied impressions for a user form one 30-minute session."
   },
   "selection_evidence": [
     {
@@ -272,12 +274,26 @@
       "fixed_gauc": 0.682319164276123,
       "fixed_ndcg5": 0.5433400273323059,
       "heldout_fold_primary_gains": [0.0000419617, 0.0000045300, 0.0000331402, 0.0000196695]
+    },
+    {
+      "stage": "single_session_yeti_rank_replacement",
+      "session_gap_minutes": 30,
+      "fold_weights": [1.0, 1.0, 1.0, 1.0],
+      "fixed_weight": 1.0,
+      "standalone_primary": 0.6123074293136597,
+      "oof_primary": 0.6128434538841248,
+      "fixed_primary": 0.6128434538841248,
+      "fixed_gauc": 0.6823336482048035,
+      "fixed_ndcg5": 0.543353259563446,
+      "heldout_fold_primary_gains": [0.0, 0.0000159740, 0.0, 0.0000396967],
+      "changed_users": 3,
+      "changed_pair_orderings": 5
     }
   ],
   "rejected_followup": {
     "feature": "remaining training-coverage residuals",
-    "reason": "The earlier tree-only promotion was invalidated after its reporting path was found to use ordinal user codes rather than actual IDs for fold membership. Under corrected folds, tree-only OOF primary is 0.61280358 and watch-only OOF primary is 0.61279690; only their jointly selected pair passes. Whole-user PairLogitPairwise and QuerySoftMax residuals remain rejected."
+    "reason": "YetiRank selected zero global residual weight. Its low-training-history gate selected similar negative weights but hurt held-out fold 0 at the fixed mean and was rejected. The one-session gate is retained because all four folds selected the same semantic endpoint and no fold regressed. The earlier tree-only promotion remains invalidated under corrected fold mapping."
   },
-  "acceptance": "Accept only stages whose disjoint-user weights agree, whose stitched cross-fitted primary improves over the preceding stage, and whose fixed recipe does not reduce either aggregate metric or any held-out user fold. All four actual-user-ID folds selected the identical joint pair (0.001875, 0.001875); the fixed pair improves every held-out fold plus aggregate GAUC and nDCG@5.",
+  "acceptance": "Accept only stages whose disjoint-user weights agree, whose stitched cross-fitted primary improves over the preceding stage, and whose fixed recipe does not reduce either aggregate metric or any held-out user fold. All four actual-user-ID folds selected full YetiRank replacement for the one-session gate; two held-out folds improve, two are unchanged, and both aggregate GAUC and nDCG@5 increase.",
   "accepted": true
 }

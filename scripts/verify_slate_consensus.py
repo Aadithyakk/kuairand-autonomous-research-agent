@@ -132,6 +132,7 @@ base = user_rank(0.765 * base + 0.235 * tree)
 skip_batch_slate = os.getenv("KUAI_SKIP_BATCH_SLATE") == "1"
 skip_user_neighbor = os.getenv("KUAI_SKIP_USER_NEIGHBOR") == "1"
 skip_user_balanced_tree = os.getenv("KUAI_SKIP_USER_BALANCED_TREE") == "1"
+skip_yeti_session_gate = os.getenv("KUAI_SKIP_YETI_SESSION_GATE") == "1"
 batch_slate_tree = (
     None if skip_batch_slate
     else load_scores("batch-slate-meta-catboost-s751.npz")
@@ -628,6 +629,21 @@ if batch_slate_tree is not None:
             + 0.001875 * user_balanced_tree
             + 0.001875 * watch
         )
+
+    # YetiRank's global ordering is weaker, but all four disjoint user folds
+    # selected it for users whose complete supplied slate forms one 30-minute
+    # session. This outcome-free gate changes only five pair orderings across
+    # three users; two held-out folds improve and two remain exactly unchanged.
+    if not skip_yeti_session_gate:
+        yeti_rank = load_scores(
+            "batch-slate-meta-catboost-ranker-YetiRankPairwise-s787.npz"
+        )
+        single_session_gate = np.zeros(len(scores), dtype=np.float64)
+        for indices_list in groups.values():
+            indices = np.asarray(indices_list, dtype=np.int64)
+            session_count = len({session_keys[index] for index in indices})
+            single_session_gate[indices] = float(session_count == 1)
+        scores = scores + single_session_gate * (yeti_rank - user_rank(scores))
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -692,6 +708,9 @@ print(json.dumps({
                 "joint_user_balanced_catboost": 0.001875,
                 "joint_watch_ratio_deepfm": 0.001875,
             } if not skip_user_balanced_tree else {}),
+            **({
+                "single_session_yeti_rank_replacement": 1.0,
+            } if not skip_yeti_session_gate else {}),
         } if not skip_batch_slate else {}),
     },
     "feature_scope": "training-only outcome models/priors plus label-free full evaluation slate",

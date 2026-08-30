@@ -8,21 +8,22 @@
     "hidden_test_accessed": false
   },
   "champion": {
-    "primary": 0.6128295660018921,
-    "gauc": 0.682319164276123,
-    "ndcg5": 0.5433400273323059,
+    "primary": 0.6128434538841248,
+    "gauc": 0.6823336482048035,
+    "ndcg5": 0.543353259563446,
     "users": 22377,
     "rows": 124909
   },
   "baseline_primary": 0.6014695167541504,
-  "previous_verified_primary": 0.612804651260376,
-  "gain_over_previous_verified": 0.00002491474151611328,
-  "gain_over_baseline": 0.0113600492477417,
-  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + two confidence gates + active-day/slate-size expert routing + two training-coverage expert gates + training-only user-neighbor collaborative correction + jointly selected user-balanced-tree and watch-ratio residual",
-  "selection_evidence": "The preceding user-neighbor champion was 0.61280465. A corrected two-dimensional fine-grid audit assigned folds by actual user_id modulo four; every fold independently selected weights (0.001875, 0.001875) for the user-balanced CatBoost and frozen watch-ratio DeepFM. The stitched OOF and deployable fixed recipes are identical at 0.61282957, with held-out gains [0.00004196, 0.00000453, 0.00003314, 0.00001967]. Aggregate GAUC and nDCG@5 both improve. The earlier tree-only promotion is invalidated because its reporting path mistakenly used ordinal user codes as fold IDs; corrected tree-only OOF is 0.61280358 and therefore regresses.",
+  "previous_verified_primary": 0.6128295660018921,
+  "gain_over_previous_verified": 0.000013887882232666016,
+  "gain_over_baseline": 0.011373937129974365,
+  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + two confidence gates + active-day/slate-size expert routing + two training-coverage expert gates + training-only user-neighbor collaborative correction + jointly selected user-balanced-tree and watch-ratio residual + one-session YetiRank replacement",
+  "selection_evidence": "After the corrected joint residual reached 0.61282957, a YetiRankPairwise model trained out of time reached 0.61230743 standalone and selected zero global residual weight. For the outcome-free gate where a user's supplied slate forms exactly one 30-minute session, every user-ID fold selected full replacement by YetiRank. The deployable gate reaches 0.61284345, with fold gains [0.0, 0.00001597, 0.0, 0.00003970], and improves aggregate GAUC and nDCG@5. It changes five pair orderings across three users. The earlier joint-residual evidence remains in accepted-cycle-2026-08-30-joint-terminal-residual.json.",
   "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. Outcome priors, coverage membership, the user-neighbor graph, and the user-balanced tree use only the April 8-21 training block; the validation slate contributes identifiers but no outcomes. The neighbor graph uses training exposure overlap for similarity and other users' training outcomes for candidate estimates. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit; the user-balanced tree is fit through April 19 and early-stopped on April 20-21 before April 22-28 inference. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
   "rejected_ablations": [
     "Tree-only residual: an audit found ordinal user codes were used for held-out reporting; corrected actual-user-ID OOF primary was 0.61280358, below the 0.61280465 predecessor, so the earlier promotion was invalidated.",
+    "YetiRankPairwise selected zero global residual weight; a low-training-history gate had an apparent fixed gain but regressed on held-out fold 0 and was rejected.",
     "Strictly earlier-day random-log aggregates and a causal random-log CatBoost selected zero residual weight; using the full same-week random panel for pretraining was excluded as temporally contaminated.",
     "Temporally selected weekly-recurrence priors, focal BCE gamma 0.5, MMoE, and binary auxiliary-feedback heads failed to add stable residual signal.",
     "Adding watch-ratio auxiliary supervision to AutoInt reached 0.60785049 standalone and regressed to 0.61279076 cross-fitted; the corresponding low-rank DCN reached 0.60727549 and selected zero residual weight in every fold.",
@@ -66,8 +67,8 @@
     "Whole-user residual CatBoost rankers reached 0.61187887 (PairLogitPairwise) and 0.61124790 (QuerySoftMax) standalone, but their cross-fitted corrections regressed and were excluded."
   ],
   "latest_rejected_cycle": "rejected-cycle-2026-08-30-interaction-watch.json",
-  "latest_accepted_cycle": "accepted-cycle-2026-08-30-joint-terminal-residual.json",
+  "latest_accepted_cycle": "accepted-cycle-2026-08-30-single-session-yeti.json",
   "target_primary": 0.7,
   "target_reached": false,
-  "remaining_gap": 0.08717043399810787
+  "remaining_gap": 0.0871565461158752
 }
