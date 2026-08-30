@@ -10,7 +10,7 @@ The previous repository is not a dependency. This implementation was rebuilt fro
 - GPT-5.6 Sol provider with high reasoning and strict JSON output.
 - Deterministic no-cost demo provider and synthetic benchmark for end-to-end smoke testing.
 - Real KuaiRand-Pure adapter built around the supplied organizer starter kit, plus a fail-closed external-adapter contract for alternative runners.
-- Typed pointwise, positive-weighted, multi-seed, BPR pairwise, pointwise/pairwise-blend, DeepFM-blend, and clock-context-blend experiment executors.
+- Typed pointwise, positive-weighted, multi-seed, BPR pairwise, pointwise/pairwise-blend, DeepFM, clock-context, and frozen-champion residual experiment executors.
 - Atomic `state.json`, append-only `events.jsonl`, proposal source, unified diff, runner logs, metrics, failures, and recovery evidence.
 - Champion promotion plus the official global 50-iteration, six-hour, ε=0.002 / three-iteration convergence limits, preserved across continuation.
 - Automatic planner retry and one lower-resource worker retry with both failures, routes, diffs, and compute retained in the evidence log.
@@ -28,6 +28,20 @@ The previous repository is not a dependency. This implementation was rebuilt fro
 - Campaign ceiling: 50 experiments and six wall-clock hours.
 - Convergence: stop after three consecutive experiments without a primary gain greater than 0.002.
 - Submission header: `row_id,user_id,video_id,score` with zero-based strictly increasing row IDs.
+
+## Champion-mounted autonomous training
+
+The 0.612858 validation champion is no longer metrics-only bootstrap evidence. Real campaigns expose a trusted `champion_residual_blend` experiment family to the LLM. Each such iteration:
+
+1. verifies the frozen score archive against `results/final-model/manifest.json` and its SHA-256 checksum;
+2. retrains a fresh pointwise FM, pairwise FM, DeepFM blend, or temporal DeepFM blend on the official April 8–21 training block;
+3. converts the candidate and champion to stable within-user ranks;
+4. blends or extrapolates the candidate at a typed weight in `[-0.25, 0.25]`;
+5. evaluates on April 22–28, saves the candidate checkpoints and blended scores in the isolated iteration workspace, and promotes only a positive primary-score gain.
+
+The hidden split remains unavailable to this adapter. Set **Mount verified 0.612858 champion** in the dashboard; the agent can then choose this family autonomously. Operator steering is optional, for example: `Try champion_residual_blend with a pairwise_fm candidate and a conservative positive weight.`
+
+The real arm64 integration smoke retrained a fresh FM in `7.001` seconds, used `0.002496` CPU-hours and `541.359` MB peak RAM, and correctly retained the `0.612858` champion when the candidate reached only `0.596280`. Its auditable result is checked in at [`results/final-model/autonomous-worker-smoke.json`](results/final-model/autonomous-worker-smoke.json).
 
 ## Verified real runs
 

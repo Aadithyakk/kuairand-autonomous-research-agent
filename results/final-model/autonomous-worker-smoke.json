@@ -1,0 +1,36 @@
+{
+  "status": "integration_verified_no_promotion",
+  "date": "2026-08-30",
+  "experiment_type": "champion_residual_blend",
+  "candidate_family": "pointwise_fm",
+  "champion_blend_weight": 0.02,
+  "protocol": {
+    "train": "2022-04-08 through 2022-04-21",
+    "validation": "2022-04-22 through 2022-04-28",
+    "hidden_test_accessed": false,
+    "champion_scores": "results/final-model/validation-scores.npz",
+    "champion_scores_sha256": "59df8954dc9b1e484e36575dc606293a2a100ba1c4ae049a8c4e2600647f5a9d"
+  },
+  "candidate_metrics": {
+    "primary": 0.5962795615196228,
+    "gauc": 0.659902036190033,
+    "ndcg5": 0.5326570868492126
+  },
+  "worker_output_metrics": {
+    "primary": 0.6128580570220947,
+    "gauc": 0.6823537349700928,
+    "ndcg5": 0.5433623194694519
+  },
+  "resource_usage": {
+    "wall_seconds": 8.996,
+    "train_seconds": 7.001,
+    "cpu_seconds": 8.986,
+    "cpu_hours": 0.002496,
+    "peak_rss_mb": 541.359,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "architecture": "arm64"
+  },
+  "result": "The freshly trained candidate was weaker than the frozen champion. Its conservative residual did not change any evaluated ordering, so the worker returned the exact champion metrics and supplied no promotion gain."
+}

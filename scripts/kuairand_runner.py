@@ -23,6 +23,7 @@ if str(ROOT) not in sys.path:
 
 from backend.kuailab.resources import ProcessResourceTracker
 from backend.kuailab.pairwise import sample_pair_indices
+from backend.kuailab.champion import blend_with_champion, load_champion_scores
 
 
 STARTER = Path(os.getenv("KUAI_STARTER_KIT_DIR", ROOT / "external" / "kuairand-starter-kit")).resolve()
@@ -218,25 +219,39 @@ def train_fm(splits: dict, output_dir: Path, proposal: dict) -> dict:
     valid_x, valid_y, valid_users = encoded["valid"]
     parameters = proposal.get("parameters", {})
     experiment_type = proposal.get("experiment_type", "fm_config")
+    champion_mode = experiment_type == "champion_residual_blend"
+    champion_families = {
+        "pointwise_fm": "fm_ensemble",
+        "pairwise_fm": "fm_pairwise",
+        "deepfm_blend": "fm_deep_blend",
+        "temporal_deepfm_blend": "fm_temporal_deep_blend",
+    }
+    candidate_family = str(parameters.get("champion_candidate_family", "pointwise_fm"))
+    if champion_mode and candidate_family not in champion_families:
+        raise ValueError(
+            f"Unsupported champion_candidate_family {candidate_family!r}; "
+            f"choose one of {sorted(champion_families)}"
+        )
+    training_type = champion_families[candidate_family] if champion_mode else experiment_type
     seed = int(parameters.get("seed", 0))
     ensemble_types = {"fm_ensemble", "fm_pairwise_blend", "fm_deep_blend", "fm_temporal_deep_blend"}
-    seeds = parameters.get("ensemble_seeds", [seed]) if experiment_type in ensemble_types else [seed]
+    seeds = parameters.get("ensemble_seeds", [seed]) if training_type in ensemble_types else [seed]
     seeds = [int(value) for value in seeds[:3]]
     positive_weight = float(parameters.get("positive_weight", 1.0))
     positive_weight = max(1.0, min(positive_weight, 10.0))
     predictions, histories, pairwise_histories, deep_histories, temporal_histories = [], [], [], [], []
-    if experiment_type != "fm_pairwise":
+    if training_type != "fm_pairwise":
         for model_seed in seeds:
             scores, history = train_one(train_x, train_y, valid_x, valid_y, valid_users, dimension, output_dir, parameters, model_seed, positive_weight)
             predictions.append(scores)
             histories.append(history)
-    if experiment_type in {"fm_pairwise", "fm_pairwise_blend", "fm_deep_blend", "fm_temporal_deep_blend"}:
+    if training_type in {"fm_pairwise", "fm_pairwise_blend", "fm_deep_blend", "fm_temporal_deep_blend"}:
         pairwise_scores, pairwise_history = train_pairwise(
             train_x, train_y, train_users, valid_x, valid_y, valid_users,
             dimension, output_dir, parameters,
         )
         pairwise_histories.append(pairwise_history)
-        if experiment_type == "fm_pairwise":
+        if training_type == "fm_pairwise":
             best_scores = pairwise_scores
         else:
             blend_weight = max(0.0, min(float(parameters.get("blend_weight", 0.455)), 1.0))
@@ -245,7 +260,7 @@ def train_fm(splits: dict, output_dir: Path, proposal: dict) -> dict:
     else:
         blend_weight = 0.0
         best_scores = np.mean(np.stack(predictions), axis=0)
-    if experiment_type in {"fm_deep_blend", "fm_temporal_deep_blend"}:
+    if training_type in {"fm_deep_blend", "fm_temporal_deep_blend"}:
         from backend.kuailab.deepfm import train_deepfm
 
         deep_scores, deep_history = train_deepfm(
@@ -257,7 +272,7 @@ def train_fm(splits: dict, output_dir: Path, proposal: dict) -> dict:
         best_scores = (1.0 - deep_blend_weight) * best_scores + deep_blend_weight * deep_scores
     else:
         deep_blend_weight = 0.0
-    if experiment_type == "fm_temporal_deep_blend":
+    if training_type == "fm_temporal_deep_blend":
         from backend.kuailab.temporal import encode_clock_context
 
         temporal_encoded, temporal_dimension = encode_clock_context(splits)
@@ -276,12 +291,39 @@ def train_fm(splits: dict, output_dir: Path, proposal: dict) -> dict:
         best_scores = (1.0 - temporal_blend_weight) * base_standardized + temporal_blend_weight * temporal_standardized
     else:
         temporal_blend_weight = 0.0
+    candidate_metrics = evaluate_module.evaluate(valid_users, valid_y, best_scores)
+    champion_manifest = None
+    champion_blend_weight = None
+    if champion_mode:
+        champion_scores, champion_manifest = load_champion_scores(expected_rows=len(valid_y))
+        champion_blend_weight = float(parameters.get("champion_blend_weight", 0.05))
+        candidate_scores = np.asarray(best_scores, dtype=np.float32)
+        best_scores = blend_with_champion(
+            valid_users, champion_scores, candidate_scores, champion_blend_weight,
+        )
+        np.savez_compressed(
+            output_dir / "champion-residual-scores.npz",
+            scores=best_scores,
+            candidate_scores=candidate_scores,
+            champion_scores=champion_scores.astype(np.float32),
+            blend_weight=np.float32(champion_blend_weight),
+        )
     final = evaluate_module.evaluate(valid_users, valid_y, best_scores)
     (output_dir / "training-history.json").write_text(json.dumps({
         "experiment_type": experiment_type,
-        "blend_weight": blend_weight if experiment_type in {"fm_pairwise_blend", "fm_deep_blend", "fm_temporal_deep_blend"} else None,
-        "deep_blend_weight": deep_blend_weight if experiment_type in {"fm_deep_blend", "fm_temporal_deep_blend"} else None,
-        "temporal_blend_weight": temporal_blend_weight if experiment_type == "fm_temporal_deep_blend" else None,
+        "candidate_experiment_type": training_type,
+        "champion_candidate_family": candidate_family if champion_mode else None,
+        "champion_blend_weight": champion_blend_weight,
+        "champion_source": champion_manifest.get("validation_scores") if champion_manifest else None,
+        "champion_primary": champion_manifest.get("validation_metrics", {}).get("primary") if champion_manifest else None,
+        "candidate_metrics": {
+            "primary": float(candidate_metrics["primary"]),
+            "gauc": float(candidate_metrics["GAUC"]),
+            "ndcg5": float(candidate_metrics["nDCG@5"]),
+        },
+        "blend_weight": blend_weight if training_type in {"fm_pairwise_blend", "fm_deep_blend", "fm_temporal_deep_blend"} else None,
+        "deep_blend_weight": deep_blend_weight if training_type in {"fm_deep_blend", "fm_temporal_deep_blend"} else None,
+        "temporal_blend_weight": temporal_blend_weight if training_type == "fm_temporal_deep_blend" else None,
         "runs": histories,
         "pairwise_runs": pairwise_histories,
         "deep_runs": deep_histories,

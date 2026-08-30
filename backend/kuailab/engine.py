@@ -9,6 +9,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from .benchmark import BenchmarkRunError, CommandBenchmark, SyntheticBenchmark, validate_metrics
+from .champion import load_champion_scores
 from .config import Settings
 from .provider import DemoProvider, OpenAIProvider, Proposal
 from .resources import add_resource_usage, combine_resource_usage, empty_campaign_usage
@@ -374,6 +375,7 @@ class CampaignEngine:
     def _verified_champion(self, baseline: dict) -> dict | None:
         evidence_dir = PROJECT_ROOT / "results" / "verified-slate-consensus"
         try:
+            _, frozen_manifest = load_champion_scores(project_root=PROJECT_ROOT)
             summary = json.loads((evidence_dir / "summary.json").read_text(encoding="utf-8"))
             proposal = json.loads((evidence_dir / "proposal.json").read_text(encoding="utf-8"))
             champion = summary["champion"]
@@ -387,6 +389,9 @@ class CampaignEngine:
                 "hidden_test_accessed", summary.get("split", {}).get("hidden_test_accessed")
             )
             if summary.get("target") != "long_view" or hidden_test_accessed is not False:
+                return None
+            frozen_metrics = frozen_manifest["validation_metrics"]
+            if any(abs(metrics[key] - float(frozen_metrics[key])) > 1e-9 for key in metrics):
                 return None
             if metrics["primary"] <= baseline["primary"]:
                 return None
@@ -510,7 +515,7 @@ class CampaignEngine:
                             "prefer validation gain per CPU/GPU hour when expected gains are similar",
                         ],
                         "executor_contract": {
-                            "runtime": "Trusted NumPy FM/BPR executors plus an installed PyTorch DeepFM executor; no package installation or arbitrary generated-code execution",
+                            "runtime": "Trusted NumPy FM/BPR executors, an installed PyTorch DeepFM executor, and a checksum-verified frozen-champion residual adapter; no package installation or arbitrary generated-code execution",
                             "experiment_types": {
                                 "fm_config": "One FM with typed k/lr/epochs/batch_size/patience/seed parameters",
                                 "fm_positive_weight": "FM logistic loss with the supplied positive_weight in [1,10]",
@@ -518,7 +523,8 @@ class CampaignEngine:
                                 "fm_pairwise": "One FM trained with within-user BPR pairs sampled from logged impressions",
                                 "fm_pairwise_blend": "Blend a 1-3 seed weighted-FM ensemble with one independently trained BPR FM",
                                 "fm_deep_blend": "Blend weighted FM, BPR FM, and a nonlinear DeepFM trained with weighted BCE",
-                                "fm_temporal_deep_blend": "Add a small globally standardized clock-context FM to the weighted FM, BPR, and DeepFM blend"
+                                "fm_temporal_deep_blend": "Add a small globally standardized clock-context FM to the weighted FM, BPR, and DeepFM blend",
+                                "champion_residual_blend": "Retrain one typed pointwise/pairwise/DeepFM candidate, convert both predictions to stable within-user ranks, and blend or extrapolate it at weight [-0.25,0.25] from the checksum-verified 0.612858 frozen champion"
                             },
                             "defaults": {
                                 "k": 16, "lr": 0.001, "epochs": 40, "batch_size": 8192, "patience": 4,
@@ -528,6 +534,7 @@ class CampaignEngine:
                                 "deep_lr": 0.001, "deep_epochs": 15, "deep_patience": 4,
                                 "deep_seed": 0, "deep_hidden": 64, "deep_dropout": 0.05,
                                 "deep_threads": 6, "deep_blend_weight": 0.23, "temporal_blend_weight": 0.024,
+                                "champion_candidate_family": "pointwise_fm", "champion_blend_weight": 0.05,
                             },
                             "rule": "Select exactly one supported experiment_type and populate every typed parameter. Generated code is evidence; the trusted executor applies the typed change."
                         },

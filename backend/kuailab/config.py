@@ -4,6 +4,8 @@ import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from .champion import champion_available
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -42,4 +44,5 @@ class Settings:
         data["api_key_available"] = self.api_key_available
         data["dataset_available"] = bool(self.dataset_path and Path(self.dataset_path).exists())
         data["adapter_available"] = bool(self.experiment_command)
+        data["champion_available"] = champion_available(PROJECT_ROOT)
         return data

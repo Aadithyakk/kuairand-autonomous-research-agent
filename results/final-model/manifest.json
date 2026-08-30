@@ -14,6 +14,7 @@
   "recipe": "results/verified-slate-consensus/proposal.json",
   "verification": "scripts/verify_slate_consensus.py",
   "submission_exporter": "scripts/export_submission.py",
+  "autonomous_worker_experiment": "champion_residual_blend",
   "validation_scores": "results/final-model/validation-scores.npz",
   "validation_scores_sha256": "59df8954dc9b1e484e36575dc606293a2a100ba1c4ae049a8c4e2600647f5a9d",
   "validation_submission": "results/final-model/validation-submission.csv",

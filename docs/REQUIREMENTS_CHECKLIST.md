@@ -13,6 +13,7 @@
 | Six-hour wall-clock ceiling | Global cumulative wall budget survives continuation | Complete |
 | ε=0.002, N=3 convergence | Forced for every real KuaiRand campaign | Complete |
 | Validation-best checkpoint selection | Positive-gain promotion; 0.612858 evidence bootstrap | Complete |
+| Continue training from validation-best model | `champion_residual_blend` retrains typed candidates against the checksum-verified frozen champion | Complete |
 | Hidden test accessed only once | Excluded from development loader; guarded receipt on final export | Ready; intentionally not run |
 | Required CSV schema | `scripts/export_submission.py`; checked validation artifact | Complete |
 | Per-iteration hypothesis and code diff | `proposal.json`, `candidate.py`, `candidate.diff`, `iteration-log.json` | Complete |

@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 
 from backend.kuailab.benchmark import SyntheticBenchmark, validate_metrics
+from backend.kuailab.champion import blend_with_champion, load_champion_scores, within_user_rank
 from backend.kuailab.config import Settings
 from backend.kuailab.engine import CampaignEngine
 from backend.kuailab.provider import DemoProvider, OpenAIProvider
@@ -53,6 +54,21 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(usage["cpu_hours"], round(20 / 3600, 6))
         self.assertEqual(usage["gpu_hours"], round(5 / 3600, 6))
         self.assertEqual(usage["cpu_utilization_percent"], 200.0)
+
+    def test_frozen_champion_is_checksum_verified(self):
+        scores, manifest = load_champion_scores(expected_rows=124_909)
+        self.assertEqual(len(scores), 124_909)
+        self.assertAlmostEqual(manifest["validation_metrics"]["primary"], 0.6128580570220947)
+        self.assertFalse(manifest["hidden_test_accessed"])
+
+    def test_champion_residual_blend_preserves_base_at_zero_weight(self):
+        users = ["a", "a", "a", "b", "b"]
+        champion = np.asarray([0.1, 0.9, 0.4, 0.8, 0.2])
+        candidate = np.asarray([0.9, 0.1, 0.4, 0.3, 0.7])
+        blended = blend_with_champion(users, champion, candidate, 0.0)
+        np.testing.assert_allclose(blended, within_user_rank(users, champion))
+        with self.assertRaisesRegex(ValueError, "between -0.25 and 0.25"):
+            blend_with_champion(users, champion, candidate, 0.3)
 
     def test_synthetic_failure_is_visible(self):
         proposal = DemoProvider().propose({"iteration": 4, "epsilon": 0.002, "steering": None})

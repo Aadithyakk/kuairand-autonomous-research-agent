@@ -21,7 +21,7 @@ type EventItem = { id: number; time: string; kind: string; title: string; detail
 type RunLimits = { max_iterations: number; max_hours: number; convergence_epsilon: number; convergence_patience: number; bootstrap_verified: boolean };
 type State = {
   campaign: { id: string | null; status: string; mode: string; provider: string; started_at: string | null; stop_reason: string | null; steering: string | null; continuations: number; session_start_iteration: number; session_start_wall_seconds: number; manual_interventions: number; failure_count: number; recovery_count: number; consecutive_small_gains: number; limits: RunLimits };
-  config: { model: string; reasoning_effort: string; max_iterations: number; max_hours: number; convergence_epsilon: number; convergence_patience: number; api_key_available: boolean; dataset_available: boolean; adapter_available: boolean };
+  config: { model: string; reasoning_effort: string; max_iterations: number; max_hours: number; convergence_epsilon: number; convergence_patience: number; api_key_available: boolean; dataset_available: boolean; adapter_available: boolean; champion_available: boolean };
   current: null | { number: number; title: string; hypothesis: string; stage: string; status: string; activity: string; stages: Stage[]; acceptance: string; abort_condition: string; expected_gain: number | null; error?: string };
   metrics: { baseline: Metrics; champion: Metrics; delta: number };
   usage: { input_tokens: number; output_tokens: number; reasoning_tokens: number; total_tokens: number; wall_seconds: number; train_seconds: number; cpu_seconds: number; cpu_hours: number; gpu_hours: number; peak_rss_mb: number; peak_gpu_memory_mb: number; experiments_measured: number };
@@ -100,7 +100,7 @@ export default function Home() {
       convergence_patience: convergencePatience,
     };
     const path = setupMode === 'continue' ? '/api/run/continue' : '/api/run/start';
-    const body = setupMode === 'continue' ? { limits } : { provider, mode, limits, bootstrap_verified: bootstrapVerified };
+    const body = setupMode === 'continue' ? { limits } : { provider, mode, limits, bootstrap_verified: bootstrapVerified && Boolean(state?.config.champion_available) };
     if (await action(path, body)) setShowSetup(false);
   }
 
@@ -225,6 +225,7 @@ export default function Home() {
           <div><span className={state?.config.api_key_available ? 'ready' : 'missing'} />GPT key <b>{state?.config.api_key_available ? 'ready' : 'not set'}</b></div>
           <div><span className={state?.config.dataset_available ? 'ready' : 'missing'} />KuaiRand data <b>{state?.config.dataset_available ? 'ready' : 'not connected'}</b></div>
           <div><span className={state?.config.adapter_available ? 'ready' : 'missing'} />Runner adapter <b>{state?.config.adapter_available ? 'ready' : 'not connected'}</b></div>
+          <div><span className={state?.config.champion_available ? 'ready' : 'missing'} />Champion base <b>{state?.config.champion_available ? '0.612858 mounted' : 'not verified'}</b></div>
           <div className="resource-total">Train {elapsed(state?.usage.train_seconds ?? 0)} · CPU {computeHours(state?.usage.cpu_hours ?? 0)} · GPU {computeHours(state?.usage.gpu_hours ?? 0)} · Tokens {(state?.usage.total_tokens ?? 0).toLocaleString()}</div>
         </section>
       </section>
@@ -234,7 +235,7 @@ export default function Home() {
         {setupMode === 'new' ? <>
           <label>Researcher<select value={provider} onChange={(event) => setProvider(event.target.value as 'demo' | 'gpt')}><option value="demo">Demo planner — no API cost</option><option value="gpt" disabled={!state?.config.api_key_available}>GPT-5.6 Sol — high reasoning{!state?.config.api_key_available ? ' (key not set)' : ''}</option></select></label>
           <label>Benchmark<select value={mode} onChange={(event) => setMode(event.target.value as 'demo' | 'kuairand')}><option value="demo">Synthetic smoke test</option><option value="kuairand" disabled={!state?.config.dataset_available || !state?.config.adapter_available}>KuaiRand-Pure validation{!state?.config.dataset_available || !state?.config.adapter_available ? ' (setup required)' : ''}</option></select></label>
-          {mode === 'kuairand' && <label className="check-label"><input type="checkbox" checked={bootstrapVerified} onChange={(event) => setBootstrapVerified(event.target.checked)} /><span><b>Start from verified 0.612858 champion</b><small>Imports the leak-free validation-best slate ensemble and searches above it.</small></span></label>}
+          {mode === 'kuairand' && <label className="check-label"><input type="checkbox" checked={bootstrapVerified} onChange={(event) => setBootstrapVerified(event.target.checked)} disabled={!state?.config.champion_available} /><span><b>Mount verified 0.612858 champion</b><small>{state?.config.champion_available ? 'Uses the checksum-verified champion as the base for freshly trained residual candidates.' : 'Frozen champion artifact is missing or failed its checksum.'}</small></span></label>}
         </> : <div className="resume-summary"><span>Retained primary</span><strong>{score(champion?.primary)}</strong><small>{state?.campaign.provider === 'gpt' ? state.config.model : 'Demo planner'} · {state?.campaign.mode === 'kuairand' ? 'KuaiRand-Pure validation' : 'Synthetic smoke test'} · {completedCount} recorded experiments</small></div>}
         <div className="form-grid">
           <label>Experiments this session<input type="number" min="1" max={Math.max(1, 50 - (setupMode === 'continue' ? officialIterationsUsed : 0))} step="1" value={maxIterations} onChange={(event) => setMaxIterations(Number(event.target.value))} required /></label>
