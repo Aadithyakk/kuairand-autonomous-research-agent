@@ -1,0 +1,67 @@
+{
+  "status": "no_verified_gain",
+  "branch": "feature/experiment-resource-tracking",
+  "starting_commit": "db670df",
+  "protocol": "Official April 9-21 training and April 22-28 validation split with four user-ID-modulo residual folds. The validation block selected the best training epoch, but no validation outcome entered an input feature and the hidden test was not accessed.",
+  "retained_champion": {
+    "primary": 0.612804651260376,
+    "gauc": 0.6822999715805054,
+    "ndcg5": 0.5433093309402466,
+    "baseline_primary": 0.6014695167541504,
+    "gain_over_baseline": 0.011335134506225586,
+    "target_primary": 0.7,
+    "remaining_gap": 0.08719534873962398
+  },
+  "experiments": [
+    {
+      "name": "AutoInt with continuous watch-ratio auxiliary supervision",
+      "result": "rejected",
+      "architecture": "Full-metadata DeepFM plus one four-head self-attention interaction layer and a watch-ratio regression head weighted 0.4.",
+      "evidence": "Epoch 1 peaked at 0.60785049 (0.67558509 GAUC, 0.54011589 nDCG@5), below the 0.60805260 watch-only model. Three residual folds selected zero; the remaining fold selected 0.0025 but regressed by 0.00005513. Cross-fitted primary fell to 0.61279076 and fixed primary to 0.61279285.",
+      "resource_usage": {
+        "training": {
+          "wall_seconds": 39.432,
+          "cpu_seconds": 128.176,
+          "cpu_hours": 0.035604,
+          "peak_rss_mb": 15970.719
+        },
+        "residual_audit": {
+          "wall_seconds": 19.027,
+          "cpu_seconds": 18.918,
+          "cpu_hours": 0.005255,
+          "peak_rss_mb": 1207.188
+        },
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "low-rank Deep Cross Network with continuous watch-ratio supervision",
+      "result": "rejected",
+      "architecture": "Full-metadata DeepFM plus two rank-16 cross layers and a watch-ratio regression head weighted 0.4.",
+      "evidence": "Epoch 2 peaked at 0.60727549 (0.67510992 GAUC, 0.53944111 nDCG@5). Every residual fold selected exactly zero weight, leaving the champion unchanged.",
+      "resource_usage": {
+        "training": {
+          "wall_seconds": 39.795,
+          "cpu_seconds": 116.763,
+          "cpu_hours": 0.032434,
+          "peak_rss_mb": 15931.422
+        },
+        "residual_audit": {
+          "wall_seconds": 19.067,
+          "cpu_seconds": 19.063,
+          "cpu_hours": 0.005295,
+          "peak_rss_mb": 1221.906
+        },
+        "gpu_hours": 0.0
+      }
+    }
+  ],
+  "successful_tracked_run_totals": {
+    "wall_seconds": 117.321,
+    "cpu_seconds": 282.92,
+    "cpu_hours": 0.078589,
+    "peak_rss_mb": 15970.719,
+    "gpu_hours": 0.0
+  },
+  "conclusion": "Continuous watch-ratio supervision did not unlock residual headroom from self-attention or explicit cross interactions. Both variants underperformed the simpler watch-ratio DeepFM and failed the user-disjoint promotion rule, so 0.6128046513 remains authoritative."
+}
