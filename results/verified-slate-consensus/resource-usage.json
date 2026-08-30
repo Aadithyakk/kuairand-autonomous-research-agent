@@ -981,6 +981,64 @@
       "primary": 0.61283851,
       "gauc": 0.68233174,
       "ndcg5": 0.54334527
+    },
+    "additional_depth8_yeti_seeds": {
+      "seeds": [797, 809],
+      "wall_seconds": 709.943,
+      "cpu_seconds": 5022.755,
+      "cpu_hours": 1.39521,
+      "maximum_peak_rss_mb": 3930.266,
+      "gpu_hours": 0.0,
+      "standalone_primary": {"797": 0.6120628, "809": 0.6123096},
+      "accepted": false
+    },
+    "depth8_yeti_rank_mean_and_gate_audit": {
+      "ensemble_wall_seconds": 18.59,
+      "ensemble_cpu_hours": 0.005163,
+      "ensemble_peak_rss_mb": 1108.062,
+      "scan_wall_seconds": 59.727,
+      "scan_cpu_hours": 0.016588,
+      "scan_peak_rss_mb": 1309.203,
+      "gpu_hours": 0.0,
+      "three_seed_rank_mean_primary": 0.61235535,
+      "global_residual_weight": 0.0,
+      "accepted": false,
+      "reason": "The strongest conditional gates each regressed on one held-out user fold."
+    },
+    "shallow_yeti_rank_pairwise": {
+      "wall_seconds": 122.022,
+      "cpu_seconds": 741.934,
+      "cpu_hours": 0.206093,
+      "peak_rss_mb": 3625.344,
+      "gpu_hours": 0.0,
+      "depth": 6,
+      "l2": 20.0,
+      "learning_rate": 0.04,
+      "seed": 821,
+      "selected_trees": 132,
+      "standalone_primary": 0.61223578
+    },
+    "accepted_recent_coverage_shallow_yeti_audits": {
+      "scan_wall_seconds": 62.847,
+      "scan_cpu_hours": 0.017454,
+      "scan_peak_rss_mb": 1306.141,
+      "exact_wall_seconds": 18.517,
+      "exact_cpu_hours": 0.005141,
+      "exact_peak_rss_mb": 1111.25,
+      "gpu_hours": 0.0,
+      "fold_weights": [-0.09, -0.09, -0.10, -0.09],
+      "fixed_weight": -0.0925,
+      "heldout_fold_primary_gains": [0.0000091195, 0.0000581145, 0.0000069141, 0.0000044107],
+      "accepted": true
+    },
+    "accepted_recent_coverage_shallow_yeti_final_verification": {
+      "wall_seconds": 17.493,
+      "cpu_hours": 0.004858,
+      "peak_rss_mb": 1108.156,
+      "gpu_hours": 0.0,
+      "primary": 0.61285806,
+      "gauc": 0.68235373,
+      "ndcg5": 0.54336232
     }
   }
 }

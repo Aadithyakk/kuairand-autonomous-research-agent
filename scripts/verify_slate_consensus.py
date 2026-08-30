@@ -134,6 +134,7 @@ skip_user_neighbor = os.getenv("KUAI_SKIP_USER_NEIGHBOR") == "1"
 skip_user_balanced_tree = os.getenv("KUAI_SKIP_USER_BALANCED_TREE") == "1"
 skip_yeti_session_gate = os.getenv("KUAI_SKIP_YETI_SESSION_GATE") == "1"
 skip_session_median_gate = os.getenv("KUAI_SKIP_SESSION_MEDIAN_GATE") == "1"
+skip_recent_yeti_gate = os.getenv("KUAI_SKIP_RECENT_YETI_GATE") == "1"
 batch_slate_tree = (
     None if skip_batch_slate
     else load_scores("batch-slate-meta-catboost-s751.npz")
@@ -393,6 +394,7 @@ user_author_completion_sum: Counter[tuple[str, str]] = Counter()
 user_author_completion_count: Counter[tuple[str, str]] = Counter()
 user_long_sum: Counter[str] = Counter()
 user_long_count: Counter[str] = Counter()
+recent_user_count: Counter[str] = Counter()
 validation_user_video_pairs = {
     (user, video) for user, video, _, _, _, _, _, _, _, _ in rows
 }
@@ -432,6 +434,7 @@ with (data_dir / "log_standard_4_08_to_4_21_pure.csv").open(
             recent3_long_count[key] += 1
             recent3_total += 1
             recent3_positive += long_view
+            recent_user_count[user] += 1
         if date >= 20220415:
             tab = int(row["tab"])
             recent7_tab_sum[tab] += long_view
@@ -452,6 +455,7 @@ recent3_user_threshold_rate = np.empty(len(rows), dtype=np.float64)
 recent7_tab_rate = np.empty(len(rows), dtype=np.float64)
 user_author_completion_rate = np.empty(len(rows), dtype=np.float64)
 training_user_long_rate = np.empty(len(rows), dtype=np.float64)
+training_recent_rows = np.empty(len(rows), dtype=np.float64)
 for index, (user, _, author, _, _, _, _, _, _, tab) in enumerate(rows):
     threshold_key = (user, threshold_duration_buckets[index])
     threshold_count = recent3_long_count[threshold_key]
@@ -471,6 +475,7 @@ for index, (user, _, author, _, _, _, _, _, _, tab) in enumerate(rows):
     training_user_long_rate[index] = (
         user_long_sum[user] + 10.0 * all_long_prior
     ) / (user_count + 10.0)
+    training_recent_rows[index] = recent_user_count[user]
 
 recent3_user_threshold_rate = user_standardize(recent3_user_threshold_rate)
 recent7_tab_rate = user_standardize(recent7_tab_rate)
@@ -661,6 +666,22 @@ if batch_slate_tree is not None:
         scores = scores - 0.0275 * two_three_session_gate * (
             user_rank(median_model_fraction) - user_rank(scores)
         )
+
+    # A shallower, more regularized YetiRank model is globally weaker, but its
+    # disagreement identifies overconfident orderings for users with dense
+    # April 19-21 histories. All four user folds selected extrapolation away
+    # from that model. The coverage threshold and prediction are training-only.
+    if not skip_recent_yeti_gate:
+        shallow_yeti_rank = load_scores(
+            "batch-slate-meta-catboost-ranker-YetiRankPairwise-s821.npz"
+        )
+        recent_high_threshold = float(np.quantile(training_recent_rows, 0.75))
+        recent_high_gate = (
+            training_recent_rows >= recent_high_threshold
+        ).astype(np.float64)
+        scores = scores - 0.0925 * recent_high_gate * (
+            shallow_yeti_rank - user_rank(scores)
+        )
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -731,6 +752,9 @@ print(json.dumps({
             **({
                 "two_three_session_median_extrapolation": -0.0275,
             } if not skip_session_median_gate else {}),
+            **({
+                "high_recent_coverage_shallow_yeti_extrapolation": -0.0925,
+            } if not skip_recent_yeti_gate else {}),
         } if not skip_batch_slate else {}),
     },
     "feature_scope": "training-only outcome models/priors plus label-free full evaluation slate",

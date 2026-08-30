@@ -1,7 +1,7 @@
 {
-  "title": "Session-count expert routing over the jointly corrected slate consensus",
+  "title": "Recent-coverage shallow-Yeti routing over the session-corrected consensus",
   "experiment_type": "offline_slate_reranking",
-  "hypothesis": "The number of reconstructed sessions identifies distinct ranking regimes. One-session users can benefit from YetiRank, while users spanning two or three sessions can benefit from a small extrapolation away from the broad median model consensus without perturbing other slates.",
+  "hypothesis": "A shallow regularized YetiRank expert exposes a systematic overconfidence direction for users with dense recent training histories. Extrapolating away from that expert only in the highest recent-coverage quartile can sharpen the calibrated consensus without disturbing sparse users.",
   "protocol": {
     "train_dates": "2022-04-08 through 2022-04-21",
     "validation_dates": "2022-04-22 through 2022-04-28",
@@ -14,7 +14,8 @@
     "user_neighbor_protocol": "Use cosine similarity over binary April 8-21 user-item exposures, retain 60 other users, square nonnegative similarities, estimate target-item long-view rates from those neighbors with smoothing 8 toward a smoothing-20 training item prior, and add only the within-user ordinal rank at weight 0.002.",
     "terminal_joint_protocol": "Fit a seed-239 pointwise CatBoost through April 19 with each row weighted by (mean user row count / user row count)^0.5, normalize weights to mean one, early-stop on April 20-21, and retain 165 trees. Pair its within-user ordinal rank with the frozen watch-ratio DeepFM rank. A two-dimensional grid from -0.00125 to 0.004375 in steps of 0.000625 selected (0.001875, 0.001875) in every actual-user-ID fold. Neither component is accepted as a terminal residual by itself.",
     "single_session_yeti_protocol": "Train CatBoost YetiRankPairwise on April 14-19 batch-slate features with the out-of-time base as baseline, early-stop on April 20-21 at 72 trees, refit on April 14-21, and route only users whose complete evaluation slate has one session under a 30-minute gap rule. Search the semantic convex range [0,1] with ties resolved toward the smallest-magnitude weight; use the mean of the four actual-user-ID fold weights.",
-    "session_median_protocol": "Build within-user fractional ranks from 20 frozen model families, take their row-wise median, and apply its gap from the preceding champion only to users with two or three 30-minute sessions. Select a scalar on four actual-user-ID folds with zero-preferring tie resolution and fix it to the fold mean."
+    "session_median_protocol": "Build within-user fractional ranks from 20 frozen model families, take their row-wise median, and apply its gap from the preceding champion only to users with two or three 30-minute sessions. Select a scalar on four actual-user-ID folds with zero-preferring tie resolution and fix it to the fold mean.",
+    "recent_coverage_yeti_protocol": "Train a depth-6, l2-20 YetiRankPairwise model on April 14-19, early-stop on April 20-21 at 132 trees, and refit on April 14-21. Count each validation user's rows on April 19-21 training dates, define the row-weighted 75th percentile without validation outcomes, and apply the Yeti rank gap only at or above that threshold. Select the scalar on four actual-user-ID folds and fix it to the fold mean."
   },
   "features": {
     "token_personal_mean": "Within-user standardized mean across an item's tag tokens of log1p(user-slate token count) - 0.25 * log1p(global-slate token count).",
@@ -48,7 +49,8 @@
     "joint_training_user_balanced_catboost": "Within-user ordinal rank of a pointwise CatBoost trained only on April 9-19 outcomes with square-root inverse user-activity weights and early-stopped on April 20-21.",
     "joint_watch_ratio_deepfm": "Within-user ordinal rank of the frozen DeepFM trained on April 9-21 with continuous watch-ratio auxiliary supervision. It is jointly weighted with the user-balanced tree rather than accepted alone.",
     "single_session_yeti_rank": "Within-user ordinal rank of a 72-tree YetiRankPairwise batch-slate model, used only when all supplied impressions for a user form one 30-minute session.",
-    "two_three_session_median_consensus": "Row-wise median within-user fractional rank across 20 frozen model families, applied only when the user's supplied slate forms two or three 30-minute sessions."
+    "two_three_session_median_consensus": "Row-wise median within-user fractional rank across 20 frozen model families, applied only when the user's supplied slate forms two or three 30-minute sessions.",
+    "high_recent_coverage_shallow_yeti": "Within-user rank of a depth-6 regularized YetiRankPairwise model, gated by the user's April 19-21 training-row count at the row-weighted 75th percentile."
   },
   "selection_evidence": [
     {
@@ -304,12 +306,29 @@
       "heldout_fold_primary_gains": [0.0, 0.0000053048, 0.0000144839, 0.0],
       "changed_users": 9,
       "changed_pair_orderings": 9
+    },
+    {
+      "stage": "high_recent_coverage_shallow_yeti_extrapolation",
+      "ranker_depth": 6,
+      "ranker_l2": 20.0,
+      "selected_trees": 132,
+      "coverage_quantile": 0.75,
+      "fold_weights": [-0.09, -0.09, -0.10, -0.09],
+      "fixed_weight": -0.0925,
+      "standalone_primary": 0.6122357845306396,
+      "oof_primary": 0.6128561496734619,
+      "fixed_primary": 0.6128580570220947,
+      "fixed_gauc": 0.6823537349700928,
+      "fixed_ndcg5": 0.5433623194694519,
+      "heldout_fold_primary_gains": [0.0000091195, 0.0000581145, 0.0000069141, 0.0000044107],
+      "changed_users": 128,
+      "changed_pair_orderings": 225
     }
   ],
   "rejected_followup": {
     "feature": "remaining training-coverage residuals",
-    "reason": "The broad structural scan's largest apparent gain, third-quartile training-history mean consensus at weight 0.07, lowered aggregate nDCG@5 and regressed on folds 1 and 3. A two-active-day watch extrapolation regressed on fold 1. A two-active-day median extrapolation improved all folds but lowered aggregate GAUC slightly. All remain rejected."
+    "reason": "Two additional depth-8 Yeti seeds reached 0.61206280 and 0.61230960; their three-seed rank mean reached 0.61235535 but selected zero globally. Its strongest two-active-day and low-history gates each regressed on one held-out fold. For the shallow model, the second-ranked five-plus-active-day and size-11-20 gates were not promoted after the stronger high-recent-coverage gate passed every criterion."
   },
-  "acceptance": "Accept only stages whose disjoint-user weights agree in direction, whose stitched cross-fitted primary improves over the preceding stage, and whose fixed recipe does not reduce either aggregate metric or any held-out user fold. The two/three-session median weights [-0.03, -0.03, -0.02, -0.03] agree; their fixed mean improves two held-out folds, leaves two unchanged, and increases aggregate GAUC and nDCG@5.",
+  "acceptance": "Accept only stages whose disjoint-user weights agree in direction, whose stitched cross-fitted primary improves over the preceding stage, and whose fixed recipe does not reduce either aggregate metric or any held-out user fold. The high-recent-coverage shallow-Yeti weights [-0.09, -0.09, -0.10, -0.09] agree; their fixed mean improves all four held-out folds plus aggregate GAUC and nDCG@5.",
   "accepted": true
 }
