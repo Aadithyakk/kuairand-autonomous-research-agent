@@ -1,0 +1,286 @@
+{
+  "experiment": "global UMRE-lite monotonic fusion",
+  "status": "rejected_at_train_only_screen",
+  "protocol": {
+    "source_model_fit": "2022-04-08..2022-04-13",
+    "fusion_fit": "2022-04-14",
+    "screen": "2022-04-15..2022-04-21",
+    "confirmation_labels_read": false,
+    "hidden_test_accessed": false,
+    "alignment": "The cache contains predictions for the source script's rows dated after cutoff 20220413. Exact length equality against April 14-21 rows was required.",
+    "source_note": "The initially preferred ordered-CatBoost/watch-ratio-DeepFM/YetiRank trio had no verified aligned April 14-21 cache. The smallest honest alternative uses pointwise FM, pairwise FM, and DeepFM streams from one aligned cache."
+  },
+  "data": {
+    "fusion_fit_rows": 71252,
+    "screen_rows": 249694,
+    "screen_users": 24262,
+    "source_cache": "runtime/stacked-reranker/out-of-time-components-cutoff-20220413.npz",
+    "source_streams": [
+      "pointwise_fm",
+      "pairwise_fm",
+      "deepfm"
+    ]
+  },
+  "standalone_screen_metrics": {
+    "pointwise_fm": {
+      "primary": 0.613215742136684,
+      "gauc": 0.6616047212768059,
+      "ndcg5": 0.5648267629965621,
+      "users": 24262,
+      "rows": 249694
+    },
+    "pairwise_fm": {
+      "primary": 0.6124016852532508,
+      "gauc": 0.6617043125907113,
+      "ndcg5": 0.5630990579157904,
+      "users": 24262,
+      "rows": 249694
+    },
+    "deepfm": {
+      "primary": 0.6141021317151716,
+      "gauc": 0.6624841030387961,
+      "ndcg5": 0.565720160391547,
+      "users": 24262,
+      "rows": 249694
+    }
+  },
+  "control": {
+    "description": "regularized nonnegative linear rank consensus on the same three streams",
+    "metrics": {
+      "primary": 0.6143405242200364,
+      "gauc": 0.6633832064804472,
+      "ndcg5": 0.5652978419596255,
+      "users": 24262,
+      "rows": 249694
+    },
+    "weights": {
+      "pointwise_fm": 0.3330204571247854,
+      "pairwise_fm": 0.3341700709155279,
+      "deepfm": 0.3328094719596867
+    },
+    "slope": 0.5361643512754957,
+    "intercept": -0.8043559601738075,
+    "standardization": {
+      "fit_mean": [
+        0.4999999999999995,
+        0.49999999999999906,
+        0.4999999999999994
+      ],
+      "fit_scale": [
+        0.27229854236193046,
+        0.27229854236193074,
+        0.27229854236193063
+      ]
+    },
+    "fit": {
+      "loss": 0.6091176274318177,
+      "steps": 1200,
+      "weight_penalty_to_equal": 0.25,
+      "slope_penalty_to_one": 0.02,
+      "learning_rate": 0.05
+    }
+  },
+  "umre_lite": {
+    "description": "eight-knot monotonic transforms plus the matching regularized nonnegative fusion",
+    "metrics": {
+      "primary": 0.6142894970595507,
+      "gauc": 0.6632624383849429,
+      "ndcg5": 0.5653165557341584,
+      "users": 24262,
+      "rows": 249694
+    },
+    "weights": {
+      "pointwise_fm": 0.3328669900207503,
+      "pairwise_fm": 0.3342822443730905,
+      "deepfm": 0.33285076560615906
+    },
+    "slope": 0.5532167671014421,
+    "intercept": -0.8089547880862771,
+    "standardization": {
+      "fit_mean": [
+        0.3131204547508454,
+        0.3129594153964571,
+        0.3135123766097855
+      ],
+      "fit_scale": [
+        0.0700585082557892,
+        0.06945908617199709,
+        0.07007878289061555
+      ]
+    },
+    "fit": {
+      "loss": 0.6083519182524182,
+      "steps": 1200,
+      "weight_penalty_to_equal": 0.25,
+      "slope_penalty_to_one": 0.02,
+      "learning_rate": 0.05
+    },
+    "curves": {
+      "pointwise_fm": {
+        "centers": [
+          0.0625,
+          0.1875,
+          0.3125,
+          0.4375,
+          0.5625,
+          0.6875,
+          0.8125,
+          0.9375
+        ],
+        "counts": [
+          6369,
+          8436,
+          9908,
+          6051,
+          13808,
+          7291,
+          11053,
+          8336
+        ],
+        "raw_rates": [
+          0.1841841643687308,
+          0.23314365809725363,
+          0.2795481859728678,
+          0.2892058416460806,
+          0.34707858927167046,
+          0.3536008257299076,
+          0.3966321739937109,
+          0.415666227994184
+        ],
+        "monotonic_rates": [
+          0.1841841643687308,
+          0.23314365809725363,
+          0.2795481859728678,
+          0.2892058416460806,
+          0.34707858927167046,
+          0.3536008257299076,
+          0.3966321739937109,
+          0.415666227994184
+        ],
+        "global_rate": 0.31947173412676133,
+        "smoothing_rows_per_knot": 2048.0
+      },
+      "pairwise_fm": {
+        "centers": [
+          0.0625,
+          0.1875,
+          0.3125,
+          0.4375,
+          0.5625,
+          0.6875,
+          0.8125,
+          0.9375
+        ],
+        "counts": [
+          6369,
+          8436,
+          9908,
+          6051,
+          13808,
+          7291,
+          11053,
+          8336
+        ],
+        "raw_rates": [
+          0.1854910433042185,
+          0.23333442498012275,
+          0.27770810567845494,
+          0.2878476492766523,
+          0.35174559229891567,
+          0.3527442029651576,
+          0.39617419368686413,
+          0.41181414787091747
+        ],
+        "monotonic_rates": [
+          0.1854910433042185,
+          0.23333442498012275,
+          0.27770810567845494,
+          0.2878476492766523,
+          0.35174559229891567,
+          0.3527442029651576,
+          0.39617419368686413,
+          0.41181414787091747
+        ],
+        "global_rate": 0.31947173412676133,
+        "smoothing_rows_per_knot": 2048.0
+      },
+      "deepfm": {
+        "centers": [
+          0.0625,
+          0.1875,
+          0.3125,
+          0.4375,
+          0.5625,
+          0.6875,
+          0.8125,
+          0.9375
+        ],
+        "counts": [
+          6369,
+          8436,
+          9908,
+          6051,
+          13808,
+          7291,
+          11053,
+          8336
+        ],
+        "raw_rates": [
+          0.18299609260919653,
+          0.234383642835903,
+          0.27720626559816053,
+          0.2946386111237939,
+          0.3456280342767159,
+          0.35413621495787634,
+          0.3985404252722393,
+          0.41316237591406074
+        ],
+        "monotonic_rates": [
+          0.18299609260919653,
+          0.234383642835903,
+          0.27720626559816053,
+          0.2946386111237939,
+          0.3456280342767159,
+          0.35413621495787634,
+          0.3985404252722393,
+          0.41316237591406074
+        ],
+        "global_rate": 0.31947173412676133,
+        "smoothing_rows_per_knot": 2048.0
+      }
+    }
+  },
+  "delta_vs_matching_control": {
+    "primary": -5.102716048566158e-05,
+    "gauc": -0.00012076809550432,
+    "ndcg5": 1.8713774532885807e-05
+  },
+  "screen_gate": {
+    "required": "primary >= +0.00001 and both component metrics nonnegative",
+    "passed": false
+  },
+  "recommendation": "Do not confirm or add a personalized gate; the global monotonic layer did not clear the locked screen.",
+  "artifacts": {
+    "script": "scripts/train_umre_lite.py",
+    "scores": "runtime/parallel-umre-lite/screen-scores.npz",
+    "report": "results/parallel-methods/umre-lite-screen.json"
+  },
+  "resource_usage": {
+    "wall_seconds": 7.133,
+    "train_seconds": 7.133,
+    "cpu_seconds": 7.132,
+    "cpu_hours": 0.001981,
+    "cpu_utilization_percent": 99.98,
+    "peak_rss_mb": 544.938,
+    "gpu_count": 0,
+    "gpu_seconds": 0.0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "hardware": {
+      "logical_cpu_count": 16,
+      "architecture": "arm64",
+      "processor": "arm"
+    }
+  }
+}

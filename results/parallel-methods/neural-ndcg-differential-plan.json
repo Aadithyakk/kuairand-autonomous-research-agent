@@ -1,0 +1,24 @@
+{
+  "experiment": "NeuralNDCG ranking-objective differential follow-up",
+  "created_before_formal_followup_execution": true,
+  "screen_formula": "frozen_base + weight * (neural_ndcg_candidate - alpha_zero_control)",
+  "screen_weight_grid": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "screen_selection": "maximum primary; exact ties prefer the smaller nonnegative weight; zero is retained unless primary gain is at least 0.0001 and GAUC and nDCG@5 both strictly improve",
+  "minimum_primary_gain": 0.0001,
+  "confirmation_protocol_if_screen_passes": {
+    "residual_training": "Apr15-21 using frozen base scores trained on Apr8-14",
+    "base_refit": "Apr8-21 with the same fixed four epochs",
+    "evaluation": "Apr22-28 exactly once",
+    "selected_differential_weight": "locked from screen and never retuned",
+    "champion_blend_weight": 0.05,
+    "champion_audit": "fixed 0.05 rank residual, overall plus four actual-user-ID modulo folds; no confirmation tuning"
+  },
+  "promotion_rule": "overall champion residual must strictly improve primary, GAUC, and nDCG@5 and no metric may regress in any of four user folds",
+  "integrity_note": "Before this follow-up was assigned, an exploratory diagnostic inspected differential weights 0.25, 0.5, and 1.0 on Apr15-21. Those observations are not independent blinded evidence. This file fixes the formal grid and decision rule before the formal pipeline; Apr22-28 remains an untouched confirmation window."
+}

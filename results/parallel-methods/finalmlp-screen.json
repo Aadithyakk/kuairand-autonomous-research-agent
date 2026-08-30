@@ -1,0 +1,137 @@
+{
+  "artifacts": {
+    "raw_and_rank_scores": "runtime/parallel-finalmlp/screen-scores.npz",
+    "script": "scripts/train_finalmlp_interactions.py",
+    "training_details": "runtime/parallel-finalmlp/training-details.json"
+  },
+  "candidate": {
+    "architecture": "two_stream_gated_low_rank_bilinear",
+    "checkpoint": "runtime/parallel-finalmlp/finalmlp-bilinear-checkpoint.pt",
+    "evaluation_metrics": {
+      "GAUC": 0.6651877760887146,
+      "nDCG@5": 0.5671066641807556,
+      "primary": 0.6161472201347351,
+      "rows": 249694,
+      "users": 24262
+    },
+    "name": "finalmlp-bilinear",
+    "objective": "pointwise_binary_cross_entropy",
+    "resource_usage": {
+      "cpu_hours": 0.006813,
+      "cpu_seconds": 24.528,
+      "cpu_utilization_percent": 152.13,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 892.547,
+      "wall_seconds": 16.123
+    },
+    "seed": 260830,
+    "selected_epoch": 4,
+    "selection_metrics": {
+      "GAUC": 0.6714390516281128,
+      "nDCG@5": 0.558841347694397,
+      "primary": 0.6151401996612549
+    }
+  },
+  "control": {
+    "architecture": "two_stream_additive_concatenation",
+    "checkpoint": "runtime/parallel-finalmlp/two-stream-additive-control-checkpoint.pt",
+    "evaluation_metrics": {
+      "GAUC": 0.6644653081893921,
+      "nDCG@5": 0.5663164854049683,
+      "primary": 0.6153908967971802,
+      "rows": 249694,
+      "users": 24262
+    },
+    "name": "two-stream-additive-control",
+    "objective": "pointwise_binary_cross_entropy",
+    "resource_usage": {
+      "cpu_hours": 0.00745,
+      "cpu_seconds": 26.82,
+      "cpu_utilization_percent": 146.46,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 873.359,
+      "wall_seconds": 18.312
+    },
+    "seed": 260830,
+    "selected_epoch": 5,
+    "selection_metrics": {
+      "GAUC": 0.6717669367790222,
+      "nDCG@5": 0.5594810843467712,
+      "primary": 0.6156240105628967
+    }
+  },
+  "deltas": {
+    "GAUC": 0.0007224678993225098,
+    "nDCG@5": 0.0007901787757873535,
+    "primary": 0.0007563233375549316
+  },
+  "experiment": "FinalMLP-style two-stream bilinear interactions",
+  "hardware": {
+    "architecture": "arm64",
+    "logical_cpu_count": 16,
+    "torch_version": "2.10.0"
+  },
+  "matched_configuration": {
+    "batch_size": 8192,
+    "dropout": 0.05,
+    "embedding_dim": 12,
+    "fields": [
+      "user_id",
+      "video_id",
+      "author_id",
+      "tab",
+      "dur_bucket"
+    ],
+    "hidden": 64,
+    "learning_rate": 0.001,
+    "maximum_epochs": 15,
+    "patience": 4,
+    "seed": 260830,
+    "streams": {
+      "item_context": [
+        "video_id",
+        "author_id",
+        "tab",
+        "dur_bucket"
+      ],
+      "user_history": [
+        "user_id"
+      ]
+    },
+    "threads": 6,
+    "weight_decay": 1e-06
+  },
+  "merits_confirmation": true,
+  "protocol": {
+    "core_training": "2022-04-08..2022-04-11",
+    "epoch_selection": "2022-04-12..2022-04-14",
+    "evaluation": "2022-04-15..2022-04-21",
+    "hidden_test_accessed": false,
+    "protected_dates_read": false,
+    "ranking_output": "stable within-user fractional ranks",
+    "refit": "2022-04-08..2022-04-14"
+  },
+  "resource_usage_total": {
+    "cpu_hours": 0.016918,
+    "cpu_seconds": 60.906,
+    "cpu_utilization_percent": 138.21,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 892.547,
+    "wall_seconds": 44.066
+  },
+  "rows": {
+    "core_training": 559379,
+    "epoch_selection": 332039,
+    "evaluation": 249694
+  },
+  "status": "screen_passed"
+}

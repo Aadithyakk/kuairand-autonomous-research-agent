@@ -125,9 +125,33 @@ A corrected zero-preferring scan of 20 frozen model families across 32 outcome-f
 
 Two extra deep YetiRank seeds and their rank ensemble improved diversity but failed the held-out fold gate. A shallower depth-6, strongly regularized YetiRank reached `0.612236` standalone, then supplied a stable `-0.0925` extrapolation for users in the highest quartile of April 19–21 training-row coverage. All four folds improve and the champion reaches `0.612858`. Training used `122.022` wall-seconds, `0.206093` CPU-hours, `3625.344` MB peak RAM, and no GPU; evidence is in [`results/verified-slate-consensus/accepted-cycle-2026-08-30-recent-coverage-yeti.json`](results/verified-slate-consensus/accepted-cycle-2026-08-30-recent-coverage-yeti.json).
 
+A parallel paper-guided sweep then evaluated UMRE-lite, SetRank attention,
+MaskNet, FinalMLP, outcome-free MMR diversity, near-tie hard-negative mining,
+and a bounded NeuralNDCG residual. MaskNet and FinalMLP passed their train-only
+matched screens but reversed at confirmation. MMR moved the global frozen score
+to `0.612871`, yet failed the predeclared all-metric gate in two actual-user-ID
+folds and was not promoted. The NeuralNDCG term improved its matched alpha-zero
+control by `+0.000307` primary, but its complete residual remained below the
+untouched base. The exact `0.612858057` champion therefore remains frozen; the
+scripts, compute telemetry, and rejection evidence are in
+[`results/parallel-methods`](results/parallel-methods).
+
+The isolated NeuralNDCG objective differential was also tested separately. It
+replicated against its own locked April 22–28 base (`+0.000221` primary), but a
+predeclared 5% blend into the actual champion lost `0.0000019` primary and
+regressed in two user folds. This confirms that the differentiable top-five
+gradient contains signal, but not yet one that complements the much stronger
+frozen ensemble.
+
+One aborted FinalMLP preflight parsed a single April 29 row into transient
+memory before its date-boundary assertion stopped the process. That value was
+never printed, saved, scored, trained on, or used. The corrected clean process
+parsed outcome fields only for April 22–28, and the incident remains explicitly
+recorded in the checked-in confirmation report.
+
 The dashboard's deterministic demo can display scores up to `0.6250`; those values are synthetic workflow checks, not model-training evidence. The UI labels the entire demo campaign accordingly. Only results under `results/verified-*` are claimed as reproduced validation scores.
 
-One ensemble attempt was deliberately invalidated after its runner process was terminated: inspection showed that the ensemble path would have ignored the proposed positive-example weight. The result was not scored or promoted, and the runner was corrected before the campaign continued. The hidden test was never accessed.
+One ensemble attempt was deliberately invalidated after its runner process was terminated: inspection showed that the ensemble path would have ignored the proposed positive-example weight. The result was not scored or promoted, and the runner was corrected before the campaign continued. No hidden-test outcome was ever scored, trained on, selected against, or used for promotion; the single transient parse from the later disclosed aborted preflight was discarded immediately.
 
 The original campaign evidence is in [`results/run-9ecfd2aa09`](results/run-9ecfd2aa09), the pairwise milestone is in [`results/verified-pairwise-blend`](results/verified-pairwise-blend), the DeepFM milestone is in [`results/verified-deep-blend`](results/verified-deep-blend), the retained lightweight checkpoint is in [`results/verified-temporal-deep-blend`](results/verified-temporal-deep-blend), and the current research-best evidence is in [`results/verified-slate-consensus`](results/verified-slate-consensus). Checkpoints, raw runner requests, logs containing local paths, and the dataset are excluded from Git.
 

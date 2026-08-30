@@ -26,9 +26,12 @@ node. The organizer evaluator remains the only authority on scores.
 | Priority | Method | Status | Smallest useful experiment |
 | --- | --- | --- | --- |
 | 1 | [Relative Advantage Debiasing](https://arxiv.org/abs/2508.11086) | Attempted—rejected | The auxiliary, α=0 control, pure RAD head, small head mixtures, and four held-out residual folds were measured. The control was stronger and no residual generalized. |
-| 2 | [UMRE monotonic ensemble](https://arxiv.org/abs/2508.07613) | Unattempted | Cross-fit monotonic transforms over three diverse frozen score streams, followed by a strongly regularized context gate. |
-| 3 | [SetRank](https://arxiv.org/abs/1912.05891) | Partial | Replace the rejected mean-pooled DeepSets context with one small permutation-invariant self-attention block, keeping the temporal protocol and BCE fixed. |
-| 4 | [Conservative Doubly Robust learning](https://jiawei-chen.github.io/paper/CIKM23-CDR.pdf) | Research-only | Reconsider only if a random-exposure screen is rebuilt; its published setting does not match this challenge's standard-log confirmation distribution. |
+| 2 | [UMRE monotonic ensemble](https://arxiv.org/abs/2508.07613) | Attempted—rejected | A train-only monotonic fusion lost primary and GAUC to its matched linear consensus; no personalized gate was opened. |
+| 3 | [SetRank](https://arxiv.org/abs/1912.05891) | Attempted—rejected | Low-rank self-attention lost primary and nDCG@5 to its matched mean-pool control on the locked screen. |
+| 4 | [MaskNet](https://arxiv.org/abs/2102.07619) | Attempted—rejected | Its +0.000449 train-only gain reversed at confirmation and three of four champion-residual folds regressed. |
+| 5 | [FinalMLP](https://arxiv.org/abs/2304.00902) | Attempted—rejected | Its +0.000756 train-only gain reversed at confirmation and every held-out residual fold lost primary. |
+| 6 | [NeuralNDCG](https://arxiv.org/abs/1906.04262) | Attempted—rejected | Its isolated objective differential replicated at confirmation, but a fixed champion blend lost all three metrics and regressed in two folds. |
+| 7 | [Conservative Doubly Robust learning](https://jiawei-chen.github.io/paper/CIKM23-CDR.pdf) | Research-only | Reconsider only if a random-exposure screen is rebuilt; its published setting does not match this challenge's standard-log confirmation distribution. |
 
 LambdaMART/YetiRank, generic MMoE/PLE, counterfactual watch-time likelihoods,
 pairwise/listwise fine-tuning, and the tested mean-pooled slate model are marked
@@ -59,3 +62,12 @@ The next paper-guided run tested RAD-UV. It passed the fast gate with a
 was stronger standalone (`0.604018` versus `0.603648`), pure RAD-head ranking
 fell to `0.583969` internally, and all four held-out residual folds regressed.
 See `results/final-model/rad-auxiliary-audit.json`.
+
+The parallel interaction-and-ranking sweep in `results/parallel-methods`
+then tested UMRE-lite, SetRank attention, MaskNet, FinalMLP, outcome-free MMR,
+near-tie hard-negative mining, and a bounded NeuralNDCG residual. MaskNet and
+FinalMLP demonstrated why the slow tier is mandatory: both had positive matched
+screens and then reversed at confirmation. MMR produced a global confirmation
+micro-gain of `+0.0000126`, but failed the predeclared all-metric gate in two
+actual-user-ID folds. No candidate was promoted; the exact `0.612858057`
+champion remains frozen.

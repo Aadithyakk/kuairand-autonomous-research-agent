@@ -13,13 +13,13 @@
   {
     "id": "umre_monotonic_ensemble",
     "category": "ensemble",
-    "status": "unattempted-priority",
+    "status": "attempted-rejected",
     "paper": "UMRE: A Unified Monotonic Transformation for Ranking Ensemble in Recommender Systems",
     "source": "https://arxiv.org/abs/2508.07613",
     "method": "Learn monotonic transformations of diverse objective scores, then fuse them with lightweight personalized weights.",
     "fit": "The frozen champion relies on linear rank consensus; RRF failed, but learned monotonic score-region weighting is mathematically different.",
-    "smallest_ablation": "Fit train-only monotonic spline/isotonic transforms for three diverse frozen scores, followed by a strongly regularized user-context gate.",
-    "risk": "Requires aligned out-of-time scores for every component and strict cross-fitting to avoid a flexible stacker leak."
+    "smallest_ablation": "Completed a leak-free UMRE-lite screen with aligned out-of-time pointwise-FM, pairwise-FM, and DeepFM streams, train-only isotonic transforms, and a matched regularized linear consensus.",
+    "risk": "The monotonic fusion lost 0.000051 primary and 0.000121 GAUC to the matched control, so no personalized gate or confirmation was allowed."
   },
   {
     "id": "direct_ndcg_catboost",
@@ -79,13 +79,13 @@
   {
     "id": "setrank_attention",
     "category": "model",
-    "status": "partially-attempted",
+    "status": "attempted-rejected",
     "paper": "SetRank: Learning a Permutation-Invariant Ranking Model for Information Retrieval",
     "source": "https://arxiv.org/abs/1912.05891",
     "method": "Encode a candidate set with permutation-invariant self-attention before producing item scores.",
     "fit": "Matches the evaluator's whole-user slate, particularly long slates where nDCG degrades.",
-    "smallest_ablation": "Replace mean-pooled DeepSets context with one low-rank self-attention block while keeping BCE and temporal selection fixed.",
-    "risk": "The mean-pooled slate model and prior causal Transformers failed; CPU cost and instability are material."
+    "smallest_ablation": "Completed one low-rank permutation-invariant self-attention residual against a matched mean-pool control with fixed pointwise BCE and temporal selection.",
+    "risk": "Attention lost 0.000008 primary and 0.000028 nDCG@5 on the locked train-only screen, so confirmation was not allowed."
   },
   {
     "id": "lambda_mart",
@@ -119,5 +119,71 @@
     "fit": "KuaiRand exposes multiple feedback labels.",
     "smallest_ablation": "Only revisit with a new target such as RAD quantiles.",
     "risk": "Generic multi-task and MMoE controls have already regressed."
+  },
+  {
+    "id": "masknet_interactions",
+    "category": "model",
+    "status": "attempted-rejected",
+    "paper": "MaskNet: Introducing Feature-Wise Multiplication to CTR Ranking Models by Instance-Guided Mask",
+    "source": "https://arxiv.org/abs/2102.07619",
+    "method": "Use instance-guided multiplicative masks to learn context-dependent feature interactions before the pointwise prediction tower.",
+    "fit": "Tests a dynamic interaction mechanism distinct from the exhausted DCN and AutoInt branches.",
+    "smallest_ablation": "Completed a matched MaskNet-versus-plain-MLP temporal screen, locked confirmation, champion residual, and four actual-user-ID folds.",
+    "risk": "A +0.000449 screen gain reversed to -0.000080 at confirmation; the residual micro-gain was only 0.0000003 and three of four folds regressed."
+  },
+  {
+    "id": "finalmlp_bilinear_interactions",
+    "category": "model",
+    "status": "attempted-rejected",
+    "paper": "FinalMLP: An Enhanced Two-Stream MLP Model for CTR Prediction",
+    "source": "https://arxiv.org/abs/2304.00902",
+    "method": "Fuse two feature streams with a gated low-rank bilinear interaction layer.",
+    "fit": "Provides a strong two-stream interaction ablation while retaining stable pointwise BCE.",
+    "smallest_ablation": "Completed a matched bilinear-versus-additive screen, locked confirmation, frozen-champion residual, and four user folds.",
+    "risk": "A +0.000756 screen gain reversed to -0.000017 at confirmation; the fixed residual lost primary and all four held-out folds regressed."
+  },
+  {
+    "id": "contextual_diversity_mmr",
+    "category": "reranking",
+    "status": "attempted-rejected",
+    "paper": "The Use of MMR, Diversity-Based Reranking for Reordering Documents and Producing Summaries",
+    "source": "https://dl.acm.org/doi/10.1145/290941.291025",
+    "method": "Apply an outcome-free author, music, type, and tag redundancy penalty inside the frozen champion's top ten.",
+    "fit": "Directly tests whether local content redundancy, rather than score calibration, limits top-five ranking quality.",
+    "smallest_ablation": "Selected lambda 0.08 on train-only dates and applied the exact locked reranker at confirmation without retuning.",
+    "risk": "The global confirmation micro-gain was +0.000013 primary, but one fold lost nDCG and another lost GAUC; it failed the predeclared all-fold all-metric gate."
+  },
+  {
+    "id": "near_tie_pairwise_residual",
+    "category": "loss",
+    "status": "attempted-rejected",
+    "paper": "Bayesian Personalized Ranking from Implicit Feedback",
+    "source": "https://arxiv.org/abs/1205.2618",
+    "method": "Mine hard positive-negative pairs whose frozen scores are nearly tied, emphasizing comparisons that can alter the top ten.",
+    "fit": "Targets only uncertain local orderings instead of disturbing globally calibrated pointwise scores.",
+    "smallest_ablation": "Fit the residual on early April 14, select its magnitude on late April 14, and lock it for April 15-21.",
+    "risk": "The zero-preferring selector chose magnitude 0.0; the candidate changed no locked metric and was not confirmed."
+  },
+  {
+    "id": "neural_ndcg_residual",
+    "category": "loss",
+    "status": "attempted-rejected",
+    "paper": "A General Approximation Framework for Direct Optimization of Information Retrieval Measures",
+    "source": "https://arxiv.org/abs/1906.04262",
+    "method": "Add a bounded neural residual trained with pointwise BCE plus a low-weight differentiable top-five ranking objective.",
+    "fit": "Isolates an nDCG-aware gradient while preserving the frozen pointwise base and strict group-memory limits.",
+    "smallest_ablation": "Compared alpha 0.02 with an exact alpha-zero neural control, then isolated candidate-minus-control as a locked differential and audited a fixed 5% champion blend.",
+    "risk": "The differential replicated with +0.000221 primary against its confirmation base, but the champion blend lost 0.0000019 primary and two held-out folds regressed."
+  },
+  {
+    "id": "adaptive_factorization_network",
+    "category": "model",
+    "status": "unattempted-priority",
+    "paper": "Adaptive Factorization Network: Learning Adaptive-Order Feature Interactions",
+    "source": "https://arxiv.org/abs/1909.03276",
+    "method": "Use logarithmic neural transformation layers to learn data-dependent interaction orders without explicitly enumerating feature crosses.",
+    "fit": "Offers an interaction geometry distinct from the rejected attention, cross, masking, and bilinear families while preserving pointwise BCE.",
+    "smallest_ablation": "Compare a small AFN residual with an embedding-and-MLP control under identical seeds, temporal selection, and a bounded CPU budget.",
+    "risk": "Log-space transforms can be numerically fragile, and another neural interaction family may repeat the same train-only optimism seen in MaskNet and FinalMLP."
   }
 ]

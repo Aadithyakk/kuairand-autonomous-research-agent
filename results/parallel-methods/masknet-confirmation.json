@@ -1,0 +1,149 @@
+{
+  "artifacts": {
+    "script": "scripts/train_masknet_interactions.py",
+    "training_details": "runtime/parallel-masknet/confirmation-training-details.json",
+    "within_user_ranks": "runtime/parallel-masknet/confirmation-scores.npz"
+  },
+  "candidate": {
+    "architecture": "two_instance_guided_multiplicative_masks_plus_mlp",
+    "checkpoint": "runtime/parallel-masknet/masknet-interactions-checkpoint.pt",
+    "evaluation_metrics": {
+      "GAUC": 0.6706189513206482,
+      "nDCG@5": 0.5372615456581116,
+      "primary": 0.6039402484893799,
+      "rows": 124909,
+      "users": 22377
+    },
+    "name": "masknet-interactions",
+    "objective": "pointwise_binary_cross_entropy",
+    "resource_usage": {
+      "cpu_hours": 0.009034,
+      "cpu_seconds": 32.523,
+      "cpu_utilization_percent": 170.73,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 901.891,
+      "wall_seconds": 19.05
+    },
+    "seed": 260830,
+    "selected_epoch": 5,
+    "selection_metrics": {
+      "GAUC": 0.6657353043556213,
+      "nDCG@5": 0.5669547319412231,
+      "primary": 0.6163450479507446
+    }
+  },
+  "control": {
+    "architecture": "plain_wide_mlp",
+    "checkpoint": "runtime/parallel-masknet/plain-mlp-control-checkpoint.pt",
+    "evaluation_metrics": {
+      "GAUC": 0.6707119941711426,
+      "nDCG@5": 0.5373281240463257,
+      "primary": 0.6040200591087341,
+      "rows": 124909,
+      "users": 22377
+    },
+    "name": "plain-mlp-control",
+    "objective": "pointwise_binary_cross_entropy",
+    "resource_usage": {
+      "cpu_hours": 0.006729,
+      "cpu_seconds": 24.224,
+      "cpu_utilization_percent": 153.15,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 864.547,
+      "wall_seconds": 15.817
+    },
+    "seed": 260830,
+    "selected_epoch": 5,
+    "selection_metrics": {
+      "GAUC": 0.6659117937088013,
+      "nDCG@5": 0.5674169063568115,
+      "primary": 0.6166643500328064
+    }
+  },
+  "deltas": {
+    "GAUC": -9.304285049438477e-05,
+    "nDCG@5": -6.657838821411133e-05,
+    "primary": -7.981061935424805e-05
+  },
+  "experiment": "MaskNet-style multiplicative feature interactions",
+  "hardware": {
+    "architecture": "arm64",
+    "logical_cpu_count": 16,
+    "torch_version": "2.10.0"
+  },
+  "matched_configuration": {
+    "batch_size": 8192,
+    "dropout": 0.05,
+    "embedding_dim": 12,
+    "fields": [
+      "user_id",
+      "video_id",
+      "author_id",
+      "tab",
+      "dur_bucket"
+    ],
+    "hidden": 64,
+    "learning_rate": 0.001,
+    "maximum_epochs": 15,
+    "patience": 4,
+    "seed": 260830,
+    "threads": 6,
+    "weight_decay": 1e-06
+  },
+  "merits_confirmation": null,
+  "protocol": {
+    "confirmation_labels_accessed": true,
+    "core_training": "2022-04-08..2022-04-14",
+    "epoch_selection": "2022-04-15..2022-04-21",
+    "evaluation": "2022-04-22..2022-04-28",
+    "hidden_test_accessed": false,
+    "ranking_output": "stable within-user fractional ranks",
+    "refit": "2022-04-08..2022-04-21"
+  },
+  "residual_audit": {
+    "all_four_holdout_folds_nonnegative": false,
+    "artifact": "results/parallel-methods/masknet-residual-audit.json",
+    "fixed_gains": {
+      "gauc": 6.556510925292969e-07,
+      "ndcg5": 0.0,
+      "primary": 2.980232238769531e-07
+    },
+    "fixed_improves_both_metrics": false,
+    "fixed_weight": -0.052500000000000005,
+    "merits_promotion": false,
+    "resource_usage": {
+      "cpu_hours": 0.01795,
+      "cpu_seconds": 64.621,
+      "cpu_utilization_percent": 99.57,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 902.188,
+      "wall_seconds": 64.899
+    }
+  },
+  "resource_usage_total": {
+    "cpu_hours": 0.036844,
+    "cpu_seconds": 132.638,
+    "cpu_utilization_percent": 119.4,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 902.188,
+    "wall_seconds": 111.086
+  },
+  "rows": {
+    "core_training": 891418,
+    "epoch_selection": 249694,
+    "evaluation": 124909
+  },
+  "status": "confirmation_rejected"
+}

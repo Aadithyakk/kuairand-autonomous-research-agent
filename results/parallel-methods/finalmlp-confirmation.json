@@ -1,0 +1,161 @@
+{
+  "artifacts": {
+    "raw_and_rank_scores": "runtime/parallel-finalmlp/confirmation-scores.npz",
+    "script": "scripts/train_finalmlp_interactions.py",
+    "training_details": "runtime/parallel-finalmlp/confirmation-training-details.json"
+  },
+  "candidate": {
+    "architecture": "two_stream_gated_low_rank_bilinear",
+    "checkpoint": "runtime/parallel-finalmlp/confirmation-finalmlp-bilinear-checkpoint.pt",
+    "evaluation_metrics": {
+      "GAUC": 0.6702930331230164,
+      "nDCG@5": 0.5374830961227417,
+      "primary": 0.6038880348205566,
+      "rows": 124909,
+      "users": 22377
+    },
+    "name": "confirmation-finalmlp-bilinear",
+    "objective": "pointwise_binary_cross_entropy",
+    "resource_usage": {
+      "cpu_hours": 0.009966,
+      "cpu_seconds": 35.877,
+      "cpu_utilization_percent": 160.17,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 907.422,
+      "wall_seconds": 22.399
+    },
+    "seed": 260830,
+    "selected_epoch": 5,
+    "selection_metrics": {
+      "GAUC": 0.6653038263320923,
+      "nDCG@5": 0.5670471787452698,
+      "primary": 0.6161755323410034
+    }
+  },
+  "control": {
+    "architecture": "two_stream_additive_concatenation",
+    "checkpoint": "runtime/parallel-finalmlp/confirmation-two-stream-additive-control-checkpoint.pt",
+    "evaluation_metrics": {
+      "GAUC": 0.6702372431755066,
+      "nDCG@5": 0.5375730395317078,
+      "primary": 0.6039051413536072,
+      "rows": 124909,
+      "users": 22377
+    },
+    "name": "confirmation-two-stream-additive-control",
+    "objective": "pointwise_binary_cross_entropy",
+    "resource_usage": {
+      "cpu_hours": 0.008938,
+      "cpu_seconds": 32.175,
+      "cpu_utilization_percent": 153.55,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 892.969,
+      "wall_seconds": 20.955
+    },
+    "seed": 260830,
+    "selected_epoch": 5,
+    "selection_metrics": {
+      "GAUC": 0.6648063659667969,
+      "nDCG@5": 0.5666754841804504,
+      "primary": 0.6157408952713013
+    }
+  },
+  "deltas": {
+    "GAUC": 5.5789947509765625e-05,
+    "nDCG@5": -8.994340896606445e-05,
+    "primary": -1.710653305053711e-05
+  },
+  "experiment": "FinalMLP-style two-stream bilinear interactions",
+  "hardware": {
+    "architecture": "arm64",
+    "logical_cpu_count": 16,
+    "torch_version": "2.10.0"
+  },
+  "matched_candidate_improves_all_metrics": false,
+  "matched_configuration": {
+    "batch_size": 8192,
+    "dropout": 0.05,
+    "embedding_dim": 12,
+    "fields": [
+      "user_id",
+      "video_id",
+      "author_id",
+      "tab",
+      "dur_bucket"
+    ],
+    "hidden": 64,
+    "learning_rate": 0.001,
+    "maximum_epochs": 15,
+    "patience": 4,
+    "seed": 260830,
+    "streams": {
+      "item_context": [
+        "video_id",
+        "author_id",
+        "tab",
+        "dur_bucket"
+      ],
+      "user_history": [
+        "user_id"
+      ]
+    },
+    "threads": 6,
+    "weight_decay": 1e-06
+  },
+  "merits_confirmation": null,
+  "protocol": {
+    "confirmation_labels_accessed": true,
+    "core_training": "2022-04-08..2022-04-14",
+    "epoch_selection": "2022-04-15..2022-04-21",
+    "evaluation": "2022-04-22..2022-04-28",
+    "hidden_test_outcomes_accessed_in_clean_model_run": false,
+    "hidden_test_outcomes_used": false,
+    "integrity_incident": {
+      "aborted_probe_hidden_row_parsed": true,
+      "description": "One aborted preflight parsed one Apr29 row including its label into transient memory. The value was not printed, scored, stored, trained on, or used. The clean confirmation run parses outcome fields only for Apr22-28.",
+      "rows": 1
+    },
+    "ranking_output": "stable within-user fractional ranks",
+    "refit": "2022-04-08..2022-04-21"
+  },
+  "residual_audit": {
+    "all_fixed_metrics_nonnegative": false,
+    "all_four_folds_all_metrics_nonnegative": false,
+    "artifact": "results/parallel-methods/finalmlp-residual-audit.json",
+    "fixed_residual_gains": {
+      "GAUC": -1.704692840576172e-05,
+      "nDCG@5": 1.5139579772949219e-05,
+      "primary": -9.5367431640625e-07
+    },
+    "fixed_residual_metrics": {
+      "GAUC": 0.682336688041687,
+      "nDCG@5": 0.5433774590492249,
+      "primary": 0.6128571033477783
+    },
+    "fixed_weight": -0.11625,
+    "merits_promotion": false
+  },
+  "resource_usage_total": {
+    "cpu_hours": 0.039251,
+    "cpu_seconds": 141.304,
+    "cpu_utilization_percent": 121.05,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 907.672,
+    "wall_seconds": 116.736
+  },
+  "rows": {
+    "core_training": 891418,
+    "epoch_selection": 249694,
+    "evaluation": 124909
+  },
+  "status": "confirmation_evaluated"
+}

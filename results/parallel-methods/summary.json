@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "campaign": "parallel paper-guided interaction and ranking sweep",
+  "branch": "feature/experiment-resource-tracking",
+  "decision": "retain_frozen_champion",
+  "champion": {
+    "primary": 0.6128580570220947,
+    "gauc": 0.6823537349700928,
+    "ndcg5": 0.5433623194694519
+  },
+  "promotion_gate": "A candidate must improve the locked primary score without regressing GAUC or nDCG@5, and micro-gains must remain nonnegative in every actual-user-ID fold.",
+  "experiments": [
+    {
+      "method": "UMRE-lite monotonic fusion",
+      "stage": "train_only_screen",
+      "status": "rejected",
+      "primary_delta_vs_control": -0.00005102716048566158,
+      "gauc_delta_vs_control": -0.00012076809550432,
+      "ndcg5_delta_vs_control": 0.000018713774532885807,
+      "evidence": "umre-lite-screen.json"
+    },
+    {
+      "method": "SetRank low-rank self-attention",
+      "stage": "train_only_screen",
+      "status": "rejected",
+      "primary_delta_vs_control": -0.000008463859558105469,
+      "gauc_delta_vs_control": 0.000010669231414794922,
+      "ndcg5_delta_vs_control": -0.00002765655517578125,
+      "evidence": "setrank-screen.json"
+    },
+    {
+      "method": "MaskNet feature interactions",
+      "stage": "locked_confirmation_and_residual_audit",
+      "status": "rejected",
+      "screen_primary_delta_vs_control": 0.0004487037658691406,
+      "confirmation_primary_delta_vs_control": -0.00007981061935424805,
+      "champion_residual_primary_delta": 2.980232238769531e-7,
+      "held_out_folds_passing_all_metrics": 1,
+      "evidence": "masknet-confirmation.json"
+    },
+    {
+      "method": "FinalMLP gated bilinear interactions",
+      "stage": "locked_confirmation_and_residual_audit",
+      "status": "rejected",
+      "screen_primary_delta_vs_control": 0.0007563233375549316,
+      "confirmation_primary_delta_vs_control": -0.00001710653305053711,
+      "champion_residual_primary_delta": -9.5367431640625e-7,
+      "held_out_folds_passing_primary": 0,
+      "evidence": "finalmlp-confirmation.json"
+    },
+    {
+      "method": "outcome-free contextual-diversity MMR",
+      "stage": "locked_confirmation_and_fold_audit",
+      "status": "rejected",
+      "confirmation_candidate_primary": 0.6128706336021423,
+      "confirmation_primary_delta": 0.000012576580047607422,
+      "confirmation_gauc_delta": 0.000006258487701416016,
+      "confirmation_ndcg5_delta": 0.00001895427703857422,
+      "held_out_folds_passing_all_metrics": 2,
+      "reason": "The global micro-gain failed the predeclared all-fold all-metric gate.",
+      "evidence": "contextual-diversity-confirmation.json"
+    },
+    {
+      "method": "near-tie hard-negative residual",
+      "stage": "train_only_screen",
+      "status": "rejected",
+      "selected_magnitude": 0.0,
+      "primary_delta": 0.0,
+      "evidence": "near-tie-screen.json"
+    },
+    {
+      "method": "bounded NeuralNDCG residual",
+      "stage": "train_only_screen",
+      "status": "rejected_as_complete_residual",
+      "primary_delta_vs_alpha_zero_control": 0.0003069639205932617,
+      "primary_delta_vs_untouched_base": -0.0008885860443115234,
+      "evidence": "neural-ndcg-screen.json"
+    },
+    {
+      "method": "isolated NeuralNDCG objective differential",
+      "stage": "locked_confirmation_and_champion_audit",
+      "status": "rejected",
+      "train_only_primary_delta_vs_base": 0.0001157522201538086,
+      "confirmation_primary_delta_vs_base": 0.00022101402282714844,
+      "champion_residual_primary_delta": -0.0000019073486328125,
+      "champion_residual_gauc_delta": -0.0000027418136596679688,
+      "champion_residual_ndcg5_delta": -9.5367431640625e-7,
+      "held_out_folds_passing_all_metrics": 2,
+      "evidence": "neural-ndcg-differential-confirmation.json"
+    }
+  ],
+  "resource_usage": {
+    "accounting": "sum of top-level successful process totals; nested audit telemetry is not counted twice",
+    "process_wall_seconds_sum": 432.21,
+    "cpu_seconds_sum": 531.487,
+    "cpu_hours_sum": 0.147635,
+    "peak_rss_mb_max": 1247.094,
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "architecture": "arm64"
+  },
+  "integrity_notes": [
+    "All scored experiments used temporal training and evaluation windows; no April 29+ outcome was used for fitting, selection, scoring, or promotion.",
+    "An aborted FinalMLP preflight parsed one April 29 row including its label into transient memory before raising. The value was never printed, stored, scored, trained on, or used. The clean run parsed outcomes only for April 22-28.",
+    "Before the formal NeuralNDCG differential plan, an exploratory train-only diagnostic inspected three weights on April 15-21; the report does not treat that scan as independent blinded evidence.",
+    "An aborted NeuralNDCG confirmation preflight parsed April 22-28 rows before a raw-order assertion. It produced no score and did not alter the locked configuration."
+  ],
+  "next_unattempted_method": "Adaptive Factorization Network with a matched embedding-and-MLP control"
+}
