@@ -817,6 +817,66 @@
       "peak_rss_mb": 1221.906,
       "gpu_hours": 0.0,
       "selected_weight": 0.0
+    },
+    "weekly_recurrence_prior_cycle": {
+      "wall_seconds": 38.84,
+      "cpu_seconds": 52.816,
+      "cpu_hours": 0.014671,
+      "peak_rss_mb": 1238.297,
+      "gpu_hours": 0.0,
+      "accepted": false
+    },
+    "focal_watch_ratio_deepfm": {
+      "wall_seconds": 38.027,
+      "cpu_seconds": 117.198,
+      "cpu_hours": 0.032555,
+      "peak_rss_mb": 15466.391,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.60757238,
+      "selected_weight": 0.0,
+      "accepted": false
+    },
+    "user_balance_control_sweep": {
+      "training_runs": 4,
+      "wall_seconds": 374.584,
+      "cpu_seconds": 2045.281,
+      "cpu_hours": 0.568134,
+      "maximum_observed_process_rss_mb": 11097.203,
+      "gpu_hours": 0.0,
+      "powers": [0.25, 0.375, 0.625, 0.75],
+      "accepted": false
+    },
+    "accepted_user_balanced_catboost": {
+      "wall_seconds": 79.947,
+      "cpu_seconds": 450.638,
+      "cpu_hours": 0.125177,
+      "peak_rss_mb": 13214.641,
+      "gpu_hours": 0.0,
+      "selected_trees": 165,
+      "standalone_primary": 0.60307485,
+      "accepted_weight": 0.001875,
+      "accepted": true
+    },
+    "accepted_user_balanced_catboost_audits": {
+      "wall_seconds": 37.528,
+      "cpu_seconds": 37.517,
+      "cpu_hours": 0.010421,
+      "peak_rss_mb": 1205.266,
+      "gpu_hours": 0.0,
+      "fine_fold_weights": [0.001875, 0.001875, 0.003125, 0.001875],
+      "fixed_weight": 0.001875,
+      "fixed_primary": 0.61280882,
+      "accepted": true
+    },
+    "accepted_user_balanced_final_verification": {
+      "wall_seconds": 16.768,
+      "cpu_seconds": 16.766,
+      "cpu_hours": 0.004657,
+      "peak_rss_mb": 1089.594,
+      "gpu_hours": 0.0,
+      "primary": 0.61280882,
+      "gauc": 0.68230242,
+      "ndcg5": 0.54331523
     }
   }
 }

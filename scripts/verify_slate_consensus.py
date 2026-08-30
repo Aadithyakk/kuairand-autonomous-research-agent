@@ -131,6 +131,7 @@ tree = load_scores(
 base = user_rank(0.765 * base + 0.235 * tree)
 skip_batch_slate = os.getenv("KUAI_SKIP_BATCH_SLATE") == "1"
 skip_user_neighbor = os.getenv("KUAI_SKIP_USER_NEIGHBOR") == "1"
+skip_user_balanced_tree = os.getenv("KUAI_SKIP_USER_BALANCED_TREE") == "1"
 batch_slate_tree = (
     None if skip_batch_slate
     else load_scores("batch-slate-meta-catboost-s751.npz")
@@ -611,6 +612,18 @@ if batch_slate_tree is not None:
             "user-neighbor-cf-n60.npz", "positive_p2.0_s8.0"
         )
         scores = scores + 0.002 * user_neighbor
+
+    # A pointwise CatBoost trained through April 19 weights each training row
+    # by inverse user activity to power 0.5, then selects its tree count on
+    # April 20-21. The model sees no evaluation outcomes. A fine four-fold
+    # audit selected the same conservative positive correction in every fold;
+    # it changes only a small number of otherwise tied or near-tied orderings.
+    if not skip_user_balanced_tree:
+        user_balanced_tree = load_scores(
+            "history-catboost-classifier-probe-i500-seq40-session-"
+            "ub0.5-s239.npz"
+        )
+        scores = scores + 0.001875 * user_balanced_tree
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -671,8 +684,11 @@ print(json.dumps({
             **({
                 "training_user_neighbor_positive_cf": 0.002,
             } if not skip_user_neighbor else {}),
+            **({
+                "training_user_balanced_catboost": 0.001875,
+            } if not skip_user_balanced_tree else {}),
         } if not skip_batch_slate else {}),
     },
-    "feature_scope": "training-only outcome priors plus label-free full evaluation slate",
+    "feature_scope": "training-only outcome models/priors plus label-free full evaluation slate",
     "verification_resource_usage": tracker.finish(),
 }, indent=2), flush=True)
