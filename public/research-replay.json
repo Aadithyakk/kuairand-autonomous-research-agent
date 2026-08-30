@@ -1,0 +1,1754 @@
+{
+  "schema_version": 1,
+  "narrative_type": "Editorial reconstruction from checked-in reports; not a timestamped agent transcript.",
+  "time_basis": "Playback seconds are presentation pacing, not experiment runtime.",
+  "source_policy": "Allowlisted aggregate report extracts only. Hashes identify complete source files, not these excerpts. Raw outcomes and model binaries are excluded.",
+  "sources": [
+    {
+      "id": "showcase",
+      "title": "Benchmark & historical result",
+      "path": "public/judge-showcase.json",
+      "sha256": "48ff3b901fe4846f7e41cd254dcff2a325a3ad3034e9bee706a87c69044d16ed",
+      "excerpt": {
+        "benchmark": {
+          "dataset": "KuaiRand-Pure",
+          "target": "long_view",
+          "metric": "0.5 × GAUC + 0.5 × nDCG@5",
+          "train_window": "8–21 Apr 2022",
+          "validation_window": "22–28 Apr 2022",
+          "hidden_test_accessed": false,
+          "train_rows": 1141112,
+          "validation_rows": 124909,
+          "validation_users": 22377
+        },
+        "result": {
+          "baseline_primary": 0.6014695167541504,
+          "champion_primary": 0.6128580570220947,
+          "gauc": 0.6823537349700928,
+          "ndcg5": 0.5433623194694519,
+          "absolute_gain": 0.011388540267944336,
+          "relative_gain_percent": 1.8934526107662046
+        },
+        "limitations": [
+          "The 0.612858 score is public validation evidence, not a hidden-test result.",
+          "The full champion is a research ensemble; distillation into a smaller deployable model remains future work.",
+          "Some label-free slate corrections assume the full candidate slate is available at inference."
+        ]
+      }
+    },
+    {
+      "id": "champion",
+      "title": "Frozen champion report",
+      "path": "results/verified-slate-consensus/summary.json",
+      "sha256": "6794fbcd04a741565522350a03e04b9423553e5c62daa8202e553c372293be88",
+      "excerpt": {
+        "champion": {
+          "primary": 0.6128580570220947,
+          "gauc": 0.6823537349700928,
+          "ndcg5": 0.5433623194694519,
+          "users": 22377,
+          "rows": 124909
+        },
+        "baseline_primary": 0.6014695167541504,
+        "gain_over_baseline": 0.011388540267944336,
+        "split": {
+          "train": "20220408-20220421",
+          "validation": "20220422-20220428",
+          "hidden_test_accessed": false
+        },
+        "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. Outcome priors, coverage membership, the user-neighbor graph, and the user-balanced tree use only the April 8-21 training block; the validation slate contributes identifiers but no outcomes. The neighbor graph uses training exposure overlap for similarity and other users' training outcomes for candidate estimates. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit; the user-balanced tree is fit through April 19 and early-stopped on April 20-21 before April 22-28 inference. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written."
+      }
+    },
+    {
+      "id": "wave",
+      "title": "Ten-method research wave",
+      "path": "results/calibrated-ranking/summary.json",
+      "sha256": "ca5c19260b928afc95517c60ea756e0f590d331cbb60a04e6114894391380708",
+      "excerpt": {
+        "campaign": "Parallel calibrated-ranking and interaction-model wave",
+        "date": "2026-08-30",
+        "protocol": {
+          "model_selection": "Use outcomes no later than 2022-04-14.",
+          "locked_train_only_screen": "2022-04-15..2022-04-21",
+          "confirmation": "2022-04-22..2022-04-28, opened only by RCR after its all-metric screen pass.",
+          "hidden_outcomes": "No 2022-04-29+ outcome field was parsed by any completed run.",
+          "promotion_gate": "Improve primary, GAUC, and nDCG@5; then survive a predeclared 5% frozen-champion residual and four actual-user-ID folds."
+        },
+        "totals": {
+          "methods_tested": 10,
+          "screen_survivors": 1,
+          "confirmed_standalone_improvements": 1,
+          "champion_promotions": 0,
+          "aggregate_trainer_wall_seconds": 346.197,
+          "aggregate_cpu_seconds": 501.143,
+          "aggregate_cpu_hours": 0.139206,
+          "gpu_hours": 0,
+          "largest_single_process_peak_rss_mb": 1490.812,
+          "note": "Trainer wall-seconds are summed across concurrent runs and are not end-to-end elapsed time. Process-level telemetry does not measure combined RAM across overlapping workers."
+        },
+        "experiments": [
+          {
+            "id": "rcr",
+            "method": "Regression-Compatible Ranking",
+            "status": "confirmed_base_gain_rejected_for_champion",
+            "screen_delta": {
+              "primary": 0.00018596649169921875,
+              "GAUC": 0.00015664100646972656,
+              "nDCG@5": 0.00021517276763916016
+            },
+            "confirmation_delta": {
+              "primary": 0.00011724233627319336,
+              "GAUC": 0.00011527538299560547,
+              "nDCG@5": 0.00011914968490600586
+            },
+            "champion_residual_delta": {
+              "primary": -0.000002384185791015625,
+              "GAUC": -0.0000036954879760742188,
+              "nDCG@5": -9.5367431640625e-7
+            },
+            "folds_all_metric_nonnegative": 1,
+            "resource_usage": {
+              "wall_seconds": 73.259,
+              "cpu_seconds": 110.936,
+              "cpu_hours": 0.030816,
+              "peak_rss_mb": 872.516,
+              "gpu_hours": 0
+            },
+            "evidence": [
+              "rcr-screen.json",
+              "rcr-confirmation.json",
+              "rcr-residual-audit.json"
+            ]
+          },
+          {
+            "id": "pdaom",
+            "method": "Personalized direct GAUC maximum-violation loss",
+            "status": "screen_rejected",
+            "screen_delta": {
+              "primary": -0.00012171268463134766,
+              "GAUC": -0.0003876686096191406,
+              "nDCG@5": 0.00014418363571166992
+            },
+            "resource_usage": {
+              "wall_seconds": 56.313,
+              "cpu_seconds": 64.109,
+              "cpu_hours": 0.017808,
+              "peak_rss_mb": 813.047,
+              "gpu_hours": 0
+            },
+            "evidence": [
+              "pdaom-screen.json"
+            ]
+          },
+          {
+            "id": "sbcr_lite",
+            "method": "Self-Boosted Calibrated Ranking",
+            "status": "screen_rejected_zero_selected",
+            "screen_delta": {
+              "primary": 0,
+              "GAUC": 0,
+              "nDCG@5": 0
+            },
+            "resource_usage": {
+              "wall_seconds": 15.945,
+              "cpu_seconds": 17.659,
+              "cpu_hours": 0.004905,
+              "peak_rss_mb": 1490.812,
+              "gpu_hours": 0
+            },
+            "evidence": [
+              "sbcr-screen.json"
+            ]
+          },
+          {
+            "id": "position_kd",
+            "method": "Position-aware knowledge distillation",
+            "status": "screen_rejected_zero_selected",
+            "screen_delta": {
+              "primary": 0,
+              "GAUC": 0,
+              "nDCG@5": 0
+            },
+            "best_nonzero_selection_primary_delta": -0.00015735626220703125,
+            "resource_usage": {
+              "wall_seconds": 16.557,
+              "cpu_seconds": 25.564,
+              "cpu_hours": 0.007101,
+              "peak_rss_mb": 865.016,
+              "gpu_hours": 0
+            },
+            "evidence": [
+              "position-kd-plan.json",
+              "position-kd-screen.json"
+            ]
+          },
+          {
+            "id": "cqe",
+            "method": "Conditional quantile watch-time estimation",
+            "status": "screen_rejected",
+            "screen_delta": {
+              "primary": -0.0004725456237792969,
+              "GAUC": -0.0005069971084594727,
+              "nDCG@5": -0.0004380345344543457
+            },
+            "resource_usage": {
+              "wall_seconds": 39.733,
+              "cpu_seconds": 59.438,
+              "cpu_hours": 0.016511,
+              "peak_rss_mb": 929.406,
+              "gpu_hours": 0
+            },
+            "evidence": [
+              "cqe-screen.json"
+            ]
+          },
+          {
+            "id": "jrc",
+            "method": "Joint ranking and calibration",
+            "status": "screen_rejected",
+            "screen_delta": {
+              "primary": 0.000011622905731201172,
+              "GAUC": -0.00004601478576660156,
+              "nDCG@5": 0.00006920099258422852
+            },
+            "resource_usage": {
+              "wall_seconds": 29.352,
+              "cpu_seconds": 33.338,
+              "cpu_hours": 0.009261,
+              "peak_rss_mb": 851.281,
+              "gpu_hours": 0
+            },
+            "evidence": [
+              "jrc-screen.json"
+            ]
+          },
+          {
+            "id": "confidence_ranking",
+            "method": "Heteroscedastic confidence-aware ranking",
+            "status": "screen_rejected",
+            "screen_delta": {
+              "primary": -0.004105508327484131,
+              "GAUC": -0.005167961120605469,
+              "nDCG@5": -0.003043055534362793
+            },
+            "resource_usage": {
+              "wall_seconds": 22.282,
+              "cpu_seconds": 28.577,
+              "cpu_hours": 0.007938,
+              "peak_rss_mb": 791.266,
+              "gpu_hours": 0
+            },
+            "evidence": [
+              "confidence-plan.json",
+              "confidence-screen.json"
+            ]
+          },
+          {
+            "id": "afn",
+            "method": "Adaptive Factorization Network",
+            "status": "architecture_selection_rejected",
+            "screen_delta": {
+              "primary": 0,
+              "GAUC": 0,
+              "nDCG@5": 0
+            },
+            "best_afn_selection_primary_delta": -0.008796334266662598,
+            "resource_usage": {
+              "wall_seconds": 24.097,
+              "cpu_seconds": 31.471,
+              "cpu_hours": 0.008742,
+              "peak_rss_mb": 977.656,
+              "gpu_hours": 0
+            },
+            "evidence": [
+              "afn-screen.json"
+            ]
+          },
+          {
+            "id": "bbp_lite",
+            "method": "Behavior Bias-aware Projection",
+            "status": "screen_rejected_zero_selected",
+            "screen_delta": {
+              "primary": 0,
+              "GAUC": 0,
+              "nDCG@5": 0
+            },
+            "best_nonzero_selection_primary_delta": -0.00008249282836914062,
+            "resource_usage": {
+              "wall_seconds": 22.539,
+              "cpu_seconds": 32.129,
+              "cpu_hours": 0.008925,
+              "peak_rss_mb": 941.438,
+              "gpu_hours": 0
+            },
+            "evidence": [
+              "bbp-plan.json",
+              "bbp-screen.json"
+            ]
+          },
+          {
+            "id": "eulernet",
+            "method": "EulerNet complex-valued feature interactions",
+            "status": "screen_rejected",
+            "screen_delta": {
+              "primary": -0.0010496973991394043,
+              "GAUC": -0.0010486841201782227,
+              "nDCG@5": -0.001050710678100586
+            },
+            "resource_usage": {
+              "wall_seconds": 46.12,
+              "cpu_seconds": 97.922,
+              "cpu_hours": 0.027201,
+              "peak_rss_mb": 1089.375,
+              "gpu_hours": 0
+            },
+            "evidence": [
+              "eulernet-screen.json"
+            ]
+          }
+        ],
+        "recommendation": "Keep the 0.612858057 champion. Retain RCR as the only validated backbone improvement, but do not blend it into the champion without a new source of complementary signal or a predeclared cross-fitted integration rule."
+      }
+    },
+    {
+      "id": "screen",
+      "title": "RCR configuration & screen",
+      "path": "results/calibrated-ranking/rcr-screen.json",
+      "sha256": "1f1dd0b888f842647500dbe9ad3dc237508148474dcb5259c06bc9585e777847",
+      "excerpt": {
+        "paper": "https://arxiv.org/abs/2211.01494",
+        "protocol": {
+          "apr22_plus_file_opened": false,
+          "complete_user_groups": true,
+          "epoch_selection": "Apr8-11 -> Apr12-14 using alpha=0 control",
+          "evaluation": "Apr15-21",
+          "hidden_test_outcomes_parsed": false,
+          "integrity_incidents": [],
+          "refit": "Apr8-14"
+        },
+        "matched_configuration": {
+          "backbone": "MaskNet-style pointwise neural model",
+          "batch_size": 8192,
+          "dropout": 0.05,
+          "embedding_dim": 12,
+          "epochs_max": 15,
+          "fields": [
+            "user_id",
+            "video_id",
+            "author_id",
+            "tab",
+            "dur_bucket"
+          ],
+          "hidden": 64,
+          "learning_rate": 0.001,
+          "objective": "(1-alpha)*BCE + alpha*ListCE(sigmoid)",
+          "patience": 4,
+          "same_initialization_and_group_order": true,
+          "seed": 260830,
+          "weight_decay": 0.000001
+        },
+        "alpha_grid_predeclared": [
+          0,
+          0.0005,
+          0.001,
+          0.002
+        ],
+        "locked_epoch_count": 6,
+        "selected_alpha": 0.0005,
+        "zero_preferring_selection": "alpha=0 unless a nonzero alpha gains >=0.0001 primary and strictly improves GAUC and nDCG@5",
+        "rows": {
+          "epoch_dev": 332039,
+          "epoch_train": 559379,
+          "screen_evaluation": 249694
+        },
+        "runs": [
+          {
+            "alpha": 0,
+            "checkpoint": "runtime/parallel-calibrated-ranking/rcr/screen-alpha-0p0.pt",
+            "metrics": {
+              "GAUC": 0.6620279550552368,
+              "nDCG@5": 0.5645400881767273,
+              "primary": 0.6132839918136597,
+              "rows": 249694,
+              "users": 24262
+            },
+            "resource_usage": {
+              "cpu_hours": 0.003018,
+              "cpu_seconds": 10.863,
+              "cpu_utilization_percent": 178.81,
+              "device": "cpu",
+              "gpu_count": 0,
+              "gpu_hours": 0,
+              "peak_gpu_memory_mb": 0,
+              "peak_rss_mb": 834.391,
+              "wall_seconds": 6.075
+            },
+            "training_history": [
+              {
+                "BCE": 0.6227187346328389,
+                "ListCE(sigmoid)": 3.085975497419184,
+                "epoch": 1,
+                "loss": 0.6227187346328389
+              },
+              {
+                "BCE": 0.544070658900521,
+                "ListCE(sigmoid)": 3.0067146431316027,
+                "epoch": 2,
+                "loss": 0.544070658900521
+              },
+              {
+                "BCE": 0.50915432843295,
+                "ListCE(sigmoid)": 2.9959615208885886,
+                "epoch": 3,
+                "loss": 0.50915432843295
+              },
+              {
+                "BCE": 0.4965643281286413,
+                "ListCE(sigmoid)": 2.988773554021662,
+                "epoch": 4,
+                "loss": 0.4965643281286413
+              },
+              {
+                "BCE": 0.48808242218060927,
+                "ListCE(sigmoid)": 2.9763466704975476,
+                "epoch": 5,
+                "loss": 0.48808242218060927
+              },
+              {
+                "BCE": 0.4804726554588838,
+                "ListCE(sigmoid)": 2.9544759143482553,
+                "epoch": 6,
+                "loss": 0.4804726554588838
+              }
+            ]
+          },
+          {
+            "alpha": 0.0005,
+            "checkpoint": "runtime/parallel-calibrated-ranking/rcr/screen-alpha-0p0005.pt",
+            "deltas_vs_control": {
+              "GAUC": 0.00015664100646972656,
+              "nDCG@5": 0.00021517276763916016,
+              "primary": 0.00018596649169921875
+            },
+            "metrics": {
+              "GAUC": 0.6621845960617065,
+              "nDCG@5": 0.5647552609443665,
+              "primary": 0.6134699583053589,
+              "rows": 249694,
+              "users": 24262
+            },
+            "resource_usage": {
+              "cpu_hours": 0.003019,
+              "cpu_seconds": 10.87,
+              "cpu_utilization_percent": 179.22,
+              "device": "cpu",
+              "gpu_count": 0,
+              "gpu_hours": 0,
+              "peak_gpu_memory_mb": 0,
+              "peak_rss_mb": 857.922,
+              "wall_seconds": 6.065
+            },
+            "training_history": [
+              {
+                "BCE": 0.6227075744758953,
+                "ListCE(sigmoid)": 3.085936916958202,
+                "epoch": 1,
+                "loss": 0.6239391738718206
+              },
+              {
+                "BCE": 0.5439236505465074,
+                "ListCE(sigmoid)": 3.0065853530710394,
+                "epoch": 2,
+                "loss": 0.5451549714261835
+              },
+              {
+                "BCE": 0.509155807170001,
+                "ListCE(sigmoid)": 2.9959871833974665,
+                "epoch": 3,
+                "loss": 0.5103992088274523
+              },
+              {
+                "BCE": 0.4964709590781819,
+                "ListCE(sigmoid)": 2.9885038050738246,
+                "epoch": 4,
+                "loss": 0.4977169638330286
+              },
+              {
+                "BCE": 0.4877205634658987,
+                "ListCE(sigmoid)": 2.9745965025641703,
+                "epoch": 5,
+                "loss": 0.48896398950706826
+              },
+              {
+                "BCE": 0.4802294649861076,
+                "ListCE(sigmoid)": 2.9520193338394165,
+                "epoch": 6,
+                "loss": 0.48146534833041105
+              }
+            ]
+          },
+          {
+            "alpha": 0.001,
+            "checkpoint": "runtime/parallel-calibrated-ranking/rcr/screen-alpha-0p001.pt",
+            "deltas_vs_control": {
+              "GAUC": -0.000024497509002685547,
+              "nDCG@5": -0.00042134523391723633,
+              "primary": -0.00022292137145996094
+            },
+            "metrics": {
+              "GAUC": 0.6620034575462341,
+              "nDCG@5": 0.5641187429428101,
+              "primary": 0.6130610704421997,
+              "rows": 249694,
+              "users": 24262
+            },
+            "resource_usage": {
+              "cpu_hours": 0.003014,
+              "cpu_seconds": 10.851,
+              "cpu_utilization_percent": 179.23,
+              "device": "cpu",
+              "gpu_count": 0,
+              "gpu_hours": 0,
+              "peak_gpu_memory_mb": 0,
+              "peak_rss_mb": 860,
+              "wall_seconds": 6.055
+            },
+            "training_history": [
+              {
+                "BCE": 0.6227019954811442,
+                "ListCE(sigmoid)": 3.085916133360429,
+                "epoch": 1,
+                "loss": 0.6251652154055509
+              },
+              {
+                "BCE": 0.5441070502454585,
+                "ListCE(sigmoid)": 3.0066648678346115,
+                "epoch": 2,
+                "loss": 0.5465696215629577
+              },
+              {
+                "BCE": 0.5091355670582164,
+                "ListCE(sigmoid)": 2.9958790627392857,
+                "epoch": 3,
+                "loss": 0.5116223153742877
+              },
+              {
+                "BCE": 0.49648629237305036,
+                "ListCE(sigmoid)": 2.988400101661682,
+                "epoch": 4,
+                "loss": 0.4989782127467069
+              },
+              {
+                "BCE": 0.48779520988464353,
+                "ListCE(sigmoid)": 2.97522656917572,
+                "epoch": 5,
+                "loss": 0.49028265232389623
+              },
+              {
+                "BCE": 0.4800421197306026,
+                "ListCE(sigmoid)": 2.9517110456119884,
+                "epoch": 6,
+                "loss": 0.4825137948448008
+              }
+            ]
+          },
+          {
+            "alpha": 0.002,
+            "checkpoint": "runtime/parallel-calibrated-ranking/rcr/screen-alpha-0p002.pt",
+            "deltas_vs_control": {
+              "GAUC": -0.0002071857452392578,
+              "nDCG@5": -0.00008255243301391602,
+              "primary": -0.00014483928680419922
+            },
+            "metrics": {
+              "GAUC": 0.6618207693099976,
+              "nDCG@5": 0.5644575357437134,
+              "primary": 0.6131391525268555,
+              "rows": 249694,
+              "users": 24262
+            },
+            "resource_usage": {
+              "cpu_hours": 0.003047,
+              "cpu_seconds": 10.968,
+              "cpu_utilization_percent": 179.69,
+              "device": "cpu",
+              "gpu_count": 0,
+              "gpu_hours": 0,
+              "peak_gpu_memory_mb": 0,
+              "peak_rss_mb": 862.953,
+              "wall_seconds": 6.104
+            },
+            "training_history": [
+              {
+                "BCE": 0.6226904944940047,
+                "ListCE(sigmoid)": 3.085869487849149,
+                "epoch": 1,
+                "loss": 0.6276168725707314
+              },
+              {
+                "BCE": 0.5440179150212895,
+                "ListCE(sigmoid)": 3.006552802432667,
+                "epoch": 2,
+                "loss": 0.548943001573736
+              },
+              {
+                "BCE": 0.5091291172937913,
+                "ListCE(sigmoid)": 2.9958207087083295,
+                "epoch": 3,
+                "loss": 0.5141025117852471
+              },
+              {
+                "BCE": 0.4965206278996034,
+                "ListCE(sigmoid)": 2.9884219386360864,
+                "epoch": 4,
+                "loss": 0.5015044415538962
+              },
+              {
+                "BCE": 0.4880871453068473,
+                "ListCE(sigmoid)": 2.976252566684376,
+                "epoch": 5,
+                "loss": 0.49306349049914966
+              },
+              {
+                "BCE": 0.4807103601368991,
+                "ListCE(sigmoid)": 2.9547309745441783,
+                "epoch": 6,
+                "loss": 0.4856584145264192
+              }
+            ]
+          }
+        ],
+        "merits_confirmation": true
+      }
+    },
+    {
+      "id": "confirmation",
+      "title": "Locked confirmation",
+      "path": "results/calibrated-ranking/rcr-confirmation.json",
+      "sha256": "0da294a1e1ad9bcba838fdd3cf1712971aae65e682264faa799b0606cd323337",
+      "excerpt": {
+        "protocol": {
+          "evaluation": "Apr22-28",
+          "hidden_test_outcomes_parsed": false,
+          "integrity_incidents": [],
+          "outcome_fields_parsed_only_for": "Apr22-28",
+          "retuning": false,
+          "train": "Apr8-21"
+        },
+        "control": {
+          "alpha": 0,
+          "checkpoint": "runtime/parallel-calibrated-ranking/rcr/confirmation-alpha-0p0.pt",
+          "metrics": {
+            "GAUC": 0.6665645241737366,
+            "nDCG@5": 0.5349597930908203,
+            "primary": 0.600762128829956,
+            "rows": 124909,
+            "users": 22377
+          },
+          "resource_usage": {
+            "cpu_hours": 0.003971,
+            "cpu_seconds": 14.296,
+            "cpu_utilization_percent": 174.12,
+            "device": "cpu",
+            "gpu_count": 0,
+            "gpu_hours": 0,
+            "peak_gpu_memory_mb": 0,
+            "peak_rss_mb": 795.453,
+            "wall_seconds": 8.211
+          },
+          "training_history": [
+            {
+              "BCE": 0.6051001946131388,
+              "ListCE(sigmoid)": 3.289305749514424,
+              "epoch": 1,
+              "loss": 0.6051001946131388
+            },
+            {
+              "BCE": 0.5413625255121407,
+              "ListCE(sigmoid)": 3.22802249759647,
+              "epoch": 2,
+              "loss": 0.5413625255121407
+            },
+            {
+              "BCE": 0.5164002167417648,
+              "ListCE(sigmoid)": 3.2195914670930685,
+              "epoch": 3,
+              "loss": 0.5164002167417648
+            },
+            {
+              "BCE": 0.5028280996261759,
+              "ListCE(sigmoid)": 3.2127614630029555,
+              "epoch": 4,
+              "loss": 0.5028280996261759
+            },
+            {
+              "BCE": 0.49583249227375004,
+              "ListCE(sigmoid)": 3.2062990716163147,
+              "epoch": 5,
+              "loss": 0.49583249227375004
+            },
+            {
+              "BCE": 0.49034884107028337,
+              "ListCE(sigmoid)": 3.188567782124729,
+              "epoch": 6,
+              "loss": 0.49034884107028337
+            }
+          ]
+        },
+        "candidate": {
+          "alpha": 0.0005,
+          "checkpoint": "runtime/parallel-calibrated-ranking/rcr/confirmation-alpha-0p0005.pt",
+          "metrics": {
+            "GAUC": 0.6666797995567322,
+            "nDCG@5": 0.5350789427757263,
+            "primary": 0.6008793711662292,
+            "rows": 124909,
+            "users": 22377
+          },
+          "resource_usage": {
+            "cpu_hours": 0.003822,
+            "cpu_seconds": 13.758,
+            "cpu_utilization_percent": 178.57,
+            "device": "cpu",
+            "gpu_count": 0,
+            "gpu_hours": 0,
+            "peak_gpu_memory_mb": 0,
+            "peak_rss_mb": 872.516,
+            "wall_seconds": 7.705
+          },
+          "training_history": [
+            {
+              "BCE": 0.6050986182605121,
+              "ListCE(sigmoid)": 3.289288546176667,
+              "epoch": 1,
+              "loss": 0.6064406992695855
+            },
+            {
+              "BCE": 0.5413778603922391,
+              "ListCE(sigmoid)": 3.2279923993644983,
+              "epoch": 2,
+              "loss": 0.5427211512487831
+            },
+            {
+              "BCE": 0.5164109986301855,
+              "ListCE(sigmoid)": 3.2195372192572194,
+              "epoch": 3,
+              "loss": 0.5177625466323068
+            },
+            {
+              "BCE": 0.5028610690265682,
+              "ListCE(sigmoid)": 3.212683124745146,
+              "epoch": 4,
+              "loss": 0.5042159673592723
+            },
+            {
+              "BCE": 0.49583150879711124,
+              "ListCE(sigmoid)": 3.206306388192143,
+              "epoch": 5,
+              "loss": 0.49718673495536153
+            },
+            {
+              "BCE": 0.4903527699041028,
+              "ListCE(sigmoid)": 3.1886816396780895,
+              "epoch": 6,
+              "loss": 0.49170191934768187
+            }
+          ]
+        },
+        "deltas_vs_control": {
+          "GAUC": 0.00011527538299560547,
+          "nDCG@5": 0.00011914968490600586,
+          "primary": 0.00011724233627319336
+        },
+        "selected_alpha_locked": 0.0005,
+        "matched_candidate_improves_all_metrics": true
+      }
+    },
+    {
+      "id": "audit",
+      "title": "Champion residual & user folds",
+      "path": "results/calibrated-ranking/rcr-residual-audit.json",
+      "sha256": "2ecbcc067fb6c7e1333405c00e7b07f3bdee922af95f2f4b312327154c846bca",
+      "excerpt": {
+        "baseline_metrics": {
+          "GAUC": 0.6823537349700928,
+          "nDCG@5": 0.5433623194694519,
+          "primary": 0.6128580570220947
+        },
+        "fixed_residual_metrics": {
+          "GAUC": 0.6823500394821167,
+          "nDCG@5": 0.5433613657951355,
+          "primary": 0.6128556728363037
+        },
+        "fixed_residual_gains": {
+          "GAUC": -0.0000036954879760742188,
+          "nDCG@5": -9.5367431640625e-7,
+          "primary": -0.000002384185791015625
+        },
+        "fixed_weight": 0.05,
+        "folds": [
+          {
+            "all_metrics_nonnegative": false,
+            "baseline_metrics": {
+              "GAUC": 0.6848820447921753,
+              "nDCG@5": 0.5397460460662842,
+              "primary": 0.6123140454292297
+            },
+            "fold": 0,
+            "gains": {
+              "GAUC": -0.00000476837158203125,
+              "nDCG@5": 0.000004231929779052734,
+              "primary": -2.980232238769531e-7
+            },
+            "residual_metrics": {
+              "GAUC": 0.6848772764205933,
+              "nDCG@5": 0.5397502779960632,
+              "primary": 0.6123137474060059
+            },
+            "rows": 31537,
+            "users": 5602
+          },
+          {
+            "all_metrics_nonnegative": false,
+            "baseline_metrics": {
+              "GAUC": 0.6825631856918335,
+              "nDCG@5": 0.542828381061554,
+              "primary": 0.6126958131790161
+            },
+            "fold": 1,
+            "gains": {
+              "GAUC": -0.0000073909759521484375,
+              "nDCG@5": 0,
+              "primary": -0.0000036954879760742188
+            },
+            "residual_metrics": {
+              "GAUC": 0.6825557947158813,
+              "nDCG@5": 0.542828381061554,
+              "primary": 0.61269211769104
+            },
+            "rows": 30770,
+            "users": 5589
+          },
+          {
+            "all_metrics_nonnegative": false,
+            "baseline_metrics": {
+              "GAUC": 0.676494836807251,
+              "nDCG@5": 0.5456936359405518,
+              "primary": 0.6110942363739014
+            },
+            "fold": 2,
+            "gains": {
+              "GAUC": -0.000004112720489501953,
+              "nDCG@5": -0.000007867813110351562,
+              "primary": -0.0000059604644775390625
+            },
+            "residual_metrics": {
+              "GAUC": 0.6764907240867615,
+              "nDCG@5": 0.5456857681274414,
+              "primary": 0.6110882759094238
+            },
+            "rows": 31466,
+            "users": 5633
+          },
+          {
+            "all_metrics_nonnegative": true,
+            "baseline_metrics": {
+              "GAUC": 0.685429036617279,
+              "nDCG@5": 0.5451765656471252,
+              "primary": 0.6153028011322021
+            },
+            "fold": 3,
+            "gains": {
+              "GAUC": 0.000001430511474609375,
+              "nDCG@5": 0,
+              "primary": 7.152557373046875e-7
+            },
+            "residual_metrics": {
+              "GAUC": 0.6854304671287537,
+              "nDCG@5": 0.5451765656471252,
+              "primary": 0.6153035163879395
+            },
+            "rows": 31136,
+            "users": 5553
+          }
+        ],
+        "merits_promotion": false,
+        "all_four_folds_all_metrics_nonnegative": false,
+        "hidden_test_outcomes_parsed": false,
+        "integrity_incidents": []
+      }
+    },
+    {
+      "id": "manifest",
+      "title": "Champion artifact manifest",
+      "path": "results/final-model/manifest.json",
+      "sha256": "9f4153ab30c0222520cd64bf210486d0b4ddc6eae10c121aa10188311352670a",
+      "excerpt": {
+        "artifact": "KuaiLab validation-best recipe",
+        "validation_metrics": {
+          "primary": 0.6128580570220947,
+          "gauc": 0.6823537349700928,
+          "ndcg5": 0.5433623194694519,
+          "rows": 124909,
+          "users": 22377
+        },
+        "validation_scores": "results/final-model/validation-scores.npz",
+        "validation_scores_sha256": "59df8954dc9b1e484e36575dc606293a2a100ba1c4ae049a8c4e2600647f5a9d",
+        "hidden_test_accessed": false,
+        "notes": "The checked-in manifest and validation export identify the frozen recipe. Large prerequisite model checkpoints remain untracked and are reproducible from the documented scripts. Use the guarded exporter exactly once for the final hidden split."
+      }
+    }
+  ],
+  "showcase": {
+    "benchmark": {
+      "dataset": "KuaiRand-Pure",
+      "target": "long_view",
+      "metric": "0.5 × GAUC + 0.5 × nDCG@5",
+      "train_window": "8–21 Apr 2022",
+      "validation_window": "22–28 Apr 2022",
+      "hidden_test_accessed": false,
+      "train_rows": 1141112,
+      "validation_rows": 124909,
+      "validation_users": 22377
+    },
+    "result": {
+      "baseline_primary": 0.6014695167541504,
+      "champion_primary": 0.6128580570220947,
+      "gauc": 0.6823537349700928,
+      "ndcg5": 0.5433623194694519,
+      "absolute_gain": 0.011388540267944336,
+      "relative_gain_percent": 1.8934526107662046
+    },
+    "limitations": [
+      "The 0.612858 score is public validation evidence, not a hidden-test result.",
+      "The full champion is a research ensemble; distillation into a smaller deployable model remains future work.",
+      "Some label-free slate corrections assume the full candidate slate is available at inference."
+    ]
+  },
+  "champion": {
+    "champion": {
+      "primary": 0.6128580570220947,
+      "gauc": 0.6823537349700928,
+      "ndcg5": 0.5433623194694519,
+      "users": 22377,
+      "rows": 124909
+    },
+    "baseline_primary": 0.6014695167541504,
+    "gain_over_baseline": 0.011388540267944336,
+    "split": {
+      "train": "20220408-20220421",
+      "validation": "20220422-20220428",
+      "hidden_test_accessed": false
+    },
+    "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. Outcome priors, coverage membership, the user-neighbor graph, and the user-balanced tree use only the April 8-21 training block; the validation slate contributes identifiers but no outcomes. The neighbor graph uses training exposure overlap for similarity and other users' training outcomes for candidate estimates. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit; the user-balanced tree is fit through April 19 and early-stopped on April 20-21 before April 22-28 inference. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written."
+  },
+  "wave": {
+    "campaign": "Parallel calibrated-ranking and interaction-model wave",
+    "date": "2026-08-30",
+    "protocol": {
+      "model_selection": "Use outcomes no later than 2022-04-14.",
+      "locked_train_only_screen": "2022-04-15..2022-04-21",
+      "confirmation": "2022-04-22..2022-04-28, opened only by RCR after its all-metric screen pass.",
+      "hidden_outcomes": "No 2022-04-29+ outcome field was parsed by any completed run.",
+      "promotion_gate": "Improve primary, GAUC, and nDCG@5; then survive a predeclared 5% frozen-champion residual and four actual-user-ID folds."
+    },
+    "totals": {
+      "methods_tested": 10,
+      "screen_survivors": 1,
+      "confirmed_standalone_improvements": 1,
+      "champion_promotions": 0,
+      "aggregate_trainer_wall_seconds": 346.197,
+      "aggregate_cpu_seconds": 501.143,
+      "aggregate_cpu_hours": 0.139206,
+      "gpu_hours": 0,
+      "largest_single_process_peak_rss_mb": 1490.812,
+      "note": "Trainer wall-seconds are summed across concurrent runs and are not end-to-end elapsed time. Process-level telemetry does not measure combined RAM across overlapping workers."
+    },
+    "experiments": [
+      {
+        "id": "rcr",
+        "method": "Regression-Compatible Ranking",
+        "status": "confirmed_base_gain_rejected_for_champion",
+        "screen_delta": {
+          "primary": 0.00018596649169921875,
+          "GAUC": 0.00015664100646972656,
+          "nDCG@5": 0.00021517276763916016
+        },
+        "confirmation_delta": {
+          "primary": 0.00011724233627319336,
+          "GAUC": 0.00011527538299560547,
+          "nDCG@5": 0.00011914968490600586
+        },
+        "champion_residual_delta": {
+          "primary": -0.000002384185791015625,
+          "GAUC": -0.0000036954879760742188,
+          "nDCG@5": -9.5367431640625e-7
+        },
+        "folds_all_metric_nonnegative": 1,
+        "resource_usage": {
+          "wall_seconds": 73.259,
+          "cpu_seconds": 110.936,
+          "cpu_hours": 0.030816,
+          "peak_rss_mb": 872.516,
+          "gpu_hours": 0
+        },
+        "evidence": [
+          "rcr-screen.json",
+          "rcr-confirmation.json",
+          "rcr-residual-audit.json"
+        ]
+      },
+      {
+        "id": "pdaom",
+        "method": "Personalized direct GAUC maximum-violation loss",
+        "status": "screen_rejected",
+        "screen_delta": {
+          "primary": -0.00012171268463134766,
+          "GAUC": -0.0003876686096191406,
+          "nDCG@5": 0.00014418363571166992
+        },
+        "resource_usage": {
+          "wall_seconds": 56.313,
+          "cpu_seconds": 64.109,
+          "cpu_hours": 0.017808,
+          "peak_rss_mb": 813.047,
+          "gpu_hours": 0
+        },
+        "evidence": [
+          "pdaom-screen.json"
+        ]
+      },
+      {
+        "id": "sbcr_lite",
+        "method": "Self-Boosted Calibrated Ranking",
+        "status": "screen_rejected_zero_selected",
+        "screen_delta": {
+          "primary": 0,
+          "GAUC": 0,
+          "nDCG@5": 0
+        },
+        "resource_usage": {
+          "wall_seconds": 15.945,
+          "cpu_seconds": 17.659,
+          "cpu_hours": 0.004905,
+          "peak_rss_mb": 1490.812,
+          "gpu_hours": 0
+        },
+        "evidence": [
+          "sbcr-screen.json"
+        ]
+      },
+      {
+        "id": "position_kd",
+        "method": "Position-aware knowledge distillation",
+        "status": "screen_rejected_zero_selected",
+        "screen_delta": {
+          "primary": 0,
+          "GAUC": 0,
+          "nDCG@5": 0
+        },
+        "best_nonzero_selection_primary_delta": -0.00015735626220703125,
+        "resource_usage": {
+          "wall_seconds": 16.557,
+          "cpu_seconds": 25.564,
+          "cpu_hours": 0.007101,
+          "peak_rss_mb": 865.016,
+          "gpu_hours": 0
+        },
+        "evidence": [
+          "position-kd-plan.json",
+          "position-kd-screen.json"
+        ]
+      },
+      {
+        "id": "cqe",
+        "method": "Conditional quantile watch-time estimation",
+        "status": "screen_rejected",
+        "screen_delta": {
+          "primary": -0.0004725456237792969,
+          "GAUC": -0.0005069971084594727,
+          "nDCG@5": -0.0004380345344543457
+        },
+        "resource_usage": {
+          "wall_seconds": 39.733,
+          "cpu_seconds": 59.438,
+          "cpu_hours": 0.016511,
+          "peak_rss_mb": 929.406,
+          "gpu_hours": 0
+        },
+        "evidence": [
+          "cqe-screen.json"
+        ]
+      },
+      {
+        "id": "jrc",
+        "method": "Joint ranking and calibration",
+        "status": "screen_rejected",
+        "screen_delta": {
+          "primary": 0.000011622905731201172,
+          "GAUC": -0.00004601478576660156,
+          "nDCG@5": 0.00006920099258422852
+        },
+        "resource_usage": {
+          "wall_seconds": 29.352,
+          "cpu_seconds": 33.338,
+          "cpu_hours": 0.009261,
+          "peak_rss_mb": 851.281,
+          "gpu_hours": 0
+        },
+        "evidence": [
+          "jrc-screen.json"
+        ]
+      },
+      {
+        "id": "confidence_ranking",
+        "method": "Heteroscedastic confidence-aware ranking",
+        "status": "screen_rejected",
+        "screen_delta": {
+          "primary": -0.004105508327484131,
+          "GAUC": -0.005167961120605469,
+          "nDCG@5": -0.003043055534362793
+        },
+        "resource_usage": {
+          "wall_seconds": 22.282,
+          "cpu_seconds": 28.577,
+          "cpu_hours": 0.007938,
+          "peak_rss_mb": 791.266,
+          "gpu_hours": 0
+        },
+        "evidence": [
+          "confidence-plan.json",
+          "confidence-screen.json"
+        ]
+      },
+      {
+        "id": "afn",
+        "method": "Adaptive Factorization Network",
+        "status": "architecture_selection_rejected",
+        "screen_delta": {
+          "primary": 0,
+          "GAUC": 0,
+          "nDCG@5": 0
+        },
+        "best_afn_selection_primary_delta": -0.008796334266662598,
+        "resource_usage": {
+          "wall_seconds": 24.097,
+          "cpu_seconds": 31.471,
+          "cpu_hours": 0.008742,
+          "peak_rss_mb": 977.656,
+          "gpu_hours": 0
+        },
+        "evidence": [
+          "afn-screen.json"
+        ]
+      },
+      {
+        "id": "bbp_lite",
+        "method": "Behavior Bias-aware Projection",
+        "status": "screen_rejected_zero_selected",
+        "screen_delta": {
+          "primary": 0,
+          "GAUC": 0,
+          "nDCG@5": 0
+        },
+        "best_nonzero_selection_primary_delta": -0.00008249282836914062,
+        "resource_usage": {
+          "wall_seconds": 22.539,
+          "cpu_seconds": 32.129,
+          "cpu_hours": 0.008925,
+          "peak_rss_mb": 941.438,
+          "gpu_hours": 0
+        },
+        "evidence": [
+          "bbp-plan.json",
+          "bbp-screen.json"
+        ]
+      },
+      {
+        "id": "eulernet",
+        "method": "EulerNet complex-valued feature interactions",
+        "status": "screen_rejected",
+        "screen_delta": {
+          "primary": -0.0010496973991394043,
+          "GAUC": -0.0010486841201782227,
+          "nDCG@5": -0.001050710678100586
+        },
+        "resource_usage": {
+          "wall_seconds": 46.12,
+          "cpu_seconds": 97.922,
+          "cpu_hours": 0.027201,
+          "peak_rss_mb": 1089.375,
+          "gpu_hours": 0
+        },
+        "evidence": [
+          "eulernet-screen.json"
+        ]
+      }
+    ],
+    "recommendation": "Keep the 0.612858057 champion. Retain RCR as the only validated backbone improvement, but do not blend it into the champion without a new source of complementary signal or a predeclared cross-fitted integration rule."
+  },
+  "screen": {
+    "paper": "https://arxiv.org/abs/2211.01494",
+    "protocol": {
+      "apr22_plus_file_opened": false,
+      "complete_user_groups": true,
+      "epoch_selection": "Apr8-11 -> Apr12-14 using alpha=0 control",
+      "evaluation": "Apr15-21",
+      "hidden_test_outcomes_parsed": false,
+      "integrity_incidents": [],
+      "refit": "Apr8-14"
+    },
+    "matched_configuration": {
+      "backbone": "MaskNet-style pointwise neural model",
+      "batch_size": 8192,
+      "dropout": 0.05,
+      "embedding_dim": 12,
+      "epochs_max": 15,
+      "fields": [
+        "user_id",
+        "video_id",
+        "author_id",
+        "tab",
+        "dur_bucket"
+      ],
+      "hidden": 64,
+      "learning_rate": 0.001,
+      "objective": "(1-alpha)*BCE + alpha*ListCE(sigmoid)",
+      "patience": 4,
+      "same_initialization_and_group_order": true,
+      "seed": 260830,
+      "weight_decay": 0.000001
+    },
+    "alpha_grid_predeclared": [
+      0,
+      0.0005,
+      0.001,
+      0.002
+    ],
+    "locked_epoch_count": 6,
+    "selected_alpha": 0.0005,
+    "zero_preferring_selection": "alpha=0 unless a nonzero alpha gains >=0.0001 primary and strictly improves GAUC and nDCG@5",
+    "rows": {
+      "epoch_dev": 332039,
+      "epoch_train": 559379,
+      "screen_evaluation": 249694
+    },
+    "runs": [
+      {
+        "alpha": 0,
+        "checkpoint": "runtime/parallel-calibrated-ranking/rcr/screen-alpha-0p0.pt",
+        "metrics": {
+          "GAUC": 0.6620279550552368,
+          "nDCG@5": 0.5645400881767273,
+          "primary": 0.6132839918136597,
+          "rows": 249694,
+          "users": 24262
+        },
+        "resource_usage": {
+          "cpu_hours": 0.003018,
+          "cpu_seconds": 10.863,
+          "cpu_utilization_percent": 178.81,
+          "device": "cpu",
+          "gpu_count": 0,
+          "gpu_hours": 0,
+          "peak_gpu_memory_mb": 0,
+          "peak_rss_mb": 834.391,
+          "wall_seconds": 6.075
+        },
+        "training_history": [
+          {
+            "BCE": 0.6227187346328389,
+            "ListCE(sigmoid)": 3.085975497419184,
+            "epoch": 1,
+            "loss": 0.6227187346328389
+          },
+          {
+            "BCE": 0.544070658900521,
+            "ListCE(sigmoid)": 3.0067146431316027,
+            "epoch": 2,
+            "loss": 0.544070658900521
+          },
+          {
+            "BCE": 0.50915432843295,
+            "ListCE(sigmoid)": 2.9959615208885886,
+            "epoch": 3,
+            "loss": 0.50915432843295
+          },
+          {
+            "BCE": 0.4965643281286413,
+            "ListCE(sigmoid)": 2.988773554021662,
+            "epoch": 4,
+            "loss": 0.4965643281286413
+          },
+          {
+            "BCE": 0.48808242218060927,
+            "ListCE(sigmoid)": 2.9763466704975476,
+            "epoch": 5,
+            "loss": 0.48808242218060927
+          },
+          {
+            "BCE": 0.4804726554588838,
+            "ListCE(sigmoid)": 2.9544759143482553,
+            "epoch": 6,
+            "loss": 0.4804726554588838
+          }
+        ]
+      },
+      {
+        "alpha": 0.0005,
+        "checkpoint": "runtime/parallel-calibrated-ranking/rcr/screen-alpha-0p0005.pt",
+        "deltas_vs_control": {
+          "GAUC": 0.00015664100646972656,
+          "nDCG@5": 0.00021517276763916016,
+          "primary": 0.00018596649169921875
+        },
+        "metrics": {
+          "GAUC": 0.6621845960617065,
+          "nDCG@5": 0.5647552609443665,
+          "primary": 0.6134699583053589,
+          "rows": 249694,
+          "users": 24262
+        },
+        "resource_usage": {
+          "cpu_hours": 0.003019,
+          "cpu_seconds": 10.87,
+          "cpu_utilization_percent": 179.22,
+          "device": "cpu",
+          "gpu_count": 0,
+          "gpu_hours": 0,
+          "peak_gpu_memory_mb": 0,
+          "peak_rss_mb": 857.922,
+          "wall_seconds": 6.065
+        },
+        "training_history": [
+          {
+            "BCE": 0.6227075744758953,
+            "ListCE(sigmoid)": 3.085936916958202,
+            "epoch": 1,
+            "loss": 0.6239391738718206
+          },
+          {
+            "BCE": 0.5439236505465074,
+            "ListCE(sigmoid)": 3.0065853530710394,
+            "epoch": 2,
+            "loss": 0.5451549714261835
+          },
+          {
+            "BCE": 0.509155807170001,
+            "ListCE(sigmoid)": 2.9959871833974665,
+            "epoch": 3,
+            "loss": 0.5103992088274523
+          },
+          {
+            "BCE": 0.4964709590781819,
+            "ListCE(sigmoid)": 2.9885038050738246,
+            "epoch": 4,
+            "loss": 0.4977169638330286
+          },
+          {
+            "BCE": 0.4877205634658987,
+            "ListCE(sigmoid)": 2.9745965025641703,
+            "epoch": 5,
+            "loss": 0.48896398950706826
+          },
+          {
+            "BCE": 0.4802294649861076,
+            "ListCE(sigmoid)": 2.9520193338394165,
+            "epoch": 6,
+            "loss": 0.48146534833041105
+          }
+        ]
+      },
+      {
+        "alpha": 0.001,
+        "checkpoint": "runtime/parallel-calibrated-ranking/rcr/screen-alpha-0p001.pt",
+        "deltas_vs_control": {
+          "GAUC": -0.000024497509002685547,
+          "nDCG@5": -0.00042134523391723633,
+          "primary": -0.00022292137145996094
+        },
+        "metrics": {
+          "GAUC": 0.6620034575462341,
+          "nDCG@5": 0.5641187429428101,
+          "primary": 0.6130610704421997,
+          "rows": 249694,
+          "users": 24262
+        },
+        "resource_usage": {
+          "cpu_hours": 0.003014,
+          "cpu_seconds": 10.851,
+          "cpu_utilization_percent": 179.23,
+          "device": "cpu",
+          "gpu_count": 0,
+          "gpu_hours": 0,
+          "peak_gpu_memory_mb": 0,
+          "peak_rss_mb": 860,
+          "wall_seconds": 6.055
+        },
+        "training_history": [
+          {
+            "BCE": 0.6227019954811442,
+            "ListCE(sigmoid)": 3.085916133360429,
+            "epoch": 1,
+            "loss": 0.6251652154055509
+          },
+          {
+            "BCE": 0.5441070502454585,
+            "ListCE(sigmoid)": 3.0066648678346115,
+            "epoch": 2,
+            "loss": 0.5465696215629577
+          },
+          {
+            "BCE": 0.5091355670582164,
+            "ListCE(sigmoid)": 2.9958790627392857,
+            "epoch": 3,
+            "loss": 0.5116223153742877
+          },
+          {
+            "BCE": 0.49648629237305036,
+            "ListCE(sigmoid)": 2.988400101661682,
+            "epoch": 4,
+            "loss": 0.4989782127467069
+          },
+          {
+            "BCE": 0.48779520988464353,
+            "ListCE(sigmoid)": 2.97522656917572,
+            "epoch": 5,
+            "loss": 0.49028265232389623
+          },
+          {
+            "BCE": 0.4800421197306026,
+            "ListCE(sigmoid)": 2.9517110456119884,
+            "epoch": 6,
+            "loss": 0.4825137948448008
+          }
+        ]
+      },
+      {
+        "alpha": 0.002,
+        "checkpoint": "runtime/parallel-calibrated-ranking/rcr/screen-alpha-0p002.pt",
+        "deltas_vs_control": {
+          "GAUC": -0.0002071857452392578,
+          "nDCG@5": -0.00008255243301391602,
+          "primary": -0.00014483928680419922
+        },
+        "metrics": {
+          "GAUC": 0.6618207693099976,
+          "nDCG@5": 0.5644575357437134,
+          "primary": 0.6131391525268555,
+          "rows": 249694,
+          "users": 24262
+        },
+        "resource_usage": {
+          "cpu_hours": 0.003047,
+          "cpu_seconds": 10.968,
+          "cpu_utilization_percent": 179.69,
+          "device": "cpu",
+          "gpu_count": 0,
+          "gpu_hours": 0,
+          "peak_gpu_memory_mb": 0,
+          "peak_rss_mb": 862.953,
+          "wall_seconds": 6.104
+        },
+        "training_history": [
+          {
+            "BCE": 0.6226904944940047,
+            "ListCE(sigmoid)": 3.085869487849149,
+            "epoch": 1,
+            "loss": 0.6276168725707314
+          },
+          {
+            "BCE": 0.5440179150212895,
+            "ListCE(sigmoid)": 3.006552802432667,
+            "epoch": 2,
+            "loss": 0.548943001573736
+          },
+          {
+            "BCE": 0.5091291172937913,
+            "ListCE(sigmoid)": 2.9958207087083295,
+            "epoch": 3,
+            "loss": 0.5141025117852471
+          },
+          {
+            "BCE": 0.4965206278996034,
+            "ListCE(sigmoid)": 2.9884219386360864,
+            "epoch": 4,
+            "loss": 0.5015044415538962
+          },
+          {
+            "BCE": 0.4880871453068473,
+            "ListCE(sigmoid)": 2.976252566684376,
+            "epoch": 5,
+            "loss": 0.49306349049914966
+          },
+          {
+            "BCE": 0.4807103601368991,
+            "ListCE(sigmoid)": 2.9547309745441783,
+            "epoch": 6,
+            "loss": 0.4856584145264192
+          }
+        ]
+      }
+    ],
+    "merits_confirmation": true
+  },
+  "confirmation": {
+    "protocol": {
+      "evaluation": "Apr22-28",
+      "hidden_test_outcomes_parsed": false,
+      "integrity_incidents": [],
+      "outcome_fields_parsed_only_for": "Apr22-28",
+      "retuning": false,
+      "train": "Apr8-21"
+    },
+    "control": {
+      "alpha": 0,
+      "checkpoint": "runtime/parallel-calibrated-ranking/rcr/confirmation-alpha-0p0.pt",
+      "metrics": {
+        "GAUC": 0.6665645241737366,
+        "nDCG@5": 0.5349597930908203,
+        "primary": 0.600762128829956,
+        "rows": 124909,
+        "users": 22377
+      },
+      "resource_usage": {
+        "cpu_hours": 0.003971,
+        "cpu_seconds": 14.296,
+        "cpu_utilization_percent": 174.12,
+        "device": "cpu",
+        "gpu_count": 0,
+        "gpu_hours": 0,
+        "peak_gpu_memory_mb": 0,
+        "peak_rss_mb": 795.453,
+        "wall_seconds": 8.211
+      },
+      "training_history": [
+        {
+          "BCE": 0.6051001946131388,
+          "ListCE(sigmoid)": 3.289305749514424,
+          "epoch": 1,
+          "loss": 0.6051001946131388
+        },
+        {
+          "BCE": 0.5413625255121407,
+          "ListCE(sigmoid)": 3.22802249759647,
+          "epoch": 2,
+          "loss": 0.5413625255121407
+        },
+        {
+          "BCE": 0.5164002167417648,
+          "ListCE(sigmoid)": 3.2195914670930685,
+          "epoch": 3,
+          "loss": 0.5164002167417648
+        },
+        {
+          "BCE": 0.5028280996261759,
+          "ListCE(sigmoid)": 3.2127614630029555,
+          "epoch": 4,
+          "loss": 0.5028280996261759
+        },
+        {
+          "BCE": 0.49583249227375004,
+          "ListCE(sigmoid)": 3.2062990716163147,
+          "epoch": 5,
+          "loss": 0.49583249227375004
+        },
+        {
+          "BCE": 0.49034884107028337,
+          "ListCE(sigmoid)": 3.188567782124729,
+          "epoch": 6,
+          "loss": 0.49034884107028337
+        }
+      ]
+    },
+    "candidate": {
+      "alpha": 0.0005,
+      "checkpoint": "runtime/parallel-calibrated-ranking/rcr/confirmation-alpha-0p0005.pt",
+      "metrics": {
+        "GAUC": 0.6666797995567322,
+        "nDCG@5": 0.5350789427757263,
+        "primary": 0.6008793711662292,
+        "rows": 124909,
+        "users": 22377
+      },
+      "resource_usage": {
+        "cpu_hours": 0.003822,
+        "cpu_seconds": 13.758,
+        "cpu_utilization_percent": 178.57,
+        "device": "cpu",
+        "gpu_count": 0,
+        "gpu_hours": 0,
+        "peak_gpu_memory_mb": 0,
+        "peak_rss_mb": 872.516,
+        "wall_seconds": 7.705
+      },
+      "training_history": [
+        {
+          "BCE": 0.6050986182605121,
+          "ListCE(sigmoid)": 3.289288546176667,
+          "epoch": 1,
+          "loss": 0.6064406992695855
+        },
+        {
+          "BCE": 0.5413778603922391,
+          "ListCE(sigmoid)": 3.2279923993644983,
+          "epoch": 2,
+          "loss": 0.5427211512487831
+        },
+        {
+          "BCE": 0.5164109986301855,
+          "ListCE(sigmoid)": 3.2195372192572194,
+          "epoch": 3,
+          "loss": 0.5177625466323068
+        },
+        {
+          "BCE": 0.5028610690265682,
+          "ListCE(sigmoid)": 3.212683124745146,
+          "epoch": 4,
+          "loss": 0.5042159673592723
+        },
+        {
+          "BCE": 0.49583150879711124,
+          "ListCE(sigmoid)": 3.206306388192143,
+          "epoch": 5,
+          "loss": 0.49718673495536153
+        },
+        {
+          "BCE": 0.4903527699041028,
+          "ListCE(sigmoid)": 3.1886816396780895,
+          "epoch": 6,
+          "loss": 0.49170191934768187
+        }
+      ]
+    },
+    "deltas_vs_control": {
+      "GAUC": 0.00011527538299560547,
+      "nDCG@5": 0.00011914968490600586,
+      "primary": 0.00011724233627319336
+    },
+    "selected_alpha_locked": 0.0005,
+    "matched_candidate_improves_all_metrics": true
+  },
+  "audit": {
+    "baseline_metrics": {
+      "GAUC": 0.6823537349700928,
+      "nDCG@5": 0.5433623194694519,
+      "primary": 0.6128580570220947
+    },
+    "fixed_residual_metrics": {
+      "GAUC": 0.6823500394821167,
+      "nDCG@5": 0.5433613657951355,
+      "primary": 0.6128556728363037
+    },
+    "fixed_residual_gains": {
+      "GAUC": -0.0000036954879760742188,
+      "nDCG@5": -9.5367431640625e-7,
+      "primary": -0.000002384185791015625
+    },
+    "fixed_weight": 0.05,
+    "folds": [
+      {
+        "all_metrics_nonnegative": false,
+        "baseline_metrics": {
+          "GAUC": 0.6848820447921753,
+          "nDCG@5": 0.5397460460662842,
+          "primary": 0.6123140454292297
+        },
+        "fold": 0,
+        "gains": {
+          "GAUC": -0.00000476837158203125,
+          "nDCG@5": 0.000004231929779052734,
+          "primary": -2.980232238769531e-7
+        },
+        "residual_metrics": {
+          "GAUC": 0.6848772764205933,
+          "nDCG@5": 0.5397502779960632,
+          "primary": 0.6123137474060059
+        },
+        "rows": 31537,
+        "users": 5602
+      },
+      {
+        "all_metrics_nonnegative": false,
+        "baseline_metrics": {
+          "GAUC": 0.6825631856918335,
+          "nDCG@5": 0.542828381061554,
+          "primary": 0.6126958131790161
+        },
+        "fold": 1,
+        "gains": {
+          "GAUC": -0.0000073909759521484375,
+          "nDCG@5": 0,
+          "primary": -0.0000036954879760742188
+        },
+        "residual_metrics": {
+          "GAUC": 0.6825557947158813,
+          "nDCG@5": 0.542828381061554,
+          "primary": 0.61269211769104
+        },
+        "rows": 30770,
+        "users": 5589
+      },
+      {
+        "all_metrics_nonnegative": false,
+        "baseline_metrics": {
+          "GAUC": 0.676494836807251,
+          "nDCG@5": 0.5456936359405518,
+          "primary": 0.6110942363739014
+        },
+        "fold": 2,
+        "gains": {
+          "GAUC": -0.000004112720489501953,
+          "nDCG@5": -0.000007867813110351562,
+          "primary": -0.0000059604644775390625
+        },
+        "residual_metrics": {
+          "GAUC": 0.6764907240867615,
+          "nDCG@5": 0.5456857681274414,
+          "primary": 0.6110882759094238
+        },
+        "rows": 31466,
+        "users": 5633
+      },
+      {
+        "all_metrics_nonnegative": true,
+        "baseline_metrics": {
+          "GAUC": 0.685429036617279,
+          "nDCG@5": 0.5451765656471252,
+          "primary": 0.6153028011322021
+        },
+        "fold": 3,
+        "gains": {
+          "GAUC": 0.000001430511474609375,
+          "nDCG@5": 0,
+          "primary": 7.152557373046875e-7
+        },
+        "residual_metrics": {
+          "GAUC": 0.6854304671287537,
+          "nDCG@5": 0.5451765656471252,
+          "primary": 0.6153035163879395
+        },
+        "rows": 31136,
+        "users": 5553
+      }
+    ],
+    "merits_promotion": false,
+    "all_four_folds_all_metrics_nonnegative": false,
+    "hidden_test_outcomes_parsed": false,
+    "integrity_incidents": []
+  },
+  "manifest": {
+    "artifact": "KuaiLab validation-best recipe",
+    "validation_metrics": {
+      "primary": 0.6128580570220947,
+      "gauc": 0.6823537349700928,
+      "ndcg5": 0.5433623194694519,
+      "rows": 124909,
+      "users": 22377
+    },
+    "validation_scores": "results/final-model/validation-scores.npz",
+    "validation_scores_sha256": "59df8954dc9b1e484e36575dc606293a2a100ba1c4ae049a8c4e2600647f5a9d",
+    "hidden_test_accessed": false,
+    "notes": "The checked-in manifest and validation export identify the frozen recipe. Large prerequisite model checkpoints remain untracked and are reproducible from the documented scripts. Use the guarded exporter exactly once for the final hidden split."
+  }
+}

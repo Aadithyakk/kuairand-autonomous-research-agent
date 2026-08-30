@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import judgeShowcase from '../public/judge-showcase.json';
+import ResearchReplay from './research-replay';
 
 const API = process.env.NEXT_PUBLIC_KUAILAB_API ?? 'http://127.0.0.1:8787';
 const stageLabels: Record<string, string> = {
@@ -58,6 +59,7 @@ function statusTone(status: string) {
 function signed(value: number, digits = 6) { return `${value >= 0 ? '+' : ''}${value.toFixed(digits)}`; }
 
 export default function Home() {
+  const [view, setView] = useState<'replay' | 'live'>('replay');
   const [state, setState] = useState<State | null>(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState('');
@@ -112,7 +114,7 @@ export default function Home() {
     setError('');
     try {
       const response = await fetch(`${API}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const payload = await response.json();
+      const payload = await response.json() as { error?: string; state: State };
       if (!response.ok) throw new Error(payload.error ?? 'Request failed');
       setState(payload.state);
       return true;
@@ -172,10 +174,10 @@ export default function Home() {
       <aside className="sidebar">
         <div className="brand-mark">KL</div>
         <nav aria-label="Dashboard sections">
-          <a className="nav-item active" href="#overview" aria-label="Run overview">⌁</a>
+          <button className={`nav-item ${view === 'replay' ? 'active' : ''}`} onClick={() => setView('replay')} aria-label="Research replay">⌁</button>
           <button className="nav-item" type="button" onClick={openJudgeWalkthrough} aria-label="Judge walkthrough">▶</button>
-          <a className="nav-item" href="#iterations" aria-label="Iterations">◇</a>
-          <a className="nav-item" href="#trace" aria-label="Evidence trace">≡</a>
+          <a className="nav-item" href="#iterations" onClick={() => setView('live')} aria-label="Live iterations">◇</a>
+          <a className="nav-item" href={view === 'replay' ? '#replay-evidence' : '#trace'} aria-label="Evidence trace">≡</a>
         </nav>
         <div className={`sidebar-status ${connected ? '' : 'offline'}`} title={connected ? 'Local engine connected' : 'Local engine offline'}><span />{connected ? 'API' : 'OFF'}</div>
       </aside>
@@ -183,11 +185,13 @@ export default function Home() {
       <section className="workspace" id="overview">
         <header className="topbar">
           <div>
-            <p className="eyebrow">KuaiRand-Pure · autonomous campaign</p>
-            <h1>Research control room</h1>
+            <p className="eyebrow">KuaiLab / {view === 'replay' ? 'Research replay' : 'Live campaign'}</p>
+            <h1>{view === 'replay' ? 'Good research leaves a trail.' : 'Research control room'}</h1>
           </div>
           <div className="top-actions">
-            <button className="button judge-button" type="button" data-testid="open-judge-walkthrough" onClick={openJudgeWalkthrough}><span>▶</span> 3-minute walkthrough</button>
+            <button className="button ghost" type="button" data-testid="open-judge-walkthrough" onClick={openJudgeWalkthrough}>Project overview</button>
+            <button className="button judge-button" type="button" onClick={() => setView(view === 'replay' ? 'live' : 'replay')}>{view === 'replay' ? 'Go live →' : '← Research replay'}</button>
+            {view === 'live' && <>
             <span className={`live-pill ${status}`}><i /> {connected ? status : 'backend offline'}</span>
             {status === 'running' && <button className="button ghost" onClick={() => action('/api/run/pause')}>Pause</button>}
             {status === 'paused' && <button className="button ghost" onClick={() => action('/api/run/resume')}>Resume</button>}
@@ -195,9 +199,11 @@ export default function Home() {
             {active && <button className="button primary" onClick={() => setShowSteer(true)}>Steer agent</button>}
             {canContinue && <button className="button ghost" onClick={() => openSetup('continue')}>Continue champion</button>}
             {!active && <button className="button primary" onClick={() => openSetup('new')}>New campaign</button>}
+            </>}
           </div>
         </header>
 
+        {view === 'replay' ? <ResearchReplay suspended={showJudgeWalkthrough} /> : <>
         <section className="judge-hero" aria-labelledby="judge-hero-title">
           <div className="judge-hero-copy">
             <div className="verified-kicker"><i /> Verified validation evidence · hidden test untouched</div>
@@ -284,6 +290,7 @@ export default function Home() {
           <div><span className={state?.config.champion_available ? 'ready' : 'missing'} />Champion base <b>{state?.config.champion_available ? '0.612858 mounted' : 'not verified'}</b></div>
           <div className="resource-total">Train {elapsed(state?.usage.train_seconds ?? 0)} · CPU {computeHours(state?.usage.cpu_hours ?? 0)} · GPU {computeHours(state?.usage.gpu_hours ?? 0)} · Tokens {(state?.usage.total_tokens ?? 0).toLocaleString()}</div>
         </section>
+        </>}
       </section>
 
       {showJudgeWalkthrough && <div className="walkthrough-backdrop" role="dialog" aria-modal="true" aria-labelledby="walkthrough-title" data-testid="judge-walkthrough">
@@ -378,7 +385,7 @@ export default function Home() {
               <span>Use ← → keys · approximately {judgeStep === 0 ? '30' : judgeStep === 4 ? '35' : '40'} seconds</span>
               <div>
                 <button className="button ghost" type="button" disabled={judgeStep === 0} onClick={() => setJudgeStep((step) => Math.max(0, step - 1))}>Back</button>
-                {judgeStep < judgeSteps.length - 1 ? <button className="button judge-primary" type="button" data-testid="judge-next" onClick={() => setJudgeStep((step) => Math.min(judgeSteps.length - 1, step + 1))}>Next: {judgeSteps[judgeStep + 1].label} <span>→</span></button> : <button className="button judge-primary" type="button" data-testid="judge-finish" onClick={() => setShowJudgeWalkthrough(false)}>Open live control room <span>↗</span></button>}
+                {judgeStep < judgeSteps.length - 1 ? <button className="button judge-primary" type="button" data-testid="judge-next" onClick={() => setJudgeStep((step) => Math.min(judgeSteps.length - 1, step + 1))}>Next: {judgeSteps[judgeStep + 1].label} <span>→</span></button> : <button className="button judge-primary" type="button" data-testid="judge-finish" onClick={() => { setShowJudgeWalkthrough(false); setView('live'); }}>Open live control room <span>↗</span></button>}
               </div>
             </footer>
           </div>

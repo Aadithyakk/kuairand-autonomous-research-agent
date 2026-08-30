@@ -1,4 +1,4 @@
-# KuaiLab three-minute judge demo
+# KuaiLab research replay & judge demo
 
 This is the deterministic presentation path for TikTok TechJam 2026. It is a view over checked-in validation evidence, not a synthetic campaign and not a hidden-test result.
 
@@ -12,11 +12,32 @@ npm run verify:demo
 npm run local
 ```
 
-Open `http://localhost:3000`, then select **3-minute walkthrough**. The walkthrough itself needs no OpenAI key or dataset download. The backend enables the live control-room portion; checked-in showcase evidence remains deterministic.
+Open `http://localhost:3000`. The default **Agent Research Replay** uses a deterministic 2:30 story reconstructed from checked-in reports. Press **Play story**; use **Audit** to pause and inspect report extracts, source fingerprints, and the clickable research tree. **Go live** opens the existing control room without starting a campaign. The previous five-part walkthrough remains under **Project overview**.
 
-Before recording, use a 1440 × 900 browser window, collapse unrelated browser chrome, and verify that the dashboard says **Champion primary · verified** rather than **Demo primary · simulated**.
+Replay needs no API key, backend, dataset download, or active training. Run `npm run dashboard -- --host 127.0.0.1 --port 3000` for the UI alone. On Windows, use `npm.cmd` if PowerShell blocks npm, and `runtime\train-env\Scripts\python.exe scripts/verify_judge_demo.py` for the original evidence verifier.
 
-## Exact 3:00 narration
+Before recording, verify the KPI strip says **Recorded champion · primary**. Never present the live synthetic smoke-test scores as model validation.
+
+## Research replay · 2:30
+
+| Time | Canvas | Key message |
+| --- | --- | --- |
+| 0:00 | Inspect | Explain the temporal windows and recorded validation counts. Missing profiling diagnostics are explicitly unavailable. |
+| 0:18 | Research | Open the recorded RCR paper citation; no fake search activity. |
+| 0:35 | Hypothesize | Show the predeclared four-weight experiment and matched control. |
+| 0:52 | Implement | Show the objective change and locked training configuration. |
+| 1:10 | Train | Show actual six-epoch training BCE, not a simulated training job. |
+| 1:26 | Evaluate: screen | The candidate improves its matched base on 15–21 April. |
+| 1:44 | Evaluate: confirm | The gain repeats on 22–28 April; integration still needs testing. |
+| 2:02 | Reflect | The 5% champion residual regresses and only one user fold passes all metrics. Reject; retain the champion. |
+
+The headline `0.601470 → 0.612858` improvement predates this RCR experiment. This wave made **zero promotions**. It would be misleading to animate that historical lift as the result of RCR. Decision cards summarize recorded observations and editorial explanations, not private chain-of-thought or a timestamped agent transcript. Playback time is presentation pacing; resource counters report saved measurements.
+
+Every stage links to its evidence. Audit exposes seven allowlisted report extracts and original-file SHA-256 fingerprints; **Download evidence bundle** downloads the same JSON used by the UI. The bundle excludes raw outcome rows and model binaries. Source hashes identify content, not independent experimental validity. Confidence intervals and unrecorded search/profiling events are not fabricated.
+
+After changing source reports, run `npm run replay:sync`, then `npm run test:replay`. Review narrative claims before accepting a changed experiment outcome. `npm run test:replay` checks freshness, metric relationships, replay transitions, each stage's server rendering, and the research tree. Run `npm run build` before presenting. The optional social preview uses localhost by default; set a trusted `NEXT_PUBLIC_SITE_URL` if this UI is later hosted.
+
+## Optional Project overview · 3:00 narration
 
 ### 0:00–0:25 — The challenge
 
