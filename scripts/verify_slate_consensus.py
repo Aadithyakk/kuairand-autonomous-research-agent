@@ -613,17 +613,21 @@ if batch_slate_tree is not None:
         )
         scores = scores + 0.002 * user_neighbor
 
-    # A pointwise CatBoost trained through April 19 weights each training row
-    # by inverse user activity to power 0.5, then selects its tree count on
-    # April 20-21. The model sees no evaluation outcomes. A fine four-fold
-    # audit selected the same conservative positive correction in every fold;
-    # it changes only a small number of otherwise tied or near-tied orderings.
+    # The user-balanced tree and frozen watch-ratio DeepFM contain complementary
+    # near-tie information even though neither passes the final residual gate
+    # alone. A corrected two-dimensional audit over actual user-ID-modulo folds
+    # selected this exact pair in all four folds, with every held-out fold
+    # improving. Both models were trained before the evaluation interval.
     if not skip_user_balanced_tree:
         user_balanced_tree = load_scores(
             "history-catboost-classifier-probe-i500-seq40-session-"
             "ub0.5-s239.npz"
         )
-        scores = scores + 0.001875 * user_balanced_tree
+        scores = (
+            scores
+            + 0.001875 * user_balanced_tree
+            + 0.001875 * watch
+        )
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -685,7 +689,8 @@ print(json.dumps({
                 "training_user_neighbor_positive_cf": 0.002,
             } if not skip_user_neighbor else {}),
             **({
-                "training_user_balanced_catboost": 0.001875,
+                "joint_user_balanced_catboost": 0.001875,
+                "joint_watch_ratio_deepfm": 0.001875,
             } if not skip_user_balanced_tree else {}),
         } if not skip_batch_slate else {}),
     },

@@ -1,105 +1,24 @@
 {
-  "status": "verified_improvement",
+  "status": "invalidated_after_fold_audit",
   "objective": "training-user-balanced pointwise tree correction",
   "branch": "feature/experiment-resource-tracking",
-  "starting_commit": "fdd0516",
-  "protocol": {
-    "training_fit_dates": "20220409-20220419",
-    "training_holdout_dates": "20220420-20220421",
-    "validation_dates": "20220422-20220428",
-    "final_selection": "four disjoint user-id-modulo folds",
-    "validation_outcomes_used_as_features": false,
-    "hidden_test_accessed": false
-  },
-  "previous_champion": {
+  "original_commit": "62e65e6",
+  "reason": "The original audit selected folds from actual user IDs but reported held-out gains using ordinal user codes modulo four. Correcting row fold membership to folds[user_codes] invalidated the tree-only promotion.",
+  "preceding_champion": {
     "primary": 0.612804651260376,
     "gauc": 0.6822999715805054,
     "ndcg5": 0.5433093309402466
   },
-  "new_champion": {
-    "primary": 0.6128088235855103,
-    "gauc": 0.6823024153709412,
-    "ndcg5": 0.5433152318000793,
-    "users": 22377,
-    "rows": 124909
+  "corrected_tree_only_audit": {
+    "fine_grid_fold_weights": [0.001875, 0.001875, 0.003125, 0.001875],
+    "heldout_fold_primary_gains": [0.0, 0.0000045299530029296875, -0.000007331371307373047, -0.0000016689300537109375],
+    "oof_primary": 0.61280357837677,
+    "fixed_mean_weight": 0.0021875,
+    "fixed_primary": 0.6128088235855103,
+    "fixed_fold_primary_gains": [0.0, 0.0000045299530029296875, 0.000013768672943115234, -0.0000016689300537109375],
+    "accepted": false
   },
-  "gain": {
-    "primary": 0.000004172325134277344,
-    "gauc": 0.0000024437904357910156,
-    "ndcg5": 0.000005900859832763672,
-    "over_baseline_primary": 0.011339306831359863,
-    "relative_over_baseline_percent": 1.8852670859452358
-  },
-  "candidate": {
-    "artifact": "runtime/history-catboost-classifier-probe-i500-seq40-session-ub0.5-s239.npz",
-    "model": "pointwise CatBoost classifier with session/history features",
-    "fit_user_weight": "(mean fit-user row count / fit-user row count)^0.5, normalized to mean one",
-    "maximum_iterations": 500,
-    "selected_trees": 165,
-    "seed": 239,
-    "standalone_primary": 0.603074848651886,
-    "accepted_weight": 0.001875,
-    "fine_grid_fold_weights": [
-      0.001875,
-      0.001875,
-      0.003125,
-      0.001875
-    ],
-    "conservative_fixed_fold_primary_gains": [
-      0.0000019073486328125,
-      0.0000008344650268554688,
-      0.0,
-      0.000013887882232666016
-    ]
-  },
-  "rejected_in_cycle": [
-    "Strictly earlier-day random-log aggregates and the causal random-log CatBoost selected zero residual weight.",
-    "Temporally selected weekly-recurrence priors selected zero or opposing fold weights.",
-    "MMoE and binary auxiliary-feedback heads selected zero or regressed at fine resolution.",
-    "Focal BCE with gamma 0.5 reached 0.60757238 standalone and selected zero residual weight.",
-    "User-balance exponents 0.25, 0.375, 0.625, and 0.75 did not reproduce the stable positive correction of exponent 0.5."
-  ],
-  "resource_usage": {
-    "accepted_retrain": {
-      "wall_seconds": 79.947,
-      "cpu_seconds": 450.638,
-      "cpu_hours": 0.125177,
-      "peak_rss_mb": 13214.641,
-      "gpu_hours": 0.0
-    },
-    "fine_residual_selection": {
-      "wall_seconds": 19.025,
-      "cpu_seconds": 19.019,
-      "cpu_hours": 0.005283,
-      "peak_rss_mb": 1204.719,
-      "gpu_hours": 0.0
-    },
-    "conservative_weight_verification": {
-      "wall_seconds": 18.503,
-      "cpu_seconds": 18.498,
-      "cpu_hours": 0.005138,
-      "peak_rss_mb": 1205.266,
-      "gpu_hours": 0.0
-    },
-    "final_canonical_and_skip_control": {
-      "runs": 2,
-      "wall_seconds": 33.41,
-      "cpu_seconds": 33.406,
-      "cpu_hours": 0.009279,
-      "peak_rss_mb": 1089.594,
-      "gpu_hours": 0.0
-    },
-    "successful_tracked_cycle_totals": {
-      "runs": 25,
-      "wall_seconds": 861.684,
-      "cpu_seconds": 2995.592,
-      "cpu_hours": 0.832109,
-      "maximum_observed_process_rss_mb": 15466.391,
-      "gpu_hours": 0.0,
-      "note": "Two CatBoost controls were run concurrently. ProcessResourceTracker records per-process peak RSS, not the combined system peak. Failed file-path probes emitted no tracker record and are excluded."
-    }
-  },
-  "target_primary": 0.7,
-  "target_reached": false,
-  "remaining_gap": 0.0871911764144897
+  "resolution": "The tree is not retained as an independent stage. A subsequent corrected two-dimensional audit accepts it only as one component of an inseparable joint residual with the frozen watch-ratio DeepFM; see accepted-cycle-2026-08-30-joint-terminal-residual.json.",
+  "validation_outcomes_used_as_features": false,
+  "hidden_test_accessed": false
 }

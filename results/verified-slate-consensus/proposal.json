@@ -1,7 +1,7 @@
 {
-  "title": "Training-user-balanced pointwise tree over the neighbor-corrected slate consensus",
+  "title": "Joint user-balanced-tree and watch-ratio residual over the neighbor-corrected slate consensus",
   "experiment_type": "offline_slate_reranking",
-  "hypothesis": "After the sparse user-neighbor correction, a pointwise tree trained with inverse user-activity weighting can recover a few user-balanced orderings that row-weighted models smooth away. A conservative ordinal correction should change only near ties and preserve calibration.",
+  "hypothesis": "The user-balanced CatBoost and frozen watch-ratio DeepFM make complementary near-tie errors. Selecting their small residual weights jointly can preserve the calibrated neighbor-corrected ensemble while recovering orderings that neither residual can improve stably alone.",
   "protocol": {
     "train_dates": "2022-04-08 through 2022-04-21",
     "validation_dates": "2022-04-22 through 2022-04-28",
@@ -9,10 +9,10 @@
     "hidden_test_accessed": false,
     "validation_outcomes_used_as_features": false,
     "candidate_information_used": ["user_id", "video_id", "author_id", "music_id", "video_type", "hourmin", "time_ms", "tab", "static tag tokens and item statistics", "training-only long_view and play_time_ms aggregates", "training-only user exposure overlap and other-user outcomes", "outcome-free full-slate score neighborhoods"],
-    "selection": "Tune each scalar only on disjoint user folds. The first eight stages use two user-parity folds; the remaining conditional, temporal, training-prior, confidence-gated, structural-routing, coverage-routing, user-neighbor, and user-balanced-tree stages use four user-id-modulo folds. Screen neighbor count, similarity profile, power, and smoothing on an April 8-18 to April 19-21 temporal split. Fit the user-balanced tree through April 19, select its tree count on April 20-21, then select only its outer scalar on four disjoint user folds. Use the conservative modal tree weight rather than the larger fold mean.",
+    "selection": "Tune each scalar only on disjoint user folds. The first eight stages use two user-parity folds; the remaining conditional, temporal, training-prior, confidence-gated, structural-routing, coverage-routing, and user-neighbor stages use four user-id-modulo folds. Screen neighbor count, similarity profile, power, and smoothing on an April 8-18 to April 19-21 temporal split. Fit the user-balanced tree through April 19 and select its tree count on April 20-21. Jointly search only the final CatBoost and frozen watch-ratio DeepFM scalars on four folds assigned by actual user_id modulo four; require all fold-selected pairs to agree and all held-out folds to improve.",
     "coverage_threshold_protocol": "Compute the low-rate threshold as the row-weighted first quartile of Bayesian-smoothed April 8-21 user long-view rates. Mark prior-video coverage when a validation user-video identifier pair occurred in April 8-21; validation labels are never accessed.",
     "user_neighbor_protocol": "Use cosine similarity over binary April 8-21 user-item exposures, retain 60 other users, square nonnegative similarities, estimate target-item long-view rates from those neighbors with smoothing 8 toward a smoothing-20 training item prior, and add only the within-user ordinal rank at weight 0.002.",
-    "user_balanced_tree_protocol": "Fit a seed-239 pointwise CatBoost through April 19 with each row weighted by (mean user row count / user row count)^0.5, normalize weights to mean one, early-stop on April 20-21, and retain 165 trees. Add its within-user ordinal rank at the conservative fixed weight 0.001875."
+    "terminal_joint_protocol": "Fit a seed-239 pointwise CatBoost through April 19 with each row weighted by (mean user row count / user row count)^0.5, normalize weights to mean one, early-stop on April 20-21, and retain 165 trees. Pair its within-user ordinal rank with the frozen watch-ratio DeepFM rank. A two-dimensional grid from -0.00125 to 0.004375 in steps of 0.000625 selected (0.001875, 0.001875) in every actual-user-ID fold. Neither component is accepted as a terminal residual by itself."
   },
   "features": {
     "token_personal_mean": "Within-user standardized mean across an item's tag tokens of log1p(user-slate token count) - 0.25 * log1p(global-slate token count).",
@@ -43,7 +43,8 @@
     "low_training_rate_watch_consensus": "For rows whose user is in the row-weighted lowest quartile of Bayesian-smoothed April 8-21 long-view rate, move 0.135 toward the frozen watch-ratio DeepFM rank.",
     "prior_video_batch_extrapolation": "For validation users having at least one exact user-video pair seen in April 8-21 training, extrapolate 0.03 away from the frozen temporal batch-slate CatBoost rank. The gate checks identifiers only.",
     "training_user_neighbor_positive_cf": "Within-user ordinal rank of a 60-neighbor collaborative estimate built from binary April 8-21 exposure overlap and other users' April 8-21 long-view outcomes. The historical artifact key contains 'positive', but similarity is exposure-only; outcomes enter only the neighbor target estimate.",
-    "training_user_balanced_catboost": "Within-user ordinal rank of a pointwise CatBoost trained only on April 9-19 outcomes with square-root inverse user-activity weights and early-stopped on April 20-21."
+    "joint_training_user_balanced_catboost": "Within-user ordinal rank of a pointwise CatBoost trained only on April 9-19 outcomes with square-root inverse user-activity weights and early-stopped on April 20-21.",
+    "joint_watch_ratio_deepfm": "Within-user ordinal rank of the frozen DeepFM trained on April 9-21 with continuous watch-ratio auxiliary supervision. It is jointly weighted with the user-balanced tree rather than accepted alone."
   },
   "selection_evidence": [
     {
@@ -260,22 +261,23 @@
       "heldout_fold_primary_gains": [0.0000380278, 0.0000196099, 0.0000212789, 0.0000163913]
     },
     {
-      "stage": "training_user_balanced_catboost",
+      "stage": "joint_user_balanced_catboost_watch_ratio",
       "user_balance_power": 0.5,
       "selected_trees": 165,
-      "fine_grid_fold_weights": [0.001875, 0.001875, 0.003125, 0.001875],
-      "fixed_weight": 0.001875,
-      "oof_primary": 0.6128088235855103,
-      "fixed_primary": 0.6128088235855103,
-      "fixed_gauc": 0.6823024153709412,
-      "fixed_ndcg5": 0.5433152318000793,
-      "heldout_fold_primary_gains": [0.0000019073, 0.0000008345, 0.0, 0.0000138879]
+      "two_dimensional_grid": [-0.00125, 0.004375, 0.000625],
+      "fold_weight_pairs": [[0.001875, 0.001875], [0.001875, 0.001875], [0.001875, 0.001875], [0.001875, 0.001875]],
+      "fixed_weights": {"user_balanced_catboost": 0.001875, "watch_ratio_deepfm": 0.001875},
+      "oof_primary": 0.6128295660018921,
+      "fixed_primary": 0.6128295660018921,
+      "fixed_gauc": 0.682319164276123,
+      "fixed_ndcg5": 0.5433400273323059,
+      "heldout_fold_primary_gains": [0.0000419617, 0.0000045300, 0.0000331402, 0.0000196695]
     }
   ],
   "rejected_followup": {
     "feature": "remaining training-coverage residuals",
-    "reason": "Whole-user PairLogitPairwise and QuerySoftMax residual rankers improved their temporal objectives but did not add stable information to the final champion. Alternate neighbor counts and signed profiles induced essentially the same tiny order changes and supplied no stable second-stage residual."
+    "reason": "The earlier tree-only promotion was invalidated after its reporting path was found to use ordinal user codes rather than actual IDs for fold membership. Under corrected folds, tree-only OOF primary is 0.61280358 and watch-only OOF primary is 0.61279690; only their jointly selected pair passes. Whole-user PairLogitPairwise and QuerySoftMax residuals remain rejected."
   },
-  "acceptance": "Accept only stages whose disjoint-user weights agree in sign, whose stitched cross-fitted primary improves over the preceding stage, and whose fixed recipe does not reduce either aggregate metric or any held-out user fold. The user-balanced tree selected a positive fine-grid weight in every fold; its conservative modal weight improves three held-out folds, leaves one unchanged, and improves aggregate GAUC and nDCG@5.",
+  "acceptance": "Accept only stages whose disjoint-user weights agree, whose stitched cross-fitted primary improves over the preceding stage, and whose fixed recipe does not reduce either aggregate metric or any held-out user fold. All four actual-user-ID folds selected the identical joint pair (0.001875, 0.001875); the fixed pair improves every held-out fold plus aggregate GAUC and nDCG@5.",
   "accepted": true
 }
