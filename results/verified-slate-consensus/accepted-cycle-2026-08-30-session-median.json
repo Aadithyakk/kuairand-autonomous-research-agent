@@ -1,0 +1,109 @@
+{
+  "status": "verified_improvement",
+  "objective": "two/three-session median-consensus extrapolation",
+  "branch": "feature/experiment-resource-tracking",
+  "starting_commit": "84ed2ca",
+  "protocol": {
+    "validation_dates": "20220422-20220428",
+    "source_models": 20,
+    "gate": "user's complete supplied slate forms two or three sessions under a 30-minute inactivity boundary",
+    "candidate": "gate * (median frozen-model fractional rank - preceding champion rank)",
+    "final_selection": "zero-preferring scalar selection on four disjoint folds assigned by actual user_id modulo four",
+    "validation_outcomes_used_as_features": false,
+    "hidden_test_accessed": false
+  },
+  "previous_champion": {
+    "primary": 0.6128336191177368,
+    "gauc": 0.6823240518569946,
+    "ndcg5": 0.5433431267738342
+  },
+  "new_champion": {
+    "primary": 0.6128385066986084,
+    "gauc": 0.6823317408561707,
+    "ndcg5": 0.5433452725410461,
+    "users": 22377,
+    "rows": 124909
+  },
+  "gain": {
+    "primary": 0.000004887580871582031,
+    "gauc": 0.00000768899917602539,
+    "ndcg5": 0.0000021457672119140625,
+    "over_baseline_primary": 0.011368989944458008,
+    "relative_over_baseline_percent": 1.8902021844450452
+  },
+  "selection_evidence": {
+    "fold_weights": [-0.03, -0.03, -0.02, -0.03],
+    "fixed_weight": -0.0275,
+    "oof_primary": 0.6128348708152771,
+    "fixed_primary": 0.6128385066986084,
+    "heldout_fold_primary_gains": [0.0, 0.000005304813385009766, 0.000014483928680419922, 0.0],
+    "changed_users": 9,
+    "changed_top_items": 0,
+    "changed_pair_orderings": 9,
+    "all_folds_non_regressive": true
+  },
+  "rejected_candidates": [
+    {
+      "name": "third-quartile training-history mean consensus",
+      "fold_weights": [0.07, 0.07, 0.07, 0.07],
+      "fixed_primary": 0.6128582954406738,
+      "fixed_gauc": 0.682393491268158,
+      "fixed_ndcg5": 0.5433230996131897,
+      "heldout_fold_primary_gains": [0.0000820159912109375, -0.00002491474151611328, 0.0000426173210144043, -0.000002384185791015625],
+      "reason": "Aggregate nDCG@5 and two held-out folds regress."
+    },
+    {
+      "name": "two-active-day watch extrapolation",
+      "fold_weights": [-0.03, -0.03, -0.05, -0.03],
+      "fixed_primary": 0.6128442287445068,
+      "reason": "Held-out fold 1 regresses by 0.00000942."
+    },
+    {
+      "name": "two-active-day median extrapolation",
+      "fold_weights": [-0.02, -0.02, -0.02, -0.02],
+      "fixed_primary": 0.6128360033035278,
+      "reason": "Aggregate GAUC decreases from 0.68232405 to 0.68232358."
+    }
+  ],
+  "resource_usage": {
+    "broad_structure_scan": {
+      "candidates": 272,
+      "wall_seconds": 342.668,
+      "cpu_seconds": 342.611,
+      "cpu_hours": 0.09517,
+      "peak_rss_mb": 1520.953,
+      "gpu_hours": 0.0
+    },
+    "selected_candidate_rescan": {
+      "wall_seconds": 21.738,
+      "cpu_seconds": 21.733,
+      "cpu_hours": 0.006037,
+      "peak_rss_mb": 1513.938,
+      "gpu_hours": 0.0
+    },
+    "exact_fold_audit": {
+      "wall_seconds": 17.602,
+      "cpu_seconds": 17.589,
+      "cpu_hours": 0.004886,
+      "peak_rss_mb": 1096.125,
+      "gpu_hours": 0.0
+    },
+    "canonical_verification": {
+      "wall_seconds": 16.605,
+      "cpu_seconds": 16.604,
+      "cpu_hours": 0.004612,
+      "peak_rss_mb": 1107.484,
+      "gpu_hours": 0.0
+    },
+    "skip_control": {
+      "wall_seconds": 16.401,
+      "cpu_seconds": 16.4,
+      "cpu_hours": 0.004556,
+      "peak_rss_mb": 1104.453,
+      "gpu_hours": 0.0
+    }
+  },
+  "target_primary": 0.7,
+  "target_reached": false,
+  "remaining_gap": 0.08716149330139156
+}

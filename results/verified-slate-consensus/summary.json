@@ -8,18 +8,18 @@
     "hidden_test_accessed": false
   },
   "champion": {
-    "primary": 0.6128336191177368,
-    "gauc": 0.6823240518569946,
-    "ndcg5": 0.5433431267738342,
+    "primary": 0.6128385066986084,
+    "gauc": 0.6823317408561707,
+    "ndcg5": 0.5433452725410461,
     "users": 22377,
     "rows": 124909
   },
   "baseline_primary": 0.6014695167541504,
-  "previous_verified_primary": 0.6128295660018921,
-  "gain_over_previous_verified": 0.0000040531158447265625,
-  "gain_over_baseline": 0.011364102363586426,
-  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + two confidence gates + active-day/slate-size expert routing + two training-coverage expert gates + training-only user-neighbor collaborative correction + jointly selected user-balanced-tree and watch-ratio residual + one-session YetiRank replacement",
-  "selection_evidence": "After the corrected joint residual reached 0.61282957, a YetiRankPairwise model trained out of time reached 0.61230743 standalone and selected zero global residual weight. For the outcome-free gate where a user's supplied slate forms exactly one 30-minute session, zero-preferring selection on four user-ID folds produced weights [0.78, 0.78, 0.78, 0.40]. Their fixed mean 0.685 reaches 0.61283362, with fold gains [0.0, 0.00001597, 0.0, 0.0], and improves aggregate GAUC and nDCG@5. It changes three pair orderings across three users. The initially reported 1.0 gate was corrected after the audit tie-break was found to prefer the largest weight on discrete metric plateaus.",
+  "previous_verified_primary": 0.6128336191177368,
+  "gain_over_previous_verified": 0.000004887580871582031,
+  "gain_over_baseline": 0.011368989944458008,
+  "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + two confidence gates + active-day/slate-size expert routing + two training-coverage expert gates + training-only user-neighbor collaborative correction + jointly selected user-balanced-tree and watch-ratio residual + one-session YetiRank consensus + two/three-session median-consensus extrapolation",
+  "selection_evidence": "A zero-preferring scan of 20 frozen model families across 32 outcome-free structural regimes selected a small extrapolation away from their median rank for users whose supplied slate forms two or three 30-minute sessions. Fold weights [-0.03, -0.03, -0.02, -0.03] have the same sign; their fixed mean -0.0275 raises primary from 0.61283362 to 0.61283851, with fold gains [0.0, 0.00000530, 0.00001448, 0.0]. Both aggregate GAUC and nDCG@5 improve. The strongest apparent alternative, third-quartile training-history mean consensus, was rejected because nDCG fell and two held-out folds regressed.",
   "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. Outcome priors, coverage membership, the user-neighbor graph, and the user-balanced tree use only the April 8-21 training block; the validation slate contributes identifiers but no outcomes. The neighbor graph uses training exposure overlap for similarity and other users' training outcomes for candidate estimates. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit; the user-balanced tree is fit through April 19 and early-stopped on April 20-21 before April 22-28 inference. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
   "rejected_ablations": [
     "Tree-only residual: an audit found ordinal user codes were used for held-out reporting; corrected actual-user-ID OOF primary was 0.61280358, below the 0.61280465 predecessor, so the earlier promotion was invalidated.",
@@ -67,8 +67,8 @@
     "Whole-user residual CatBoost rankers reached 0.61187887 (PairLogitPairwise) and 0.61124790 (QuerySoftMax) standalone, but their cross-fitted corrections regressed and were excluded."
   ],
   "latest_rejected_cycle": "rejected-cycle-2026-08-30-interaction-watch.json",
-  "latest_accepted_cycle": "accepted-cycle-2026-08-30-single-session-yeti.json",
+  "latest_accepted_cycle": "accepted-cycle-2026-08-30-session-median.json",
   "target_primary": 0.7,
   "target_reached": false,
-  "remaining_gap": 0.08716638088226314
+  "remaining_gap": 0.08716149330139156
 }

@@ -949,6 +949,38 @@
       "primary": 0.61283362,
       "gauc": 0.68232405,
       "ndcg5": 0.54334313
+    },
+    "post_yeti_structure_routing_scan": {
+      "candidates": 272,
+      "wall_seconds": 342.668,
+      "cpu_seconds": 342.611,
+      "cpu_hours": 0.09517,
+      "peak_rss_mb": 1520.953,
+      "gpu_hours": 0.0,
+      "top_apparent_primary": 0.61285830,
+      "top_apparent_accepted": false,
+      "reason": "The top third-history-quartile mean-consensus candidate reduced nDCG@5 and regressed on two folds."
+    },
+    "accepted_two_three_session_median_audits": {
+      "wall_seconds": 39.34,
+      "cpu_seconds": 39.322,
+      "cpu_hours": 0.010923,
+      "peak_rss_mb": 1513.938,
+      "gpu_hours": 0.0,
+      "fold_weights": [-0.03, -0.03, -0.02, -0.03],
+      "fixed_weight": -0.0275,
+      "heldout_fold_primary_gains": [0.0, 0.00000530, 0.00001448, 0.0],
+      "accepted": true
+    },
+    "accepted_two_three_session_median_final_verification": {
+      "wall_seconds": 16.605,
+      "cpu_seconds": 16.604,
+      "cpu_hours": 0.004612,
+      "peak_rss_mb": 1107.484,
+      "gpu_hours": 0.0,
+      "primary": 0.61283851,
+      "gauc": 0.68233174,
+      "ndcg5": 0.54334527
     }
   }
 }

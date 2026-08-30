@@ -1,7 +1,7 @@
 {
-  "title": "Single-session YetiRank routing over the jointly corrected slate consensus",
+  "title": "Session-count expert routing over the jointly corrected slate consensus",
   "experiment_type": "offline_slate_reranking",
-  "hypothesis": "A listwise-style YetiRank model is globally less calibrated than the consensus but may be a better expert for the narrow regime where a user's complete supplied slate is one contiguous session. An outcome-free hard gate can capture that specialization without perturbing other users.",
+  "hypothesis": "The number of reconstructed sessions identifies distinct ranking regimes. One-session users can benefit from YetiRank, while users spanning two or three sessions can benefit from a small extrapolation away from the broad median model consensus without perturbing other slates.",
   "protocol": {
     "train_dates": "2022-04-08 through 2022-04-21",
     "validation_dates": "2022-04-22 through 2022-04-28",
@@ -13,7 +13,8 @@
     "coverage_threshold_protocol": "Compute the low-rate threshold as the row-weighted first quartile of Bayesian-smoothed April 8-21 user long-view rates. Mark prior-video coverage when a validation user-video identifier pair occurred in April 8-21; validation labels are never accessed.",
     "user_neighbor_protocol": "Use cosine similarity over binary April 8-21 user-item exposures, retain 60 other users, square nonnegative similarities, estimate target-item long-view rates from those neighbors with smoothing 8 toward a smoothing-20 training item prior, and add only the within-user ordinal rank at weight 0.002.",
     "terminal_joint_protocol": "Fit a seed-239 pointwise CatBoost through April 19 with each row weighted by (mean user row count / user row count)^0.5, normalize weights to mean one, early-stop on April 20-21, and retain 165 trees. Pair its within-user ordinal rank with the frozen watch-ratio DeepFM rank. A two-dimensional grid from -0.00125 to 0.004375 in steps of 0.000625 selected (0.001875, 0.001875) in every actual-user-ID fold. Neither component is accepted as a terminal residual by itself.",
-    "single_session_yeti_protocol": "Train CatBoost YetiRankPairwise on April 14-19 batch-slate features with the out-of-time base as baseline, early-stop on April 20-21 at 72 trees, refit on April 14-21, and route only users whose complete evaluation slate has one session under a 30-minute gap rule. Search the semantic convex range [0,1] with ties resolved toward the smallest-magnitude weight; use the mean of the four actual-user-ID fold weights."
+    "single_session_yeti_protocol": "Train CatBoost YetiRankPairwise on April 14-19 batch-slate features with the out-of-time base as baseline, early-stop on April 20-21 at 72 trees, refit on April 14-21, and route only users whose complete evaluation slate has one session under a 30-minute gap rule. Search the semantic convex range [0,1] with ties resolved toward the smallest-magnitude weight; use the mean of the four actual-user-ID fold weights.",
+    "session_median_protocol": "Build within-user fractional ranks from 20 frozen model families, take their row-wise median, and apply its gap from the preceding champion only to users with two or three 30-minute sessions. Select a scalar on four actual-user-ID folds with zero-preferring tie resolution and fix it to the fold mean."
   },
   "features": {
     "token_personal_mean": "Within-user standardized mean across an item's tag tokens of log1p(user-slate token count) - 0.25 * log1p(global-slate token count).",
@@ -46,7 +47,8 @@
     "training_user_neighbor_positive_cf": "Within-user ordinal rank of a 60-neighbor collaborative estimate built from binary April 8-21 exposure overlap and other users' April 8-21 long-view outcomes. The historical artifact key contains 'positive', but similarity is exposure-only; outcomes enter only the neighbor target estimate.",
     "joint_training_user_balanced_catboost": "Within-user ordinal rank of a pointwise CatBoost trained only on April 9-19 outcomes with square-root inverse user-activity weights and early-stopped on April 20-21.",
     "joint_watch_ratio_deepfm": "Within-user ordinal rank of the frozen DeepFM trained on April 9-21 with continuous watch-ratio auxiliary supervision. It is jointly weighted with the user-balanced tree rather than accepted alone.",
-    "single_session_yeti_rank": "Within-user ordinal rank of a 72-tree YetiRankPairwise batch-slate model, used only when all supplied impressions for a user form one 30-minute session."
+    "single_session_yeti_rank": "Within-user ordinal rank of a 72-tree YetiRankPairwise batch-slate model, used only when all supplied impressions for a user form one 30-minute session.",
+    "two_three_session_median_consensus": "Row-wise median within-user fractional rank across 20 frozen model families, applied only when the user's supplied slate forms two or three 30-minute sessions."
   },
   "selection_evidence": [
     {
@@ -288,12 +290,26 @@
       "heldout_fold_primary_gains": [0.0, 0.0000159740, 0.0, 0.0],
       "changed_users": 3,
       "changed_pair_orderings": 3
+    },
+    {
+      "stage": "two_three_session_median_extrapolation",
+      "source_models": 20,
+      "session_gap_minutes": 30,
+      "fold_weights": [-0.03, -0.03, -0.02, -0.03],
+      "fixed_weight": -0.0275,
+      "oof_primary": 0.6128348708152771,
+      "fixed_primary": 0.6128385066986084,
+      "fixed_gauc": 0.6823317408561707,
+      "fixed_ndcg5": 0.5433452725410461,
+      "heldout_fold_primary_gains": [0.0, 0.0000053048, 0.0000144839, 0.0],
+      "changed_users": 9,
+      "changed_pair_orderings": 9
     }
   ],
   "rejected_followup": {
     "feature": "remaining training-coverage residuals",
-    "reason": "YetiRank selected zero global residual weight. Its low-training-history gate selected similar negative weights but hurt held-out fold 0 at the fixed mean and was rejected. The one-session gate is retained because all four folds selected the same semantic endpoint and no fold regressed. The earlier tree-only promotion remains invalidated under corrected fold mapping."
+    "reason": "The broad structural scan's largest apparent gain, third-quartile training-history mean consensus at weight 0.07, lowered aggregate nDCG@5 and regressed on folds 1 and 3. A two-active-day watch extrapolation regressed on fold 1. A two-active-day median extrapolation improved all folds but lowered aggregate GAUC slightly. All remain rejected."
   },
-  "acceptance": "Accept only stages whose disjoint-user weights agree in direction, whose stitched cross-fitted primary improves over the preceding stage, and whose fixed recipe does not reduce either aggregate metric or any held-out user fold. The four zero-preferring fold weights are [0.78, 0.78, 0.78, 0.40]; their fixed mean improves one held-out fold, leaves three unchanged, and increases aggregate GAUC and nDCG@5.",
+  "acceptance": "Accept only stages whose disjoint-user weights agree in direction, whose stitched cross-fitted primary improves over the preceding stage, and whose fixed recipe does not reduce either aggregate metric or any held-out user fold. The two/three-session median weights [-0.03, -0.03, -0.02, -0.03] agree; their fixed mean improves two held-out folds, leaves two unchanged, and increases aggregate GAUC and nDCG@5.",
   "accepted": true
 }

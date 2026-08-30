@@ -133,6 +133,7 @@ skip_batch_slate = os.getenv("KUAI_SKIP_BATCH_SLATE") == "1"
 skip_user_neighbor = os.getenv("KUAI_SKIP_USER_NEIGHBOR") == "1"
 skip_user_balanced_tree = os.getenv("KUAI_SKIP_USER_BALANCED_TREE") == "1"
 skip_yeti_session_gate = os.getenv("KUAI_SKIP_YETI_SESSION_GATE") == "1"
+skip_session_median_gate = os.getenv("KUAI_SKIP_SESSION_MEDIAN_GATE") == "1"
 batch_slate_tree = (
     None if skip_batch_slate
     else load_scores("batch-slate-meta-catboost-s751.npz")
@@ -542,10 +543,11 @@ if batch_slate_tree is not None:
         "session1-sessionx1-sessionw0-multir0-trend0-affinity0-ctx0-"
         "transition1.npz",
     ]
-    mean_model_fraction = np.mean(
-        [load_fractional_ranks(name) for name in confidence_source_names],
-        axis=0,
-    )
+    confidence_fraction_rows = [
+        load_fractional_ranks(name) for name in confidence_source_names
+    ]
+    mean_model_fraction = np.mean(confidence_fraction_rows, axis=0)
+    median_model_fraction = np.median(confidence_fraction_rows, axis=0)
     normalized_top_margin = normalized_user_top_margin(scores)
     eligible_top_margins = normalized_top_margin[normalized_top_margin > 0]
     median_margin_threshold = float(np.quantile(eligible_top_margins, 0.50))
@@ -646,6 +648,19 @@ if batch_slate_tree is not None:
         scores = scores + 0.685 * single_session_gate * (
             yeti_rank - user_rank(scores)
         )
+
+    # For users whose supplied slate spans two or three reconstructed sessions,
+    # all four user folds selected a small extrapolation away from the median
+    # rank of 20 frozen model families. The gate and source ranks are label-free.
+    if not skip_session_median_gate:
+        two_three_session_gate = np.zeros(len(scores), dtype=np.float64)
+        for indices_list in groups.values():
+            indices = np.asarray(indices_list, dtype=np.int64)
+            session_count = len({session_keys[index] for index in indices})
+            two_three_session_gate[indices] = float(2 <= session_count <= 3)
+        scores = scores - 0.0275 * two_three_session_gate * (
+            user_rank(median_model_fraction) - user_rank(scores)
+        )
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -713,6 +728,9 @@ print(json.dumps({
             **({
                 "single_session_yeti_rank_consensus": 0.685,
             } if not skip_yeti_session_gate else {}),
+            **({
+                "two_three_session_median_extrapolation": -0.0275,
+            } if not skip_session_median_gate else {}),
         } if not skip_batch_slate else {}),
     },
     "feature_scope": "training-only outcome models/priors plus label-free full evaluation slate",
