@@ -21,6 +21,7 @@ from backend.kuailab.rad import build_rad_labels
 from backend.kuailab.slate import build_slate_features
 from backend.kuailab.research import load_method_cards, summarize_search_tree
 from backend.kuailab.state import StateStore
+from scripts.train_dvr_wtg import auxiliary_targets, final_scores, fit_wtg_reference
 
 
 class CoreTests(unittest.TestCase):
@@ -137,6 +138,25 @@ class CoreTests(unittest.TestCase):
         np.testing.assert_array_equal(labels[1], [1.0, 1.0, 1.0])
         self.assertEqual(labels.shape, (2, 3))
         self.assertEqual(stats["thresholds"], [0.25, 0.5, 0.75])
+
+    def test_dvr_wtg_reference_is_finite_and_preserves_within_duration_order(self):
+        rows = [
+            (20220408, "u1", "v1", "a1", "0", 10_000.0, 0, 1_000.0, 1_000),
+            (20220408, "u2", "v2", "a2", "0", 10_000.0, 1, 9_000.0, 2_000),
+            (20220408, "u3", "v3", "a3", "0", 20_000.0, 1, 15_000.0, 3_000),
+        ]
+        reference = fit_wtg_reference(rows)
+        gain, duration_z = auxiliary_targets(rows, reference)
+        self.assertTrue(np.all(np.isfinite(gain)))
+        self.assertTrue(np.all(np.isfinite(duration_z)))
+        self.assertLess(gain[0], gain[1])
+        self.assertEqual(reference["observed_duration_buckets"], 2)
+
+    def test_dvr_wtg_zero_rank_blend_preserves_long_view_scores(self):
+        long_view = np.asarray([0.7, 0.2, 0.8], dtype=np.float32)
+        wtg = np.asarray([0.1, 0.9, 0.3], dtype=np.float32)
+        output = final_scores(["u1", "u1", "u2"], long_view, wtg, 0.0)
+        np.testing.assert_array_equal(output, long_view)
 
     def test_synthetic_failure_is_visible(self):
         proposal = DemoProvider().propose({"iteration": 4, "epsilon": 0.002, "steering": None})

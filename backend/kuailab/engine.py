@@ -559,6 +559,7 @@ class CampaignEngine:
                             "residual_plateau": "Pointwise FM, pairwise FM, ordinary DeepFM, and anti-expert residuals repeatedly returned 0.6126-0.6129 and were rejected.",
                             "slate_context_audit": "A k16/hidden64/dropout0.1 matched-week slate_context_deepfm reached 0.603570 standalone; its apparent +0.0000063 residual regressed in three of four held-out user folds. A three-seed ensemble reached 0.603915 standalone and had -0.0000001 fixed residual. Do not repeat these exact configurations.",
                             "rad_audit": "RAD-UV train-only user-duration/video watch-time quantiles passed the proxy screen, but the alpha-zero control was stronger standalone, pure RAD-head ranking scored 0.583969 internally, and all four held-out residual folds regressed. Do not repeat this DeepFM RAD configuration.",
+                            "dvr_wtg_audit": "Paper-faithful duration-conditioned Watch-Time-Gain plus gradient reversal gained 0.000148 on April 15-21, then lost 0.000063 on all metrics at April 22-28. Its fixed 5% champion residual scored 0.612857640 and failed two actual-user-ID folds. Do not repeat this exact configuration.",
                             "error_regime": "Users with seven or more sessions account for 53.1% of recoverable nDCG@5 gap, but gating the tested slate residual to that regime still failed.",
                         },
                         "executor_contract": {

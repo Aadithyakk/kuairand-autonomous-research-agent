@@ -1,0 +1,177 @@
+{
+  "artifacts": {
+    "scores": "runtime/duration-debiasing/dvr-wtg/confirmation-scores.npz",
+    "script": "scripts/train_dvr_wtg.py"
+  },
+  "candidate": {
+    "checkpoint": "runtime/duration-debiasing/dvr-wtg/confirmation-dvr_wtg.pt",
+    "config": {
+      "adversary_weight": 0.05,
+      "wtg_rank_blend": 0.0,
+      "wtg_weight": 0.05
+    },
+    "metrics": {
+      "GAUC": 0.6689165830612183,
+      "nDCG@5": 0.5363571047782898,
+      "primary": 0.6026368141174316,
+      "rows": 124909,
+      "users": 22377
+    },
+    "mode": "dvr_wtg",
+    "resource_usage": {
+      "architecture": "arm64",
+      "cpu_hours": 0.001577,
+      "cpu_seconds": 5.678,
+      "cpu_utilization_percent": 188.6,
+      "device": "cpu",
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 865.922,
+      "wall_seconds": 3.011
+    },
+    "training_history": [
+      {
+        "BCE": 0.5889666416815349,
+        "WTG_loss": 0.3357825481465885,
+        "duration_adversary_loss": 0.41421987925257003,
+        "epoch": 1,
+        "loss": 0.6264667642968041
+      },
+      {
+        "BCE": 0.5099424726196697,
+        "WTG_loss": 0.29440617135592867,
+        "duration_adversary_loss": 0.41097512926374163,
+        "epoch": 2,
+        "loss": 0.5452115356922149
+      },
+      {
+        "BCE": 0.5014726485524859,
+        "WTG_loss": 0.2863389956099646,
+        "duration_adversary_loss": 0.4101696063365255,
+        "epoch": 3,
+        "loss": 0.5362980770213264
+      },
+      {
+        "BCE": 0.497747979419572,
+        "WTG_loss": 0.28415697004113877,
+        "duration_adversary_loss": 0.4110143876501492,
+        "epoch": 4,
+        "loss": 0.5325065493583679
+      }
+    ]
+  },
+  "control": {
+    "checkpoint": "runtime/duration-debiasing/dvr-wtg/confirmation-control.pt",
+    "config": {
+      "adversary_weight": 0.0,
+      "wtg_rank_blend": 0.0,
+      "wtg_weight": 0.0
+    },
+    "metrics": {
+      "GAUC": 0.6689799427986145,
+      "nDCG@5": 0.5364199280738831,
+      "primary": 0.6026999354362488,
+      "rows": 124909,
+      "users": 22377
+    },
+    "mode": "control",
+    "resource_usage": {
+      "architecture": "arm64",
+      "cpu_hours": 0.001578,
+      "cpu_seconds": 5.679,
+      "cpu_utilization_percent": 183.44,
+      "device": "cpu",
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 842.375,
+      "wall_seconds": 3.096
+    },
+    "training_history": [
+      {
+        "BCE": 0.5891985335520336,
+        "WTG_loss": 0.3795533816729273,
+        "duration_adversary_loss": 0.43925600413765226,
+        "epoch": 1,
+        "loss": 0.5891985335520336
+      },
+      {
+        "BCE": 0.5099477061203548,
+        "WTG_loss": 0.42436675748654773,
+        "duration_adversary_loss": 0.43874808847904206,
+        "epoch": 2,
+        "loss": 0.5099477061203548
+      },
+      {
+        "BCE": 0.5013939304011209,
+        "WTG_loss": 0.42807319355862483,
+        "duration_adversary_loss": 0.43843759447336195,
+        "epoch": 3,
+        "loss": 0.5013939304011209
+      },
+      {
+        "BCE": 0.4976424255541393,
+        "WTG_loss": 0.43251669045005525,
+        "duration_adversary_loss": 0.4383527083056314,
+        "epoch": 4,
+        "loss": 0.4976424255541393
+      }
+    ]
+  },
+  "deltas_vs_control": {
+    "GAUC": -6.335973739624023e-05,
+    "nDCG@5": -6.282329559326172e-05,
+    "primary": -6.312131881713867e-05
+  },
+  "experiment": "locked DVR Watch-Time-Gain confirmation",
+  "locked_epoch_count": 4,
+  "matched_candidate_improves_all_metrics": false,
+  "official_implementation": "https://github.com/tsinghua-fib-lab/WTG-DVR",
+  "paper": "https://arxiv.org/abs/2208.05190",
+  "protocol": {
+    "evaluation": "Apr22-28",
+    "hidden_test_outcomes_parsed": false,
+    "integrity_incidents": [],
+    "outcome_fields_parsed_only_for": "Apr22-28",
+    "retuning": false,
+    "screen_artifact": "results/duration-debiasing/dvr-wtg-screen.json",
+    "train": "Apr8-21"
+  },
+  "recommendation": "reject; retain frozen champion",
+  "residual_audit": {
+    "all_four_folds_all_metrics_nonnegative": false,
+    "all_global_metrics_nonnegative": false,
+    "artifact": "results/duration-debiasing/dvr-wtg-residual-audit.json",
+    "fixed_residual_gains": {
+      "GAUC": 1.7881393432617188e-07,
+      "nDCG@5": -9.5367431640625e-07,
+      "primary": -4.172325134277344e-07
+    },
+    "fixed_residual_metrics": {
+      "GAUC": 0.6823539137840271,
+      "nDCG@5": 0.5433613657951355,
+      "primary": 0.6128576397895813
+    },
+    "fixed_weight": 0.05,
+    "merits_promotion": false
+  },
+  "resources": {
+    "total": {
+      "architecture": "arm64",
+      "cpu_hours": 0.004393,
+      "cpu_seconds": 15.814,
+      "cpu_utilization_percent": 150.09,
+      "device": "cpu",
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 875.609,
+      "wall_seconds": 10.536
+    }
+  },
+  "selected_config": {
+    "adversary_weight": 0.05,
+    "wtg_rank_blend": 0.0,
+    "wtg_weight": 0.05
+  },
+  "selected_config_index_locked": 4,
+  "status": "confirmation_evaluated"
+}

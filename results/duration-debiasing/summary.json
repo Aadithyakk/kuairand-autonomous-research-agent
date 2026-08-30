@@ -1,0 +1,60 @@
+{
+  "experiment": "DVR Watch-Time-Gain duration-debiasing",
+  "status": "attempted-rejected",
+  "decision": "retain frozen champion",
+  "target": "organizer long_view, unchanged",
+  "sources": {
+    "paper": "https://arxiv.org/abs/2208.05190",
+    "official_implementation": "https://github.com/tsinghua-fib-lab/WTG-DVR"
+  },
+  "adaptation": {
+    "primary_loss": "long_view BCE",
+    "auxiliary_reward": "train-only duration-conditioned standardized truncated play time",
+    "duration_debiasing": "gradient-reversal duration reconstruction head",
+    "duration_input_removed": true,
+    "cross_user_pairwise_loss_used": false
+  },
+  "screen": {
+    "fit": "20220408-20220414 with configuration selection on 20220412-20220414",
+    "evaluation": "20220415-20220421",
+    "control_primary": 0.6156336665153503,
+    "candidate_primary": 0.6157811880111694,
+    "primary_gain": 0.0001475214958190918,
+    "gauc_gain": 0.00007510185241699219,
+    "ndcg5_gain": 0.0002200007438659668,
+    "artifact": "results/duration-debiasing/dvr-wtg-screen.json"
+  },
+  "locked_confirmation": {
+    "fit": "20220408-20220421",
+    "evaluation": "20220422-20220428",
+    "retuning": false,
+    "control_primary": 0.6026999354362488,
+    "candidate_primary": 0.6026368141174316,
+    "primary_gain": -0.00006312131881713867,
+    "gauc_gain": -0.00006335973739624023,
+    "ndcg5_gain": -0.00006282329559326172,
+    "artifact": "results/duration-debiasing/dvr-wtg-confirmation.json"
+  },
+  "frozen_champion_residual": {
+    "weight": 0.05,
+    "champion_primary": 0.6128580570220947,
+    "candidate_primary": 0.6128576397895813,
+    "primary_gain": -4.172325134277344e-7,
+    "all_four_folds_all_metrics_nonnegative": false,
+    "failing_folds": [2, 3],
+    "artifact": "results/duration-debiasing/dvr-wtg-residual-audit.json"
+  },
+  "resources": {
+    "screen_and_confirmation_wall_seconds": 35.67,
+    "screen_and_confirmation_cpu_seconds": 54.436,
+    "screen_and_confirmation_cpu_hours": 0.015121,
+    "peak_rss_mb": 942.406,
+    "gpu_hours": 0.0
+  },
+  "integrity": {
+    "hidden_test_outcomes_parsed": false,
+    "confirmation_opened_only_after_screen_passed": true,
+    "integrity_incidents": []
+  },
+  "recommendation": "Do not repeat this exact DVR/WTG configuration. A materially different duration reference or backbone would require a new hypothesis and matched control."
+}

@@ -11,6 +11,17 @@
     "risk": "The alpha-zero control outperformed the RAD auxiliary on both tiers; pure RAD-head ranking scored 0.583969 internally and every held-out residual fold regressed. Do not repeat without a materially different stage-1 estimator or backbone."
   },
   {
+    "id": "dvr_watch_time_gain",
+    "category": "reward",
+    "status": "attempted-rejected",
+    "paper": "DVR: Micro-Video Recommendation Optimizing Watch-Time-Gain under Duration Bias",
+    "source": "https://arxiv.org/abs/2208.05190",
+    "method": "Standardize truncated watch time against train-only duration-conditioned distributions, train a Watch-Time-Gain auxiliary head, and adversarially remove duration reconstructability.",
+    "fit": "Tests a duration-conditioned gain and gradient-reversal objective distinct from RAD, CWM, and CQE while retaining the organizer's long_view BCE target.",
+    "smallest_ablation": "Completed a matched BCE control, five-config train-only selection, locked confirmation, fixed 5% frozen-champion residual, and four actual-user-ID folds.",
+    "risk": "The screen gained 0.000148 primary, but locked confirmation lost 0.000063 on all three metrics. The 5% champion residual scored 0.612857640 and regressed in folds 2 and 3. Do not repeat without a materially different duration reference or backbone."
+  },
+  {
     "id": "umre_monotonic_ensemble",
     "category": "ensemble",
     "status": "attempted-rejected",

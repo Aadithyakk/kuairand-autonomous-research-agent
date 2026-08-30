@@ -78,6 +78,16 @@ fast screen, and every held-out residual fold regressed. The five runs consumed
 GPU. Evidence is in
 [`results/final-model/rad-auxiliary-audit.json`](results/final-model/rad-auxiliary-audit.json).
 
+A separate paper-faithful DVR/Watch-Time-Gain audit kept the official
+`long_view` target and added only a train-derived duration-conditioned reward
+head plus gradient-reversal duration adversary. It gained `+0.000148` against
+its matched control on the April 15–21 screen, but reversed to `-0.000063` on
+April 22–28. The fixed 5% champion residual scored `0.612857640` and failed two
+of four actual-user-ID folds, so the `0.612858057` champion remains unchanged.
+The runnable experiment and decision record are
+[`scripts/train_dvr_wtg.py`](scripts/train_dvr_wtg.py) and
+[`results/duration-debiasing/summary.json`](results/duration-debiasing/summary.json).
+
 Promotion has a stability guard: any primary gain below `0.0001` must also leave
 both GAUC and nDCG@5 non-decreasing. Larger primary gains still follow the
 organizer's combined metric. This prevents top-five regressions from being
