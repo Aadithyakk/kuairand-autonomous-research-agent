@@ -929,24 +929,26 @@
       "reason": "The fixed gate regressed on held-out fold 0."
     },
     "accepted_single_session_yeti_audits": {
-      "wall_seconds": 40.251,
-      "cpu_seconds": 40.238,
-      "cpu_hours": 0.011177,
-      "peak_rss_mb": 1278.5,
+      "wall_seconds": 39.065,
+      "cpu_seconds": 39.057,
+      "cpu_hours": 0.01085,
+      "peak_rss_mb": 1292.328,
       "gpu_hours": 0.0,
-      "fold_weights": [1.0, 1.0, 1.0, 1.0],
-      "heldout_fold_primary_gains": [0.0, 0.00001597, 0.0, 0.00003970],
+      "fold_weights": [0.78, 0.78, 0.78, 0.40],
+      "fixed_weight": 0.685,
+      "heldout_fold_primary_gains": [0.0, 0.00001597, 0.0, 0.0],
+      "audit_correction": "Zero-preferring tie resolution replaces the initially overstated all-1.0 fold weights.",
       "accepted": true
     },
     "accepted_single_session_yeti_final_verification": {
-      "wall_seconds": 16.382,
-      "cpu_seconds": 16.381,
-      "cpu_hours": 0.00455,
-      "peak_rss_mb": 1094.547,
+      "wall_seconds": 16.16,
+      "cpu_seconds": 16.159,
+      "cpu_hours": 0.004489,
+      "peak_rss_mb": 1087.719,
       "gpu_hours": 0.0,
-      "primary": 0.61284345,
-      "gauc": 0.68233365,
-      "ndcg5": 0.54335326
+      "primary": 0.61283362,
+      "gauc": 0.68232405,
+      "ndcg5": 0.54334313
     }
   }
 }

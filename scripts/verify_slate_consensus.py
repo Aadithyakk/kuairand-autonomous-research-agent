@@ -631,9 +631,9 @@ if batch_slate_tree is not None:
         )
 
     # YetiRank's global ordering is weaker, but all four disjoint user folds
-    # selected it for users whose complete supplied slate forms one 30-minute
-    # session. This outcome-free gate changes only five pair orderings across
-    # three users; two held-out folds improve and two remain exactly unchanged.
+    # selected the same positive direction for users whose full supplied slate
+    # forms one 30-minute session. The fixed mean scalar changes one ordering in
+    # one user; one fold improves and the other three remain exactly unchanged.
     if not skip_yeti_session_gate:
         yeti_rank = load_scores(
             "batch-slate-meta-catboost-ranker-YetiRankPairwise-s787.npz"
@@ -643,7 +643,9 @@ if batch_slate_tree is not None:
             indices = np.asarray(indices_list, dtype=np.int64)
             session_count = len({session_keys[index] for index in indices})
             single_session_gate[indices] = float(session_count == 1)
-        scores = scores + single_session_gate * (yeti_rank - user_rank(scores))
+        scores = scores + 0.685 * single_session_gate * (
+            yeti_rank - user_rank(scores)
+        )
 metrics = runner.evaluate_module.evaluate(valid_users, valid_y, scores)
 
 days = {}
@@ -709,7 +711,7 @@ print(json.dumps({
                 "joint_watch_ratio_deepfm": 0.001875,
             } if not skip_user_balanced_tree else {}),
             **({
-                "single_session_yeti_rank_replacement": 1.0,
+                "single_session_yeti_rank_consensus": 0.685,
             } if not skip_yeti_session_gate else {}),
         } if not skip_batch_slate else {}),
     },

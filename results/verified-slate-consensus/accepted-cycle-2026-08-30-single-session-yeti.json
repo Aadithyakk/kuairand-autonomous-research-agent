@@ -20,18 +20,18 @@
     "ndcg5": 0.5433400273323059
   },
   "new_champion": {
-    "primary": 0.6128434538841248,
-    "gauc": 0.6823336482048035,
-    "ndcg5": 0.543353259563446,
+    "primary": 0.6128336191177368,
+    "gauc": 0.6823240518569946,
+    "ndcg5": 0.5433431267738342,
     "users": 22377,
     "rows": 124909
   },
   "gain": {
-    "primary": 0.000013887882232666016,
-    "gauc": 0.000014483928680419922,
-    "ndcg5": 0.000013232231140136719,
-    "over_baseline_primary": 0.011373937129974365,
-    "relative_over_baseline_percent": 1.89102470086168
+    "primary": 0.0000040531158447265625,
+    "gauc": 0.000004887580871582031,
+    "ndcg5": 0.0000030994415283203125,
+    "over_baseline_primary": 0.011364102363586426,
+    "relative_over_baseline_percent": 1.8893895778647554
   },
   "ranker": {
     "artifact": "runtime/batch-slate-meta-catboost-ranker-YetiRankPairwise-s787.npz",
@@ -47,12 +47,12 @@
   },
   "gate_selection": {
     "semantic_weight_range": [0.0, 1.0],
-    "fold_weights": [1.0, 1.0, 1.0, 1.0],
-    "fixed_weight": 1.0,
-    "heldout_fold_primary_gains": [0.0, 0.000015974044799804688, 0.0, 0.000039696693420410156],
+    "fold_weights": [0.78, 0.78, 0.78, 0.40],
+    "fixed_weight": 0.685,
+    "heldout_fold_primary_gains": [0.0, 0.000015974044799804688, 0.0, 0.0],
     "changed_users": 3,
-    "changed_top_items": 2,
-    "changed_pair_orderings": 5,
+    "changed_top_items": 1,
+    "changed_pair_orderings": 3,
     "all_folds_non_regressive": true
   },
   "rejected_gate": {
@@ -87,28 +87,29 @@
       "gpu_hours": 0.0
     },
     "one_session_range_audit": {
-      "wall_seconds": 22.833,
-      "cpu_seconds": 22.828,
-      "cpu_hours": 0.006341,
-      "peak_rss_mb": 1278.5,
+      "wall_seconds": 22.176,
+      "cpu_seconds": 22.171,
+      "cpu_hours": 0.006159,
+      "peak_rss_mb": 1292.328,
       "gpu_hours": 0.0
     },
     "exact_gate_verification": {
-      "wall_seconds": 17.418,
-      "cpu_seconds": 17.41,
-      "cpu_hours": 0.004836,
-      "peak_rss_mb": 1099.047,
+      "wall_seconds": 16.889,
+      "cpu_seconds": 16.886,
+      "cpu_hours": 0.004691,
+      "peak_rss_mb": 1099.609,
       "gpu_hours": 0.0
     },
     "canonical_verification": {
-      "wall_seconds": 16.382,
-      "cpu_seconds": 16.381,
-      "cpu_hours": 0.00455,
-      "peak_rss_mb": 1094.547,
+      "wall_seconds": 16.16,
+      "cpu_seconds": 16.159,
+      "cpu_hours": 0.004489,
+      "peak_rss_mb": 1087.719,
       "gpu_hours": 0.0
     }
   },
   "target_primary": 0.7,
   "target_reached": false,
-  "remaining_gap": 0.0871565461158752
+  "remaining_gap": 0.08716638088226314,
+  "audit_correction": "The first report used a max-tuple tie-break that preferred larger weights on discrete metric plateaus. Re-running with a zero-preferring tie-break changed fold weights from the overstated [1,1,1,1] to [0.78,0.78,0.78,0.40] and the fixed weight from 1.0 to 0.685."
 }

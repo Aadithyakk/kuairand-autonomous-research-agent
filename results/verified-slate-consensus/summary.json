@@ -8,18 +8,18 @@
     "hidden_test_accessed": false
   },
   "champion": {
-    "primary": 0.6128434538841248,
-    "gauc": 0.6823336482048035,
-    "ndcg5": 0.543353259563446,
+    "primary": 0.6128336191177368,
+    "gauc": 0.6823240518569946,
+    "ndcg5": 0.5433431267738342,
     "users": 22377,
     "rows": 124909
   },
   "baseline_primary": 0.6014695167541504,
   "previous_verified_primary": 0.6128295660018921,
-  "gain_over_previous_verified": 0.000013887882232666016,
-  "gain_over_baseline": 0.011373937129974365,
+  "gain_over_previous_verified": 0.0000040531158447265625,
+  "gain_over_baseline": 0.011364102363586426,
   "fixed_recipe": "tree-regularized consensus + six label-free slate count/diversity corrections + broad/conditional content graph smoothing + temporal slate corrections + three Bayesian-smoothed training-only cross-conditional priors + temporal batch-slate tree/repeat ordinal consensus + two confidence gates + active-day/slate-size expert routing + two training-coverage expert gates + training-only user-neighbor collaborative correction + jointly selected user-balanced-tree and watch-ratio residual + one-session YetiRank replacement",
-  "selection_evidence": "After the corrected joint residual reached 0.61282957, a YetiRankPairwise model trained out of time reached 0.61230743 standalone and selected zero global residual weight. For the outcome-free gate where a user's supplied slate forms exactly one 30-minute session, every user-ID fold selected full replacement by YetiRank. The deployable gate reaches 0.61284345, with fold gains [0.0, 0.00001597, 0.0, 0.00003970], and improves aggregate GAUC and nDCG@5. It changes five pair orderings across three users. The earlier joint-residual evidence remains in accepted-cycle-2026-08-30-joint-terminal-residual.json.",
+  "selection_evidence": "After the corrected joint residual reached 0.61282957, a YetiRankPairwise model trained out of time reached 0.61230743 standalone and selected zero global residual weight. For the outcome-free gate where a user's supplied slate forms exactly one 30-minute session, zero-preferring selection on four user-ID folds produced weights [0.78, 0.78, 0.78, 0.40]. Their fixed mean 0.685 reaches 0.61283362, with fold gains [0.0, 0.00001597, 0.0, 0.0], and improves aggregate GAUC and nDCG@5. It changes three pair orderings across three users. The initially reported 1.0 gate was corrected after the audit tie-break was found to prefer the largest weight on discrete metric plateaus.",
   "leakage_note": "The content/temporal correction is transductive but label-free: it uses the complete supplied evaluation impression slate and static video metadata, matching the official batch evaluator. Outcome priors, coverage membership, the user-neighbor graph, and the user-balanced tree use only the April 8-21 training block; the validation slate contributes identifiers but no outcomes. The neighbor graph uses training exposure overlap for similarity and other users' training outcomes for candidate estimates. The batch-slate tree is trained out of time on April 14-19, early-stopped on April 20-21, then refit; the user-balanced tree is fit through April 19 and early-stopped on April 20-21 before April 22-28 inference. No validation long_view, click, play time, or other outcome is read as a feature. Deployments that do not know the complete candidate slate must not use the transductive terms as written.",
   "rejected_ablations": [
     "Tree-only residual: an audit found ordinal user codes were used for held-out reporting; corrected actual-user-ID OOF primary was 0.61280358, below the 0.61280465 predecessor, so the earlier promotion was invalidated.",
@@ -70,5 +70,5 @@
   "latest_accepted_cycle": "accepted-cycle-2026-08-30-single-session-yeti.json",
   "target_primary": 0.7,
   "target_reached": false,
-  "remaining_gap": 0.0871565461158752
+  "remaining_gap": 0.08716638088226314
 }
