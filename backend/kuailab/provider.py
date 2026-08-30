@@ -120,7 +120,7 @@ class OpenAIProvider:
                         "pairwise_lr", "pairwise_epochs", "pairwise_patience", "pairwise_seed", "blend_weight",
                         "deep_lr", "deep_epochs", "deep_patience", "deep_seed", "deep_hidden", "deep_dropout",
                         "deep_threads", "deep_blend_weight", "temporal_blend_weight",
-                        "rad_aux_weight", "rad_score_weight", "champion_candidate_family", "champion_blend_weight"
+                        "rad_aux_weight", "rad_score_weight", "gauc_pair_weight", "champion_candidate_family", "champion_blend_weight"
                     ],
                     "properties": {
                         "k": {"type": "integer"},
@@ -149,12 +149,13 @@ class OpenAIProvider:
                         "rad_aux_weight": {"type": "number", "minimum": 0, "maximum": 1},
                         "rad_score_weight": {"type": "number", "minimum": 0, "maximum": 1},
                         "ordinal_aux_weight": {"type": "number", "minimum": 0, "maximum": 1},
+                        "gauc_pair_weight": {"type": "number", "minimum": 0, "maximum": 0.5},
                         "champion_candidate_family": {
                             "type": "string",
                             "enum": [
                                 "pointwise_fm", "pairwise_fm", "deepfm_blend",
                                 "temporal_deepfm_blend", "slate_context_deepfm", "rad_deepfm",
-                                "ordinal_watch_deepfm", "profile_deepfm"
+                                "ordinal_watch_deepfm", "profile_deepfm", "gauc_deepfm"
                             ]
                         },
                         "champion_blend_weight": {"type": "number", "minimum": -0.25, "maximum": 0.25}
@@ -184,7 +185,7 @@ class OpenAIProvider:
         body = {
             "model": self.model,
             "reasoning": {"effort": self.reasoning_effort},
-            "instructions": "You are the experiment-design component of an autonomous recommender-systems researcher. First produce exactly three distinct alternatives: one exploit, one explore, and one innovate. Then select exactly one as the returned proposal. Anchor it to one parent_iteration in the supplied search_tree and apply one atomic operator to one component. Use ablation evidence and the method-card case library; never repeat an exhausted card or exact tested configuration. Propose a falsifiable, budget-aware KuaiRand-Pure long_view experiment using the executor contract. Never claim a metric you have not observed. Use only the trusted typed executors: NumPy FM variants, installed PyTorch DeepFM/RAD/ordinal/profile variants, or champion_residual_blend over the checksum-verified 0.612858 champion. Prefer conservative residual weights. Do not install packages or use undefined placeholders. The code field must show the concrete typed configuration. Return only schema-valid JSON.",
+            "instructions": "You are the experiment-design component of an autonomous recommender-systems researcher. First produce exactly three distinct alternatives: one exploit, one explore, and one innovate. Then select exactly one as the returned proposal. Anchor it to one parent_iteration in the supplied search_tree and apply one atomic operator to one component. Use ablation evidence and the method-card case library; never repeat an exhausted card or exact tested configuration. Propose a falsifiable, budget-aware KuaiRand-Pure long_view experiment using the executor contract. Never claim a metric you have not observed. Use only the trusted typed executors: NumPy FM variants, installed PyTorch DeepFM/RAD/ordinal/profile/GAUC variants, or champion_residual_blend over the checksum-verified 0.612858 champion. Prefer conservative residual weights. Do not install packages or use undefined placeholders. The code field must show the concrete typed configuration. Return only schema-valid JSON.",
             "input": json.dumps(context, sort_keys=True),
             "text": {"format": {"type": "json_schema", "name": "experiment_proposal", "strict": True, "schema": schema}},
         }

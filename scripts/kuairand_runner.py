@@ -278,6 +278,7 @@ def train_fm(
         "rad_deepfm": "fm_rad_deep",
         "ordinal_watch_deepfm": "fm_ordinal_deep",
         "profile_deepfm": "fm_profile_deep",
+        "gauc_deepfm": "fm_gauc_deep",
     }
     candidate_family = str(parameters.get("champion_candidate_family", "pointwise_fm"))
     if requested_champion_mode and candidate_family not in champion_families:
@@ -294,6 +295,7 @@ def train_fm(
         "fm_ensemble", "fm_pairwise_blend", "fm_deep_blend",
         "fm_temporal_deep_blend", "fm_slate_deep",
         "fm_rad_deep", "fm_ordinal_deep", "fm_profile_deep",
+        "fm_gauc_deep",
     }
     seeds = parameters.get("ensemble_seeds", [seed]) if training_type in ensemble_types else [seed]
     seeds = [int(value) for value in seeds[:3]]
@@ -326,6 +328,21 @@ def train_fm(
             slate_predictions.append(within_user_rank(valid_users, slate_scores))
             deep_histories.append(slate_history)
         best_scores = np.mean(np.stack(slate_predictions), axis=0)
+        blend_weight = 0.0
+        deep_blend_weight = 0.0
+    elif training_type == "fm_gauc_deep":
+        from backend.kuailab.gauc import train_gauc_deepfm
+
+        gauc_predictions = []
+        for model_seed in seeds:
+            gauc_parameters = {**parameters, "deep_seed": model_seed}
+            gauc_scores, gauc_history = train_gauc_deepfm(
+                splits, encoded, dimension, output_dir, gauc_parameters,
+                evaluate_module.evaluate,
+            )
+            gauc_predictions.append(within_user_rank(valid_users, gauc_scores))
+            deep_histories.append(gauc_history)
+        best_scores = np.mean(np.stack(gauc_predictions), axis=0)
         blend_weight = 0.0
         deep_blend_weight = 0.0
     elif training_type == "fm_ordinal_deep":
@@ -396,6 +413,7 @@ def train_fm(
             best_scores = (1.0 - blend_weight) * pointwise_scores + blend_weight * pairwise_scores
     elif training_type not in {
         "fm_slate_deep", "fm_rad_deep", "fm_ordinal_deep", "fm_profile_deep",
+        "fm_gauc_deep",
     }:
         blend_weight = 0.0
         best_scores = np.mean(np.stack(predictions), axis=0)

@@ -55,6 +55,17 @@
     "risk": "The best fixed micro-gain was 0.612877, but held-out user folds regressed; do not promote or repeat without a materially different validation protocol."
   },
   {
+    "id": "full_user_gauc_pair_anchor",
+    "category": "loss",
+    "status": "attempted-rejected",
+    "paper": "Bayesian Personalized Ranking from Implicit Feedback",
+    "source": "https://arxiv.org/abs/1205.2618",
+    "method": "Add a small same-user positive-negative softplus loss to pointwise DeepFM, select epochs by GAUC on a later temporal window, and refit on the full training period.",
+    "fit": "The official GAUC is positive-count-weighted within-user AUC, so sampling one logged negative per usable positive closely matches its comparison weighting while BCE anchors pointwise behavior.",
+    "smallest_ablation": "Completed a random-stream-matched pointwise control and pair weights 0.05 and 0.01. Weight 0.01 improved the train-only screen by +0.000057 GAUC and +0.000120 nDCG@5, then scored 0.612856984 at confirmation versus the 0.612858057 champion.",
+    "risk": "The four-fold residual audit selected inconsistent negative weights, three held-out folds regressed, and the fixed residual lost 0.00005275 primary. Do not promote or repeat this loss without a materially different sampler or backbone."
+  },
+  {
     "id": "cdr_debiasing",
     "category": "loss",
     "status": "research-only",

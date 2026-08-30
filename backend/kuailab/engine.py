@@ -571,7 +571,7 @@ class CampaignEngine:
                                 "fm_pairwise_blend": "Blend a 1-3 seed weighted-FM ensemble with one independently trained BPR FM",
                                 "fm_deep_blend": "Blend weighted FM, BPR FM, and a nonlinear DeepFM trained with weighted BCE",
                                 "fm_temporal_deep_blend": "Add a small globally standardized clock-context FM to the weighted FM, BPR, and DeepFM blend",
-                                "champion_residual_blend": "Retrain one typed pointwise/pairwise/DeepFM/RAD/ordinal/profile/full-slate candidate, convert both predictions to stable within-user ranks, and blend or extrapolate it at weight [-0.25,0.25] from the checksum-verified 0.612858 frozen champion. RAD, ordinal-watch, profile-embedding, and slate-context variants select epochs out of time and refit before confirmation; consult exhausted method cards before choosing one."
+                                "champion_residual_blend": "Retrain one typed pointwise/pairwise/DeepFM/RAD/ordinal/profile/GAUC/full-slate candidate, convert both predictions to stable within-user ranks, and blend or extrapolate it at weight [-0.25,0.25] from the checksum-verified 0.612858 frozen champion. RAD, ordinal-watch, profile-embedding, GAUC, and slate-context variants select epochs out of time and refit before confirmation; consult exhausted method cards before choosing one."
                             },
                             "defaults": {
                                 "k": 16, "lr": 0.001, "epochs": 40, "batch_size": 8192, "patience": 4,
@@ -582,6 +582,7 @@ class CampaignEngine:
                                 "deep_seed": 0, "deep_hidden": 64, "deep_dropout": 0.05,
                                 "deep_threads": 6, "deep_blend_weight": 0.23, "temporal_blend_weight": 0.024,
                                 "rad_aux_weight": 0.2, "rad_score_weight": 0.0,
+                                "gauc_pair_weight": 0.05,
                                 "champion_candidate_family": "pointwise_fm", "champion_blend_weight": 0.05,
                             },
                             "rule": "Select exactly one supported experiment_type and populate every typed parameter. Generated code is evidence; the trusted executor applies the typed change."
