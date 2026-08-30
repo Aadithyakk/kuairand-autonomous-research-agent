@@ -88,6 +88,15 @@ The runnable experiment and decision record are
 [`scripts/train_dvr_wtg.py`](scripts/train_dvr_wtg.py) and
 [`results/duration-debiasing/summary.json`](results/duration-debiasing/summary.json).
 
+A Kuaishou [Contextual Distillation Model](https://arxiv.org/abs/2406.09021)
+follow-up then tested whether learned candidate-set context could stabilize the
+earlier MMR micro-gain. A broad exploratory grid reached `0.612908304` but
+reduced nDCG@5. Its best all-fold-safe rule reached only `0.612860441` and did
+not survive leave-one-fold-out selection; an independently trained context gate
+selected zero at its locked screen threshold. The frozen champion therefore
+remains `0.612858057`. Full evidence and recovery compute are recorded in
+[`results/context-distillation/summary.json`](results/context-distillation/summary.json).
+
 Promotion has a stability guard: any primary gain below `0.0001` must also leave
 both GAUC and nDCG@5 non-decreasing. Larger primary gains still follow the
 organizer's combined metric. This prevents top-five regressions from being

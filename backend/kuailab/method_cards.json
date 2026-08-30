@@ -165,6 +165,17 @@
     "risk": "The global confirmation micro-gain was +0.000013 primary, but one fold lost nDCG and another lost GAUC; it failed the predeclared all-fold all-metric gate."
   },
   {
+    "id": "contextual_distillation_gate",
+    "category": "reranking",
+    "status": "attempted-rejected",
+    "paper": "Contextual Distillation Model for Diversified Recommendation",
+    "source": "https://arxiv.org/abs/2406.09021",
+    "method": "Use static competing-item context to distill an MMR-style teacher into a lightweight learned gate over the frozen relevance score.",
+    "fit": "The earlier MMR correction improved global validation but had opposing fold-level GAUC and nDCG effects, making a learned context gate a distinct stabilization attempt.",
+    "smallest_ablation": "Completed a 360-configuration static context audit, an independent fixed author-only temporal replication, and an out-of-fold learned tag-context gate with a locked materiality threshold.",
+    "risk": "The exploratory maximum reached 0.612908304 but reduced nDCG. Twenty-four all-fold-safe configurations changed very few rows; the best reached only 0.612860441 and failed leave-one-fold-out selection. The learned gate selected zero at its predeclared threshold."
+  },
+  {
     "id": "near_tie_pairwise_residual",
     "category": "loss",
     "status": "attempted-rejected",

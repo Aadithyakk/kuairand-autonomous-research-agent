@@ -22,6 +22,7 @@ from backend.kuailab.slate import build_slate_features
 from backend.kuailab.research import load_method_cards, summarize_search_tree
 from backend.kuailab.state import StateStore
 from scripts.train_dvr_wtg import auxiliary_targets, final_scores, fit_wtg_reference
+from scripts.audit_cdm_context_grid import prepare_context, rerank
 
 
 class CoreTests(unittest.TestCase):
@@ -157,6 +158,22 @@ class CoreTests(unittest.TestCase):
         wtg = np.asarray([0.1, 0.9, 0.3], dtype=np.float32)
         output = final_scores(["u1", "u1", "u2"], long_view, wtg, 0.0)
         np.testing.assert_array_equal(output, long_view)
+
+    def test_cdm_context_rerank_is_outcome_free(self):
+        rows = [
+            (20220422, "u1", "v1", "a1", "m1", "NORMAL", frozenset({"x"}), 0),
+            (20220422, "u1", "v2", "a2", "m2", "NORMAL", frozenset({"x"}), 1),
+            (20220422, "u1", "v3", "a3", "m3", "NORMAL", frozenset({"y"}), 0),
+        ]
+        changed = [tuple(list(row[:-1]) + [1 - row[-1]]) for row in rows]
+        scores = np.asarray([0.9, 0.8, 0.7], dtype=np.float64)
+        base, context = prepare_context(rows, ["u1"] * 3, scores)
+        changed_base, changed_context = prepare_context(changed, ["u1"] * 3, scores)
+        candidate = rerank(base, context, (0.0, 0.0, 0.0, 1.0), 0.2, 3)
+        changed_candidate = rerank(
+            changed_base, changed_context, (0.0, 0.0, 0.0, 1.0), 0.2, 3
+        )
+        np.testing.assert_array_equal(candidate, changed_candidate)
 
     def test_synthetic_failure_is_visible(self):
         proposal = DemoProvider().propose({"iteration": 4, "epsilon": 0.002, "steering": None})

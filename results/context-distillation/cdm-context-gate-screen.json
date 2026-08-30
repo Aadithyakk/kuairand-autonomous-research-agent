@@ -1,0 +1,186 @@
+{
+  "experiment": "learned CDM tag-context gate",
+  "paper": "https://arxiv.org/abs/2406.09021",
+  "status": "screen_rejected",
+  "teacher": {
+    "similarity": "tag Jaccard only",
+    "pool_size": 5,
+    "lambda": 0.09
+  },
+  "protocol": {
+    "source_score_fit_through": "2022-04-13",
+    "OOF_gate_fit_and_fraction_selection": "2022-04-14",
+    "locked_screen": "2022-04-15..2022-04-21",
+    "confirmation_file_opened": false,
+    "outcome_features_at_inference": false,
+    "hidden_test_accessed": false,
+    "retrospective_origin": "teacher configuration came from an exploratory April22-28 grid; this screen is an independent earlier-time replication"
+  },
+  "selection_examples": 423,
+  "screen_examples": 3601,
+  "fraction_grid": [
+    {
+      "gate_fraction": 0.0,
+      "selected_changed_users": 0,
+      "metrics": {
+        "primary": 0.5959912538528442,
+        "gauc": 0.6698681712150574,
+        "ndcg5": 0.5221143960952759,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta": {
+        "primary": 0.0,
+        "gauc": 0.0,
+        "ndcg5": 0.0
+      },
+      "all_metrics_nonnegative": true
+    },
+    {
+      "gate_fraction": 0.1,
+      "selected_changed_users": 43,
+      "metrics": {
+        "primary": 0.5959808230400085,
+        "gauc": 0.6698545217514038,
+        "ndcg5": 0.5221071243286133,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta": {
+        "primary": -1.043081283569336e-05,
+        "gauc": -1.3649463653564453e-05,
+        "ndcg5": -7.271766662597656e-06
+      },
+      "all_metrics_nonnegative": false
+    },
+    {
+      "gate_fraction": 0.2,
+      "selected_changed_users": 85,
+      "metrics": {
+        "primary": 0.596000075340271,
+        "gauc": 0.6698811054229736,
+        "ndcg5": 0.5221191048622131,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta": {
+        "primary": 8.821487426757812e-06,
+        "gauc": 1.2934207916259766e-05,
+        "ndcg5": 4.708766937255859e-06
+      },
+      "all_metrics_nonnegative": true
+    },
+    {
+      "gate_fraction": 0.3,
+      "selected_changed_users": 127,
+      "metrics": {
+        "primary": 0.595999002456665,
+        "gauc": 0.6698775887489319,
+        "ndcg5": 0.5221203565597534,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta": {
+        "primary": 7.748603820800781e-06,
+        "gauc": 9.417533874511719e-06,
+        "ndcg5": 5.9604644775390625e-06
+      },
+      "all_metrics_nonnegative": true
+    },
+    {
+      "gate_fraction": 0.5,
+      "selected_changed_users": 212,
+      "metrics": {
+        "primary": 0.5959984660148621,
+        "gauc": 0.6698693633079529,
+        "ndcg5": 0.5221275687217712,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta": {
+        "primary": 7.212162017822266e-06,
+        "gauc": 1.1920928955078125e-06,
+        "ndcg5": 1.3172626495361328e-05
+      },
+      "all_metrics_nonnegative": true
+    },
+    {
+      "gate_fraction": 0.75,
+      "selected_changed_users": 318,
+      "metrics": {
+        "primary": 0.5959569811820984,
+        "gauc": 0.6697972416877747,
+        "ndcg5": 0.5221167206764221,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta": {
+        "primary": -3.427267074584961e-05,
+        "gauc": -7.092952728271484e-05,
+        "ndcg5": 2.3245811462402344e-06
+      },
+      "all_metrics_nonnegative": false
+    },
+    {
+      "gate_fraction": 1.0,
+      "selected_changed_users": 423,
+      "metrics": {
+        "primary": 0.595885694026947,
+        "gauc": 0.6697070002555847,
+        "ndcg5": 0.5220643877983093,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta": {
+        "primary": -0.0001055598258972168,
+        "gauc": -0.00016117095947265625,
+        "ndcg5": -5.0008296966552734e-05
+      },
+      "all_metrics_nonnegative": false
+    }
+  ],
+  "selected_gate_fraction": 0.0,
+  "screen_selected_changed_users": 0,
+  "control": {
+    "primary": 0.6141026020050049,
+    "gauc": 0.6624848246574402,
+    "ndcg5": 0.5657204389572144,
+    "users": 24262,
+    "rows": 249694
+  },
+  "candidate": {
+    "primary": 0.6141026020050049,
+    "gauc": 0.6624848246574402,
+    "ndcg5": 0.5657204389572144,
+    "users": 24262,
+    "rows": 249694
+  },
+  "delta": {
+    "primary": 0.0,
+    "gauc": 0.0,
+    "ndcg5": 0.0
+  },
+  "merits_confirmation": false,
+  "resources": {
+    "wall_seconds": 7.718,
+    "train_seconds": 7.718,
+    "cpu_seconds": 27.183,
+    "cpu_hours": 0.007551,
+    "cpu_utilization_percent": 352.21,
+    "peak_rss_mb": 497.344,
+    "gpu_count": 0,
+    "gpu_seconds": 0.0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "hardware": {
+      "logical_cpu_count": 16,
+      "architecture": "arm64",
+      "processor": "arm"
+    }
+  },
+  "artifacts": {
+    "scores": "runtime/context-distillation/cdm-context-gate-screen.npz"
+  },
+  "recommendation": "reject learned context gate"
+}

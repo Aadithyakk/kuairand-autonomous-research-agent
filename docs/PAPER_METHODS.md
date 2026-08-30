@@ -32,7 +32,8 @@ node. The organizer evaluator remains the only authority on scores.
 | 5 | [MaskNet](https://arxiv.org/abs/2102.07619) | Attempted—rejected | Its +0.000449 train-only gain reversed at confirmation and three of four champion-residual folds regressed. |
 | 6 | [FinalMLP](https://arxiv.org/abs/2304.00902) | Attempted—rejected | Its +0.000756 train-only gain reversed at confirmation and every held-out residual fold lost primary. |
 | 7 | [NeuralNDCG](https://arxiv.org/abs/1906.04262) | Attempted—rejected | Its isolated objective differential replicated at confirmation, but a fixed champion blend lost all three metrics and regressed in two folds. |
-| 8 | [Conservative Doubly Robust learning](https://jiawei-chen.github.io/paper/CIKM23-CDR.pdf) | Research-only | Reconsider only if a random-exposure screen is rebuilt; its published setting does not match this challenge's standard-log confirmation distribution. |
+| 8 | [Contextual Distillation Model](https://arxiv.org/abs/2406.09021) | Attempted—rejected | Static context produced a tempting post-hoc maximum, but leave-one-fold-out selection and the learned context gate retained the unchanged champion. |
+| 9 | [Conservative Doubly Robust learning](https://jiawei-chen.github.io/paper/CIKM23-CDR.pdf) | Research-only | Reconsider only if a random-exposure screen is rebuilt; its published setting does not match this challenge's standard-log confirmation distribution. |
 
 LambdaMART/YetiRank, generic MMoE/PLE, counterfactual watch-time likelihoods,
 pairwise/listwise fine-tuning, and the tested mean-pooled slate model are marked
@@ -115,3 +116,28 @@ end-to-end elapsed time and process telemetry does not measure combined RAM
 across concurrent workers. The complete decision and per-method telemetry are
 in `results/calibrated-ranking/summary.json`. The exact `0.612858057` champion
 remains frozen.
+
+## Contextual-distillation follow-up
+
+[CDM](https://arxiv.org/abs/2406.09021), a Kuaishou contextual-distillation
+method, motivated a focused attempt to stabilize the earlier MMR micro-gain.
+A predeclared 360-configuration audit varied only static author, music, video
+type, and tag context, penalty, and top-pool size. The largest global result was
+`0.612908304`, but nDCG@5 fell by `0.000024080` and fold 0 regressed. Twenty-four
+configurations preserved every metric in every fold, but they moved very few
+rows: the strongest was author-only top-five reranking at `0.612860441`, a
+`+0.000002384` gain. Three of four leave-one-fold-out selectors chose the
+unchanged champion; the remaining selection lost all metrics on its held-out
+fold.
+
+The fixed author-only rule was then checked on two earlier out-of-time windows.
+It was neutral on April 14 and gained `+0.000013351` on April 15–21, so it failed
+the predeclared requirement for a positive result in both windows. Finally, a
+small gradient-boosted context gate used only score margins, slate structure,
+and static redundancy. Its best all-metric OOF arm gained `+0.000008821`, below
+the locked `0.000010` threshold; zero was selected and confirmation stayed
+closed for that branch. Successful evidence runs consumed `171.763` aggregate
+wall-seconds and `0.052853` CPU-hours, used no GPU, and peaked at `497.344` MB
+RAM. Two report-serialization recovery runs repeated the grid before the final
+artifact, adding roughly `281.6` observed wall-seconds. See
+`results/context-distillation/summary.json`.
