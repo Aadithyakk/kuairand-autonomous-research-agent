@@ -2,13 +2,13 @@
   {
     "id": "rad_watch_quantiles",
     "category": "reward",
-    "status": "unattempted-priority",
+    "status": "attempted-rejected",
     "paper": "Relative Advantage Debiasing for Watch-Time Prediction in Short-Video Recommendation",
     "source": "https://arxiv.org/abs/2508.11086",
     "method": "Map play time to train-only user- and video-conditional empirical quantiles, then learn the relative-preference signal in a separate stage.",
     "fit": "Distinct from watch_ratio and CWM: it removes both user watch-habit and item-duration/popularity confounding.",
-    "smallest_ablation": "Add fused user/video watch quantiles as an auxiliary target to one pointwise DeepFM seed; retain long_view as the ranking head.",
-    "risk": "Quantiles must be constructed strictly from the training window and need smoothing for sparse users/videos."
+    "smallest_ablation": "Completed: fused user/video watch quantiles as a DeepFM auxiliary target, alpha-zero control, pure RAD-head ranking, and train-only head-mix scan.",
+    "risk": "The alpha-zero control outperformed the RAD auxiliary on both tiers; pure RAD-head ranking scored 0.583969 internally and every held-out residual fold regressed. Do not repeat without a materially different stage-1 estimator or backbone."
   },
   {
     "id": "umre_monotonic_ensemble",

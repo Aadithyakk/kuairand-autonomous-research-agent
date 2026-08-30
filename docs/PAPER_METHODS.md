@@ -25,7 +25,7 @@ node. The organizer evaluator remains the only authority on scores.
 
 | Priority | Method | Status | Smallest useful experiment |
 | --- | --- | --- | --- |
-| 1 | [Relative Advantage Debiasing](https://arxiv.org/abs/2508.11086) | Unattempted | Construct train-only, smoothed user/video watch-time quantiles and use their fused relative-preference value as an auxiliary DeepFM target. Rank only with the `long_view` head. |
+| 1 | [Relative Advantage Debiasing](https://arxiv.org/abs/2508.11086) | Attempted—rejected | The auxiliary, α=0 control, pure RAD head, small head mixtures, and four held-out residual folds were measured. The control was stronger and no residual generalized. |
 | 2 | [UMRE monotonic ensemble](https://arxiv.org/abs/2508.07613) | Unattempted | Cross-fit monotonic transforms over three diverse frozen score streams, followed by a strongly regularized context gate. |
 | 3 | [SetRank](https://arxiv.org/abs/1912.05891) | Partial | Replace the rejected mean-pooled DeepSets context with one small permutation-invariant self-attention block, keeping the temporal protocol and BCE fixed. |
 | 4 | [Conservative Doubly Robust learning](https://jiawei-chen.github.io/paper/CIKM23-CDR.pdf) | Research-only | Reconsider only if a random-exposure screen is rebuilt; its published setting does not match this challenge's standard-log confirmation distribution. |
@@ -52,3 +52,10 @@ The first measured fast/slow audit is in
 `results/final-model/fast-slow-slate-smoke.json`. It demonstrates why both tiers
 are required: the slate candidate gained `+0.004450` internally but was neutral
 after confirmation and held-out residual auditing.
+
+The next paper-guided run tested RAD-UV. It passed the fast gate with a
+`0.615556` long-view-head score, but its fixed 5% champion residual scored
+`0.612856567`, below the frozen champion. An otherwise identical α=0 control
+was stronger standalone (`0.604018` versus `0.603648`), pure RAD-head ranking
+fell to `0.583969` internally, and all four held-out residual folds regressed.
+See `results/final-model/rad-auxiliary-audit.json`.

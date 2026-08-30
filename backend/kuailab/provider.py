@@ -120,7 +120,7 @@ class OpenAIProvider:
                         "pairwise_lr", "pairwise_epochs", "pairwise_patience", "pairwise_seed", "blend_weight",
                         "deep_lr", "deep_epochs", "deep_patience", "deep_seed", "deep_hidden", "deep_dropout",
                         "deep_threads", "deep_blend_weight", "temporal_blend_weight",
-                        "champion_candidate_family", "champion_blend_weight"
+                        "rad_aux_weight", "rad_score_weight", "champion_candidate_family", "champion_blend_weight"
                     ],
                     "properties": {
                         "k": {"type": "integer"},
@@ -145,11 +145,13 @@ class OpenAIProvider:
                         "deep_threads": {"type": "integer"},
                         "deep_blend_weight": {"type": "number"},
                         "temporal_blend_weight": {"type": "number"},
+                        "rad_aux_weight": {"type": "number", "minimum": 0, "maximum": 1},
+                        "rad_score_weight": {"type": "number", "minimum": 0, "maximum": 1},
                         "champion_candidate_family": {
                             "type": "string",
                             "enum": [
                                 "pointwise_fm", "pairwise_fm", "deepfm_blend",
-                                "temporal_deepfm_blend", "slate_context_deepfm"
+                                "temporal_deepfm_blend", "slate_context_deepfm", "rad_deepfm"
                             ]
                         },
                         "champion_blend_weight": {"type": "number", "minimum": -0.25, "maximum": 0.25}

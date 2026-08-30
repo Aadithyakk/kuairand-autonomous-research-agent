@@ -64,6 +64,7 @@ def load_development_splits(data_dir: Path) -> dict:
                     date, row["user_id"], row["video_id"], video_to_author.get(row["video_id"], "UNK"),
                     row["tab"], float(row["duration_ms"]), 1 if row["long_view"] != "0" else 0,
                     int(row["hourmin"]) // 100, int(row["time_ms"]),
+                    float(row["play_time_ms"]),
                 )
                 (train if date <= 20220421 else valid).append(item)
     if len(train) != 1_141_112 or len(valid) != 124_909:
@@ -86,6 +87,7 @@ def load_screen_splits(data_dir: Path) -> dict:
                 video_to_author.get(row["video_id"], "UNK"), row["tab"],
                 float(row["duration_ms"]), 1 if row["long_view"] != "0" else 0,
                 int(row["hourmin"]) // 100, int(row["time_ms"]),
+                float(row["play_time_ms"]),
             )
             (train if date <= 20220414 else valid).append(item)
     if not train or not valid or len(train) + len(valid) != 1_141_112:
@@ -253,6 +255,7 @@ def train_fm(
         "deepfm_blend": "fm_deep_blend",
         "temporal_deepfm_blend": "fm_temporal_deep_blend",
         "slate_context_deepfm": "fm_slate_deep",
+        "rad_deepfm": "fm_rad_deep",
     }
     candidate_family = str(parameters.get("champion_candidate_family", "pointwise_fm"))
     if requested_champion_mode and candidate_family not in champion_families:
@@ -268,12 +271,14 @@ def train_fm(
     ensemble_types = {
         "fm_ensemble", "fm_pairwise_blend", "fm_deep_blend",
         "fm_temporal_deep_blend", "fm_slate_deep",
+        "fm_rad_deep",
     }
     seeds = parameters.get("ensemble_seeds", [seed]) if training_type in ensemble_types else [seed]
     seeds = [int(value) for value in seeds[:3]]
     positive_weight = float(parameters.get("positive_weight", 1.0))
     positive_weight = max(1.0, min(positive_weight, 10.0))
     predictions, histories, pairwise_histories, deep_histories, temporal_histories = [], [], [], [], []
+    rad_histories = []
     if training_type == "fm_slate_deep":
         from backend.kuailab.slate import train_slate_deepfm
 
@@ -287,6 +292,21 @@ def train_fm(
             slate_predictions.append(within_user_rank(valid_users, slate_scores))
             deep_histories.append(slate_history)
         best_scores = np.mean(np.stack(slate_predictions), axis=0)
+        blend_weight = 0.0
+        deep_blend_weight = 0.0
+    elif training_type == "fm_rad_deep":
+        from backend.kuailab.rad import train_rad_deepfm
+
+        rad_predictions = []
+        for model_seed in seeds:
+            rad_parameters = {**parameters, "deep_seed": model_seed}
+            rad_scores, rad_history = train_rad_deepfm(
+                splits, encoded, dimension, output_dir, rad_parameters,
+                evaluate_module.evaluate,
+            )
+            rad_predictions.append(within_user_rank(valid_users, rad_scores))
+            rad_histories.append(rad_history)
+        best_scores = np.mean(np.stack(rad_predictions), axis=0)
         blend_weight = 0.0
         deep_blend_weight = 0.0
     elif training_type != "fm_pairwise":
@@ -306,7 +326,7 @@ def train_fm(
             blend_weight = max(0.0, min(float(parameters.get("blend_weight", 0.455)), 1.0))
             pointwise_scores = np.mean(np.stack(predictions), axis=0)
             best_scores = (1.0 - blend_weight) * pointwise_scores + blend_weight * pairwise_scores
-    elif training_type != "fm_slate_deep":
+    elif training_type not in {"fm_slate_deep", "fm_rad_deep"}:
         blend_weight = 0.0
         best_scores = np.mean(np.stack(predictions), axis=0)
     if training_type in {"fm_deep_blend", "fm_temporal_deep_blend"}:
@@ -377,6 +397,7 @@ def train_fm(
         "pairwise_runs": pairwise_histories,
         "deep_runs": deep_histories,
         "temporal_runs": temporal_histories,
+        "rad_runs": rad_histories,
     }, indent=2), encoding="utf-8")
     return {"primary": float(final["primary"]), "gauc": float(final["GAUC"]), "ndcg5": float(final["nDCG@5"])}
 

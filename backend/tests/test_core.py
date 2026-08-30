@@ -16,6 +16,7 @@ from backend.kuailab.engine import CampaignEngine
 from backend.kuailab.provider import DemoProvider, OpenAIProvider
 from backend.kuailab.pairwise import sample_pair_indices
 from backend.kuailab.resources import normalize_resource_usage
+from backend.kuailab.rad import build_rad_labels
 from backend.kuailab.slate import build_slate_features
 from backend.kuailab.research import load_method_cards, summarize_search_tree
 from backend.kuailab.state import StateStore
@@ -105,6 +106,25 @@ class CoreTests(unittest.TestCase):
         session_fraction = names.index("session_fraction")
         self.assertEqual(features[0, session_fraction], features[1, session_fraction])
         self.assertGreater(features[2, session_fraction], features[1, session_fraction])
+
+    def test_rad_labels_use_video_and_user_duration_reference_groups(self):
+        rows = [
+            (20220408, "u1", "v1", "a1", "0", 10_000.0, 0, 8, 1_000, 1_000.0),
+            (20220408, "u2", "v1", "a1", "0", 10_000.0, 1, 8, 2_000, 9_000.0),
+            (20220408, "u1", "v2", "a2", "0", 30_000.0, 1, 8, 3_000, 15_000.0),
+            (20220408, "u2", "v2", "a2", "0", 30_000.0, 0, 8, 4_000, 2_000.0),
+        ]
+        try:
+            labels, stats = build_rad_labels(rows, duration_bins=2)
+        except RuntimeError as error:
+            if "SciPy" in str(error):
+                self.skipTest("RAD deep optional dependency is not installed")
+            raise
+        self.assertEqual(labels.shape, (4,))
+        self.assertTrue(np.all((labels > 0) & (labels < 1)))
+        self.assertGreater(labels[1], labels[0])
+        self.assertGreater(labels[2], labels[3])
+        self.assertEqual(stats["duration_bins"], 2)
 
     def test_synthetic_failure_is_visible(self):
         proposal = DemoProvider().propose({"iteration": 4, "epsilon": 0.002, "steering": None})

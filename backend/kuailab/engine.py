@@ -558,10 +558,11 @@ class CampaignEngine:
                         "offline_research_evidence": {
                             "residual_plateau": "Pointwise FM, pairwise FM, ordinary DeepFM, and anti-expert residuals repeatedly returned 0.6126-0.6129 and were rejected.",
                             "slate_context_audit": "A k16/hidden64/dropout0.1 matched-week slate_context_deepfm reached 0.603570 standalone; its apparent +0.0000063 residual regressed in three of four held-out user folds. A three-seed ensemble reached 0.603915 standalone and had -0.0000001 fixed residual. Do not repeat these exact configurations.",
+                            "rad_audit": "RAD-UV train-only user-duration/video watch-time quantiles passed the proxy screen, but the alpha-zero control was stronger standalone, pure RAD-head ranking scored 0.583969 internally, and all four held-out residual folds regressed. Do not repeat this DeepFM RAD configuration.",
                             "error_regime": "Users with seven or more sessions account for 53.1% of recoverable nDCG@5 gap, but gating the tested slate residual to that regime still failed.",
                         },
                         "executor_contract": {
-                            "runtime": "Trusted NumPy FM/BPR executors, installed PyTorch DeepFM and full-slate DeepSets executors, and a checksum-verified frozen-champion residual adapter; no package installation or arbitrary generated-code execution",
+                            "runtime": "Trusted NumPy FM/BPR executors, installed PyTorch DeepFM, RAD auxiliary, and full-slate DeepSets executors, and a checksum-verified frozen-champion residual adapter; no package installation or arbitrary generated-code execution",
                             "experiment_types": {
                                 "fm_config": "One FM with typed k/lr/epochs/batch_size/patience/seed parameters",
                                 "fm_positive_weight": "FM logistic loss with the supplied positive_weight in [1,10]",
@@ -570,7 +571,7 @@ class CampaignEngine:
                                 "fm_pairwise_blend": "Blend a 1-3 seed weighted-FM ensemble with one independently trained BPR FM",
                                 "fm_deep_blend": "Blend weighted FM, BPR FM, and a nonlinear DeepFM trained with weighted BCE",
                                 "fm_temporal_deep_blend": "Add a small globally standardized clock-context FM to the weighted FM, BPR, and DeepFM blend",
-                                "champion_residual_blend": "Retrain one typed pointwise/pairwise/DeepFM/full-slate candidate, convert both predictions to stable within-user ranks, and blend or extrapolate it at weight [-0.25,0.25] from the checksum-verified 0.612858 frozen champion. slate_context_deepfm selects epochs out of time on matched seven-day slates, refits April 8-21, and uses outcome-free whole-user slate/session/repeat context"
+                                "champion_residual_blend": "Retrain one typed pointwise/pairwise/DeepFM/RAD/full-slate candidate, convert both predictions to stable within-user ranks, and blend or extrapolate it at weight [-0.25,0.25] from the checksum-verified 0.612858 frozen champion. rad_deepfm builds train-only user-duration/video watch-time quantiles, selects epochs out of time, refits, and ranks only with long_view. slate_context_deepfm selects epochs out of time on matched seven-day slates, refits April 8-21, and uses outcome-free whole-user slate/session/repeat context"
                             },
                             "defaults": {
                                 "k": 16, "lr": 0.001, "epochs": 40, "batch_size": 8192, "patience": 4,
@@ -580,6 +581,7 @@ class CampaignEngine:
                                 "deep_lr": 0.001, "deep_epochs": 15, "deep_patience": 4,
                                 "deep_seed": 0, "deep_hidden": 64, "deep_dropout": 0.05,
                                 "deep_threads": 6, "deep_blend_weight": 0.23, "temporal_blend_weight": 0.024,
+                                "rad_aux_weight": 0.2, "rad_score_weight": 0.0,
                                 "champion_candidate_family": "pointwise_fm", "champion_blend_weight": 0.05,
                             },
                             "rule": "Select exactly one supported experiment_type and populate every typed parameter. Generated code is evidence; the trusted executor applies the typed change."

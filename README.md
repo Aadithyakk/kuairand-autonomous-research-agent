@@ -48,6 +48,24 @@ epoch on matched seven-day slates (April 8–14 → April 15–21), refits both 
 then computes the April 22–28 confirmation score, reducing repeated confirmation-
 split tuning.
 
+The `rad_deepfm` family implements the paper-guided Relative Advantage
+Debiasing ablation. It estimates smoothed watch-time quantiles only inside the
+training window: by video ID, and by user ID within four duration bins. Support-
+weighted probit fusion supplies an auxiliary target to DeepFM, while only the
+`long_view` head produces ranking scores by default. `rad_score_weight` exposes
+a controlled paper-faithful ablation from the binary head toward the predicted
+relative-advantage head. Epoch selection and refitting use the same nested
+temporal protocol as the slate candidate.
+
+The first RAD audit rejected promotion. Its auxiliary version passed the
+train-only screen at `0.615556`, but the 5% confirmation residual reached only
+`0.612856567`; an otherwise identical α=0 control was stronger standalone
+(`0.604018` versus `0.603648`). Pure RAD-head ranking scored `0.583969` on the
+fast screen, and every held-out residual fold regressed. The five runs consumed
+`72.076` wall-seconds, `0.026406` CPU-hours, at most `1132.125` MB RAM, and no
+GPU. Evidence is in
+[`results/final-model/rad-auxiliary-audit.json`](results/final-model/rad-auxiliary-audit.json).
+
 Promotion has a stability guard: any primary gain below `0.0001` must also leave
 both GAUC and nDCG@5 non-decreasing. Larger primary gains still follow the
 organizer's combined metric. This prevents top-five regressions from being
