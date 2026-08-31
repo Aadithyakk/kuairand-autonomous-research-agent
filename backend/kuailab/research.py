@@ -5,6 +5,7 @@ from pathlib import Path
 
 
 METHOD_CARDS_PATH = Path(__file__).with_name("method_cards.json")
+RESEARCH_PRIORS_PATH = Path(__file__).with_name("research_priors.json")
 
 
 def load_method_cards() -> list[dict]:
@@ -17,6 +18,20 @@ def load_method_cards() -> list[dict]:
         if missing:
             raise ValueError(f"Method card {card.get('id', '<unknown>')} is missing {sorted(missing)}")
     return cards
+
+
+def load_research_priors() -> dict:
+    priors = json.loads(RESEARCH_PRIORS_PATH.read_text(encoding="utf-8"))
+    if not isinstance(priors, dict) or not priors:
+        raise ValueError("Research-prior library must contain at least one prior")
+    required = {"status", "teacher", "transferable_strategy", "submission_safe_translation", "priority_experiments", "prohibited_claim"}
+    for prior_id, prior in priors.items():
+        if not isinstance(prior, dict):
+            raise ValueError(f"Research prior {prior_id} must be an object")
+        missing = required - set(prior)
+        if missing:
+            raise ValueError(f"Research prior {prior_id} is missing {sorted(missing)}")
+    return priors
 
 
 def summarize_search_tree(iterations: list[dict], limit: int = 20) -> list[dict]:

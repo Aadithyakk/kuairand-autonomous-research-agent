@@ -19,7 +19,7 @@ from backend.kuailab.pairwise import sample_pair_indices
 from backend.kuailab.resources import normalize_resource_usage
 from backend.kuailab.rad import build_rad_labels
 from backend.kuailab.slate import build_slate_features
-from backend.kuailab.research import load_method_cards, summarize_search_tree
+from backend.kuailab.research import load_method_cards, load_research_priors, summarize_search_tree
 from backend.kuailab.state import StateStore
 from backend.kuailab.live_predictor import predict_slate, score_candidate
 from scripts.train_dvr_wtg import auxiliary_targets, final_scores, fit_wtg_reference
@@ -85,6 +85,13 @@ class CoreTests(unittest.TestCase):
         self.assertIn("exhausted", statuses)
         tree = summarize_search_tree([{"number": 0, "title": "root", "status": "baseline", "metrics": {"primary": 0.6}}])
         self.assertEqual(tree[0]["node"], 0)
+
+    def test_online_teacher_is_directional_submission_safe_prior(self):
+        prior = load_research_priors()["online_teacher_distillation"]
+        self.assertAlmostEqual(prior["teacher"]["metrics"]["primary"], 0.7234153747558594)
+        self.assertIn("not a static submission", prior["teacher"]["evaluation_mode"])
+        self.assertTrue(any("without hidden outcomes" in item for item in prior["submission_safe_translation"]))
+        self.assertIn("Do not report 0.723415", prior["prohibited_claim"])
 
     def test_responses_output_text_fallback(self):
         response = {"output": [{"content": [{"type": "output_text", "text": "{\"ok\":true}"}]}]}

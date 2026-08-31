@@ -13,7 +13,7 @@ from .champion import load_champion_scores
 from .config import Settings
 from .provider import DemoProvider, OpenAIProvider, Proposal
 from .resources import add_resource_usage, combine_resource_usage, empty_campaign_usage
-from .research import load_method_cards, summarize_search_tree
+from .research import load_method_cards, load_research_priors, summarize_search_tree
 from .state import StateStore, utc_now
 
 
@@ -541,6 +541,7 @@ class CampaignEngine:
                         "prior_iterations": snapshot["iterations"][-12:],
                         "search_tree": summarize_search_tree(snapshot["iterations"]),
                         "method_cards": load_method_cards(),
+                        "research_priors": load_research_priors(),
                         "epsilon": limits["convergence_epsilon"],
                         "remaining_iterations": end_number - number,
                         "official_iterations_used": self._budget_iterations(snapshot),
@@ -554,6 +555,7 @@ class CampaignEngine:
                             "must be reproducible",
                             "do not repeat an exact experiment_type and parameter configuration already listed",
                             "prefer validation gain per CPU/GPU hour when expected gains are similar",
+                            "use verified online results only as research priors; the evaluated candidate must remain frozen and outcome-free at prediction time",
                         ],
                         "offline_research_evidence": {
                             "residual_plateau": "Pointwise FM, pairwise FM, ordinary DeepFM, and anti-expert residuals repeatedly returned 0.6126-0.6129 and were rejected.",
