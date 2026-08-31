@@ -1,0 +1,49 @@
+{
+  "date": "2026-08-29",
+  "target": "long_view",
+  "split": "validation",
+  "hidden_test_accessed": false,
+  "baseline": {
+    "primary": 0.6014695167541504,
+    "gauc": 0.6671333909034729,
+    "ndcg5": 0.5358057022094727
+  },
+  "previous_champion": {
+    "primary": 0.605809211730957,
+    "gauc": 0.6728978753089905,
+    "ndcg5": 0.5387206077575684
+  },
+  "champion": {
+    "primary": 0.6058847904205322,
+    "gauc": 0.6729640364646912,
+    "ndcg5": 0.5388054847717285,
+    "gain_over_baseline": 0.0044152736663818,
+    "gain_over_previous_champion": 0.0000755786895752
+  },
+  "method": {
+    "experiment_type": "fm_temporal_deep_blend",
+    "pointwise_objective": "positive-weighted binary cross-entropy",
+    "pointwise_seeds": [0, 2],
+    "positive_weight": 2.75,
+    "pairwise_objective": "within-user Bayesian Personalized Ranking",
+    "pairwise_seed": 1,
+    "pointwise_pairwise_blend_weight": 0.455,
+    "deep_objective": "positive-weighted DeepFM binary cross-entropy",
+    "deep_seed": 0,
+    "deep_blend_weight": 0.23,
+    "temporal_objective": "positive-weighted FM binary cross-entropy",
+    "temporal_features": ["hour", "daypart", "weekday"],
+    "temporal_blend_weight": 0.024,
+    "temporal_normalization": "global z-score"
+  },
+  "resource_usage": {
+    "wall_seconds": 69.07,
+    "train_seconds": 67.028,
+    "cpu_seconds": 73.824,
+    "cpu_hours": 0.020507,
+    "peak_rss_mb": 1042.172,
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "device": "cpu"
+  }
+}

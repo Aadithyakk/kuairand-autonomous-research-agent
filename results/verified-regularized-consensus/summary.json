@@ -1,0 +1,47 @@
+{
+  "date": "2026-08-29",
+  "target": "long_view",
+  "split": "validation",
+  "hidden_test_accessed": false,
+  "baseline": {
+    "primary": 0.6014695167541504,
+    "gauc": 0.6671333909034729,
+    "ndcg5": 0.5358057022094727
+  },
+  "previous_research_best": {
+    "primary": 0.6101099848747253,
+    "gauc": 0.6789171099662781,
+    "ndcg5": 0.5413028597831726
+  },
+  "research_best": {
+    "primary": 0.6109744310379028,
+    "gauc": 0.6802416443824768,
+    "ndcg5": 0.5417072772979736,
+    "gain_over_baseline": 0.009504914283752441,
+    "relative_gain_over_baseline_percent": 1.580281962591557,
+    "gain_over_previous_research_best": 0.0008644461631774902
+  },
+  "requested_target": 0.62,
+  "gap_to_requested_target": 0.009025568962097164,
+  "status": "improved_but_target_not_reached",
+  "method": {
+    "name": "watch-ratio auxiliary plus pointwise-anchored same-session margin consensus",
+    "label_safe_features": true,
+    "validation_outcomes_used_for_training": false,
+    "disjoint_user_blend_check": true,
+    "normalization": "within-user ordinal rank"
+  },
+  "resource_usage": {
+    "training_wall_seconds": 72.578,
+    "training_cpu_seconds": 215.872,
+    "training_cpu_hours": 0.059964,
+    "training_peak_rss_mb": 15898.125,
+    "verification_wall_seconds": 8.463,
+    "verification_cpu_seconds": 8.448,
+    "verification_cpu_hours": 0.002347,
+    "verification_peak_rss_mb": 477.375,
+    "gpu_count": 0,
+    "device": "cpu",
+    "candidate_search_complete_tracking": true
+  }
+}

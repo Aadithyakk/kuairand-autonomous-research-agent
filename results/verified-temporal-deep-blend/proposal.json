@@ -1,0 +1,29 @@
+{
+  "title": "Clock-context FM, BPR, and DeepFM blend",
+  "experiment_type": "fm_temporal_deep_blend",
+  "hypothesis": "A very small clock-context FM contribution adds stable request-time preference information without displacing the retained collaborative rankers.",
+  "parameters": {
+    "k": 16,
+    "lr": 0.001,
+    "epochs": 40,
+    "batch_size": 8192,
+    "patience": 4,
+    "seed": 0,
+    "ensemble_seeds": [0, 2],
+    "positive_weight": 2.75,
+    "pairwise_lr": 0.002,
+    "pairwise_epochs": 12,
+    "pairwise_patience": 4,
+    "pairwise_seed": 1,
+    "blend_weight": 0.455,
+    "deep_lr": 0.001,
+    "deep_epochs": 15,
+    "deep_patience": 4,
+    "deep_seed": 0,
+    "deep_hidden": 64,
+    "deep_dropout": 0.05,
+    "deep_threads": 6,
+    "deep_blend_weight": 0.23,
+    "temporal_blend_weight": 0.024
+  }
+}

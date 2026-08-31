@@ -1,0 +1,172 @@
+{
+  "source_primary": 0.6128580570220947,
+  "source_gauc": 0.6823537349700928,
+  "source_ndcg5": 0.5433623194694519,
+  "recomputed_ndcg5": 0.5433617583548432,
+  "label_oracle_ndcg5": 0.6967868793850829,
+  "recoverable_ndcg5_gap": 0.15342512103023964,
+  "users": 22377,
+  "rows": 124909,
+  "regimes": {
+    "slate_size": [
+      {
+        "regime": "01-05",
+        "users": 14254,
+        "rows": 37566,
+        "mean_ndcg5": 0.529399,
+        "recoverable_gap": 0.063978,
+        "share_of_total_gap": 0.265625
+      },
+      {
+        "regime": "06-10",
+        "users": 5225,
+        "rows": 39587,
+        "mean_ndcg5": 0.602762,
+        "recoverable_gap": 0.250827,
+        "share_of_total_gap": 0.381735
+      },
+      {
+        "regime": "11-20",
+        "users": 2346,
+        "rows": 32609,
+        "mean_ndcg5": 0.522698,
+        "recoverable_gap": 0.395461,
+        "share_of_total_gap": 0.27023
+      },
+      {
+        "regime": "21-40",
+        "users": 517,
+        "rows": 13332,
+        "mean_ndcg5": 0.431048,
+        "recoverable_gap": 0.510925,
+        "share_of_total_gap": 0.07694
+      },
+      {
+        "regime": "41+",
+        "users": 35,
+        "rows": 1815,
+        "mean_ndcg5": 0.406168,
+        "recoverable_gap": 0.536689,
+        "share_of_total_gap": 0.005471
+      }
+    ],
+    "positive_count": [
+      {
+        "regime": "0",
+        "users": 6785,
+        "rows": 21807,
+        "mean_ndcg5": 0.0,
+        "recoverable_gap": 0.0,
+        "share_of_total_gap": 0.0
+      },
+      {
+        "regime": "1",
+        "users": 6447,
+        "rows": 25466,
+        "mean_ndcg5": 0.806537,
+        "recoverable_gap": 0.193463,
+        "share_of_total_gap": 0.363294
+      },
+      {
+        "regime": "11+",
+        "users": 154,
+        "rows": 3938,
+        "mean_ndcg5": 0.747468,
+        "recoverable_gap": 0.252532,
+        "share_of_total_gap": 0.011328
+      },
+      {
+        "regime": "2",
+        "users": 3672,
+        "rows": 21547,
+        "mean_ndcg5": 0.788153,
+        "recoverable_gap": 0.211847,
+        "share_of_total_gap": 0.226582
+      },
+      {
+        "regime": "3-5",
+        "users": 4218,
+        "rows": 36232,
+        "mean_ndcg5": 0.753216,
+        "recoverable_gap": 0.246784,
+        "share_of_total_gap": 0.303198
+      },
+      {
+        "regime": "6-10",
+        "users": 1101,
+        "rows": 15919,
+        "mean_ndcg5": 0.701898,
+        "recoverable_gap": 0.298102,
+        "share_of_total_gap": 0.095599
+      }
+    ],
+    "active_days": [
+      {
+        "regime": "1",
+        "users": 5588,
+        "rows": 8433,
+        "mean_ndcg5": 0.436627,
+        "recoverable_gap": 0.018993,
+        "share_of_total_gap": 0.030913
+      },
+      {
+        "regime": "2",
+        "users": 5383,
+        "rows": 18259,
+        "mean_ndcg5": 0.566819,
+        "recoverable_gap": 0.08895,
+        "share_of_total_gap": 0.139467
+      },
+      {
+        "regime": "3-4",
+        "users": 7469,
+        "rows": 46261,
+        "mean_ndcg5": 0.607724,
+        "recoverable_gap": 0.190241,
+        "share_of_total_gap": 0.413874
+      },
+      {
+        "regime": "5+",
+        "users": 3937,
+        "rows": 51956,
+        "mean_ndcg5": 0.540681,
+        "recoverable_gap": 0.362545,
+        "share_of_total_gap": 0.415747
+      }
+    ],
+    "session_count": [
+      {
+        "regime": "1",
+        "users": 4431,
+        "rows": 5062,
+        "mean_ndcg5": 0.398181,
+        "recoverable_gap": 0.003308,
+        "share_of_total_gap": 0.00427
+      },
+      {
+        "regime": "2-3",
+        "users": 6983,
+        "rows": 19958,
+        "mean_ndcg5": 0.561843,
+        "recoverable_gap": 0.073987,
+        "share_of_total_gap": 0.150487
+      },
+      {
+        "regime": "4-6",
+        "users": 5999,
+        "rows": 34569,
+        "mean_ndcg5": 0.630941,
+        "recoverable_gap": 0.179861,
+        "share_of_total_gap": 0.31428
+      },
+      {
+        "regime": "7+",
+        "users": 4964,
+        "rows": 65320,
+        "mean_ndcg5": 0.541116,
+        "recoverable_gap": 0.367224,
+        "share_of_total_gap": 0.530963
+      }
+    ]
+  }
+}

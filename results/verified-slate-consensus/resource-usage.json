@@ -1,0 +1,1044 @@
+{
+  "device": "cpu",
+  "hardware": {
+    "logical_cpu_count": 16,
+    "architecture": "arm64",
+    "processor": "arm"
+  },
+  "accepted_slate_correction": {
+    "model_training_required": false,
+    "diversity_selection_audit": {
+      "wall_seconds": 34.198,
+      "cpu_seconds": 34.528,
+      "cpu_hours": 0.009591,
+      "peak_rss_mb": 799.188,
+      "gpu_hours": 0.0
+    },
+    "graph_selection_audit": {
+      "wall_seconds": 30.051,
+      "cpu_seconds": 30.442,
+      "cpu_hours": 0.008456,
+      "peak_rss_mb": 809.625,
+      "gpu_hours": 0.0
+    },
+    "conditional_graph_selection_audit": {
+      "wall_seconds": 37.243,
+      "cpu_seconds": 38.205,
+      "cpu_hours": 0.010612,
+      "peak_rss_mb": 956.781,
+      "gpu_hours": 0.0
+    },
+    "temporal_selection_audit": {
+      "wall_seconds": 167.824,
+      "cpu_seconds": 167.863,
+      "cpu_hours": 0.046629,
+      "peak_rss_mb": 1164.625,
+      "gpu_hours": 0.0
+    },
+    "temporal_fourth_stage_audit": {
+      "wall_seconds": 75.118,
+      "cpu_seconds": 75.202,
+      "cpu_hours": 0.020889,
+      "peak_rss_mb": 1126.141,
+      "gpu_hours": 0.0
+    },
+    "history_prior_exhaustive_audit": {
+      "candidate_features": 386,
+      "wall_seconds": 340.443,
+      "cpu_seconds": 346.168,
+      "cpu_hours": 0.096158,
+      "peak_rss_mb": 2420.172,
+      "gpu_hours": 0.0
+    },
+    "history_prior_stage2_audit": {
+      "wall_seconds": 72.432,
+      "cpu_seconds": 78.526,
+      "cpu_hours": 0.021813,
+      "peak_rss_mb": 2396.969,
+      "gpu_hours": 0.0
+    },
+    "history_prior_stage3_audit": {
+      "wall_seconds": 70.43,
+      "cpu_seconds": 76.257,
+      "cpu_hours": 0.021183,
+      "peak_rss_mb": 2393.562,
+      "gpu_hours": 0.0
+    },
+    "exposure_graph_audit": {
+      "wall_seconds": 58.042,
+      "cpu_seconds": 58.332,
+      "cpu_hours": 0.016203,
+      "peak_rss_mb": 1794.344,
+      "gpu_hours": 0.0
+    },
+    "temporal_batch_slate_tree": {
+      "wall_seconds": 111.008,
+      "cpu_seconds": 717.23,
+      "cpu_hours": 0.19923,
+      "peak_rss_mb": 4075.0,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.5919663
+    },
+    "joint_batch_slate_selection_audit": {
+      "wall_seconds": 15.383,
+      "cpu_seconds": 15.404,
+      "cpu_hours": 0.004279,
+      "peak_rss_mb": 1339.344,
+      "gpu_hours": 0.0
+    },
+    "expanded_model_residual_scan": {
+      "candidate_artifacts": 198,
+      "wall_seconds": 101.527,
+      "cpu_seconds": 101.204,
+      "cpu_hours": 0.028112,
+      "peak_rss_mb": 1250.406,
+      "gpu_hours": 0.0,
+      "accepted_candidate_family": "new-cycle-joint-candidates"
+    },
+    "joint_ordinal_residual_audit": {
+      "wall_seconds": 26.295,
+      "cpu_seconds": 26.289,
+      "cpu_hours": 0.007302,
+      "peak_rss_mb": 1395.562,
+      "gpu_hours": 0.0,
+      "oof_primary": 0.6122684,
+      "fixed_primary": 0.6122815012931824
+    },
+    "high_margin_gated_consensus_audit": {
+      "model_training_required": false,
+      "source_models": 20,
+      "candidate_corrections": 65,
+      "wall_seconds": 92.035,
+      "cpu_seconds": 92.012,
+      "cpu_hours": 0.025559,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1287.922,
+      "gpu_hours": 0.0,
+      "selected_margin_quantile": 0.75,
+      "selected_fold_weights": [0.34, 0.34, 0.34, 0.34],
+      "oof_primary": 0.6123714447021484,
+      "fixed_primary": 0.6123714447021484
+    },
+    "high_margin_candidate_slice_verification": {
+      "wall_seconds": 13.884,
+      "cpu_seconds": 13.88,
+      "cpu_hours": 0.003855,
+      "cpu_utilization_percent": 99.97,
+      "peak_rss_mb": 1064.203,
+      "gpu_hours": 0.0,
+      "changed_user_groups": 352,
+      "changed_top_items": 31,
+      "changed_pair_orderings": 629,
+      "positive_heldout_user_folds": 3,
+      "heldout_fold_primary_gains": [-0.0001347661, 0.0002592802, 0.0000870824, 0.0001543164]
+    },
+    "median_margin_model_mean_audit": {
+      "model_training_required": false,
+      "source_models": 20,
+      "candidate_corrections": 65,
+      "wall_seconds": 91.692,
+      "cpu_seconds": 91.674,
+      "cpu_hours": 0.025465,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1275.703,
+      "gpu_hours": 0.0,
+      "selected_margin_quantile": 0.5,
+      "selected_fold_weights": [0.01, 0.01, 0.01, 0.01],
+      "oof_primary": 0.6124310493469238,
+      "fixed_primary": 0.6124310493469238
+    },
+    "median_margin_model_mean_slice_verification": {
+      "wall_seconds": 14.492,
+      "cpu_seconds": 14.489,
+      "cpu_hours": 0.004025,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1064.906,
+      "gpu_hours": 0.0,
+      "changed_user_groups": 30,
+      "changed_top_items": 0,
+      "changed_pair_orderings": 30,
+      "positive_heldout_user_folds": 4,
+      "heldout_fold_primary_gains": [0.0000914931, 0.0000357032, 0.0000432134, 0.0000674129]
+    },
+    "structural_gate_discovery_audit": {
+      "model_training_required": false,
+      "source_models": 20,
+      "candidate_corrections": 144,
+      "wall_seconds": 186.339,
+      "cpu_seconds": 186.302,
+      "cpu_hours": 0.051751,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1367.656,
+      "gpu_hours": 0.0
+    },
+    "two_active_days_ordered_gate": {
+      "scan_wall_seconds": 19.029,
+      "scan_cpu_seconds": 19.015,
+      "scan_cpu_hours": 0.005282,
+      "scan_peak_rss_mb": 1356.547,
+      "slice_wall_seconds": 15.553,
+      "slice_cpu_seconds": 15.549,
+      "slice_cpu_hours": 0.004319,
+      "slice_peak_rss_mb": 1086.266,
+      "gpu_hours": 0.0,
+      "fold_weights": [-0.54, -0.55, -0.43, -0.57],
+      "oof_primary": 0.612510085105896,
+      "fixed_primary": 0.6125684380531311,
+      "positive_heldout_user_folds": 4
+    },
+    "three_four_active_days_watch_gate": {
+      "scan_wall_seconds": 18.587,
+      "scan_cpu_seconds": 18.564,
+      "scan_cpu_hours": 0.005157,
+      "scan_peak_rss_mb": 1337.391,
+      "slice_wall_seconds": 15.711,
+      "slice_cpu_seconds": 15.708,
+      "slice_cpu_hours": 0.004363,
+      "slice_peak_rss_mb": 1088.688,
+      "gpu_hours": 0.0,
+      "fold_weights": [-0.18, -0.18, -0.18, -0.16],
+      "oof_primary": 0.612615704536438,
+      "fixed_primary": 0.6126254796981812,
+      "positive_heldout_user_folds": 3
+    },
+    "structural_gate_residual_rescan": {
+      "candidate_corrections": 144,
+      "wall_seconds": 186.834,
+      "cpu_seconds": 186.794,
+      "cpu_hours": 0.051887,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1347.922,
+      "gpu_hours": 0.0
+    },
+    "medium_slate_batch_gate": {
+      "model_training_required": false,
+      "slice_wall_seconds": 16.13,
+      "slice_cpu_seconds": 16.127,
+      "slice_cpu_hours": 0.00448,
+      "slice_peak_rss_mb": 1088.969,
+      "gpu_hours": 0.0,
+      "fold_weights": [0.01, 0.01, 0.01, 0.01],
+      "oof_primary": 0.6126559972763062,
+      "fixed_primary": 0.6126559972763062,
+      "positive_heldout_user_folds": 3,
+      "unchanged_heldout_user_folds": 1,
+      "changed_pair_orderings": 35
+    },
+    "training_coverage_discovery_audit": {
+      "model_training_required": false,
+      "source_models": 20,
+      "candidate_corrections": 128,
+      "wall_seconds": 170.186,
+      "cpu_seconds": 170.159,
+      "cpu_hours": 0.047266,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1514.375,
+      "gpu_hours": 0.0
+    },
+    "low_training_rate_watch_gate": {
+      "slice_wall_seconds": 16.276,
+      "slice_cpu_seconds": 16.272,
+      "slice_cpu_hours": 0.00452,
+      "slice_peak_rss_mb": 1089.172,
+      "gpu_hours": 0.0,
+      "fold_weights": [0.13, 0.14, 0.13, 0.14],
+      "oof_primary": 0.6127263307571411,
+      "fixed_primary": 0.6127434968948364,
+      "fixed_gauc": 0.6822268962860107,
+      "fixed_ndcg5": 0.5432600378990173,
+      "positive_heldout_user_folds": 4,
+      "changed_pair_orderings": 1424
+    },
+    "training_coverage_residual_rescan": {
+      "candidate_corrections": 128,
+      "wall_seconds": 172.467,
+      "cpu_seconds": 172.446,
+      "cpu_hours": 0.047902,
+      "peak_rss_mb": 1502.422,
+      "gpu_hours": 0.0
+    },
+    "prior_video_batch_gate": {
+      "scan_wall_seconds": 21.388,
+      "scan_cpu_seconds": 21.382,
+      "scan_cpu_hours": 0.005939,
+      "scan_peak_rss_mb": 1494.844,
+      "slice_wall_seconds": 16.624,
+      "slice_cpu_seconds": 16.618,
+      "slice_cpu_hours": 0.004616,
+      "slice_peak_rss_mb": 1095.031,
+      "gpu_hours": 0.0,
+      "fold_weights": [-0.04, -0.03, -0.03, -0.02],
+      "oof_primary": 0.612764835357666,
+      "fixed_primary": 0.6127808094024658,
+      "fixed_gauc": 0.6822733879089355,
+      "fixed_ndcg5": 0.5432882308959961,
+      "positive_heldout_user_folds": 3,
+      "effectively_unchanged_heldout_user_folds": 1,
+      "changed_pair_orderings": 203
+    },
+    "final_training_coverage_residual_rescan": {
+      "candidate_corrections": 128,
+      "wall_seconds": 172.302,
+      "cpu_seconds": 172.27,
+      "cpu_hours": 0.047853,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1508.781,
+      "gpu_hours": 0.0
+    },
+    "user_neighbor_cf_temporal_search": {
+      "neighbor_counts": [30, 60, 120],
+      "profiles": ["exposure", "exposure_tfidf", "signed"],
+      "aggregate_run_wall_seconds": 98.827,
+      "aggregate_cpu_seconds": 110.424,
+      "aggregate_cpu_hours": 0.030674,
+      "peak_rss_mb": 4427.641,
+      "gpu_hours": 0.0,
+      "selected_neighbors": 60,
+      "selected_profile_artifact_key": "positive_p2.0_s8.0"
+    },
+    "user_neighbor_cf_training": {
+      "wall_seconds": 6.943,
+      "cpu_seconds": 8.079,
+      "cpu_hours": 0.002244,
+      "cpu_utilization_percent": 116.37,
+      "peak_rss_mb": 4239.0,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.58131
+    },
+    "user_neighbor_cf_selection_audit": {
+      "wall_seconds": 17.623,
+      "cpu_seconds": 17.62,
+      "cpu_hours": 0.004894,
+      "cpu_utilization_percent": 99.98,
+      "peak_rss_mb": 1217.516,
+      "gpu_hours": 0.0,
+      "fold_weights": [0.002, 0.002, 0.002, 0.002],
+      "heldout_fold_primary_gains": [0.0000380278, 0.0000196099, 0.0000212789, 0.0000163913],
+      "fixed_primary": 0.612804651260376,
+      "fixed_gauc": 0.6822999715805054,
+      "fixed_ndcg5": 0.5433093309402466
+    },
+    "current_cycle_totals": {
+      "successful_tracked_run_wall_seconds_sum": 784.497,
+      "cpu_seconds": 2133.987,
+      "cpu_hours": 0.592774,
+      "peak_rss_mb": 4427.641,
+      "gpu_hours": 0.0,
+      "additional_untracked_wall_seconds": 141.515,
+      "note": "The untracked wall time is a raw-feature audit plus a PairLogit run that raised after training before the tracker finalized; it is excluded from CPU-hour totals. Per-run wall seconds are summed even when audits ran concurrently."
+    },
+    "tracked_verification": {
+      "wall_seconds": 15.561,
+      "cpu_seconds": 15.56,
+      "cpu_hours": 0.004322,
+      "cpu_utilization_percent": 99.99,
+      "peak_rss_mb": 1092.594,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0
+    }
+  },
+  "rejected_experiments": {
+    "whole_user_residual_rankers": {
+      "pair_logit_pairwise": {
+        "wall_seconds": 141.254,
+        "cpu_seconds": 943.041,
+        "cpu_hours": 0.261956,
+        "peak_rss_mb": 3400.438,
+        "standalone_primary": 0.6118788719177246,
+        "cross_fitted_primary": 0.6127787828445435
+      },
+      "query_softmax": {
+        "wall_seconds": 96.152,
+        "cpu_seconds": 626.916,
+        "cpu_hours": 0.174143,
+        "peak_rss_mb": 3538.031,
+        "standalone_primary": 0.6112478971481323,
+        "cross_fitted_primary": 0.6127710342407227
+      },
+      "gpu_hours": 0.0,
+      "reason": "Both residual rankers improved their April 20-21 CatBoost ranking objective but failed the final four-fold user-disjoint residual gate."
+    },
+    "training_coverage_followup_rejections": {
+      "model_training_required": false,
+      "gpu_hours": 0.0,
+      "peak_rss_mb": 1506.531,
+      "candidates": [
+        "coverage_video_some_mean_gap",
+        "coverage_trend_high_watch_gap",
+        "coverage_history_q3_mean_gap",
+        "coverage_history_q4_median_gap",
+        "coverage_recent_high_watch_gap"
+      ],
+      "targeted_scan_wall_seconds": 84.868,
+      "targeted_scan_cpu_hours": 0.023562,
+      "slice_verification_runs": 4,
+      "slice_verification_wall_seconds": 67.625,
+      "slice_verification_cpu_hours": 0.01878,
+      "reason": "Rejected for mixed held-out fold direction, aggregate nDCG@5 regression, or a held-out fold loss too large relative to the tiny aggregate gain. The third-history-quartile candidate was independently sliced after each accepted coverage gate."
+    },
+    "structural_gate_followup_rejections": {
+      "wall_seconds": 125.377,
+      "cpu_hours": 0.034808,
+      "peak_rss_mb": 1348.594,
+      "gpu_hours": 0.0,
+      "candidates": [
+        "size_6_10_q25_gap",
+        "repeat_any_batch_gap",
+        "sessions_2_3_trimmed_gap",
+        "days_3_4_batch_gap",
+        "size_11_20_batch_gap"
+      ],
+      "reason": "OOF regression, aggregate nDCG regression, zero residual weight, or mixed held-out fold effects after accepted routing stages."
+    },
+    "third_pass_top_decile_trimmed_consensus": {
+      "model_training_required": false,
+      "scan_wall_seconds": 94.081,
+      "scan_cpu_seconds": 94.051,
+      "scan_cpu_hours": 0.026125,
+      "scan_peak_rss_mb": 1278.297,
+      "slice_wall_seconds": 15.696,
+      "slice_cpu_seconds": 15.692,
+      "slice_cpu_hours": 0.004359,
+      "slice_peak_rss_mb": 1087.688,
+      "gpu_hours": 0.0,
+      "fixed_primary": 0.612452507019043,
+      "heldout_fold_primary_gains": [-0.0000327826, -0.0000278354, 0.0000649691, 0.0000816584]
+    },
+    "personalized_transfer_signal_audit": {
+      "wall_seconds": 19.223,
+      "cpu_seconds": 22.254,
+      "cpu_hours": 0.006182,
+      "peak_rss_mb": 2111.703,
+      "gpu_hours": 0.0,
+      "validation_user_history_seen_fraction": 0.984068,
+      "median_training_rows_per_validation_user": 51.0
+    },
+    "personalized_dense_slope_model": {
+      "wall_seconds": 75.565,
+      "cpu_seconds": 121.282,
+      "cpu_hours": 0.033689,
+      "peak_rss_mb": 5117.547,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.6000191,
+      "personalized_component_primary": 0.51010096
+    },
+    "personalized_dense_slope_residual_audit": {
+      "wall_seconds": 26.733,
+      "cpu_seconds": 26.693,
+      "cpu_hours": 0.007415,
+      "peak_rss_mb": 1380.359,
+      "gpu_hours": 0.0,
+      "cross_fitted_primary": 0.61226666,
+      "fold_weights": [0.025, 0.025, -0.04, -0.01]
+    },
+    "cross_model_consensus_confidence": {
+      "wall_seconds": 55.917,
+      "cpu_seconds": 55.901,
+      "cpu_hours": 0.015528,
+      "peak_rss_mb": 1267.438,
+      "gpu_hours": 0.0,
+      "models": 20,
+      "best_cross_fitted_primary": 0.61228347,
+      "best_fold_weights": [0.02, -0.005, -0.005, -0.005]
+    },
+    "temporal_user_expert_gate": {
+      "wall_seconds": 15.98,
+      "cpu_seconds": 15.975,
+      "cpu_hours": 0.004437,
+      "peak_rss_mb": 579.219,
+      "gpu_hours": 0.0,
+      "temporal_holdout_base_primary": 0.55994964,
+      "temporal_holdout_gated_primary": 0.56007898,
+      "standalone_primary": 0.60596293
+    },
+    "temporal_user_expert_gate_residual_audit": {
+      "wall_seconds": 26.398,
+      "cpu_seconds": 26.377,
+      "cpu_hours": 0.007327,
+      "peak_rss_mb": 1379.797,
+      "gpu_hours": 0.0,
+      "cross_fitted_primary": 0.6122078,
+      "fold_weights": [0.09, -0.015, -0.005, 0.115]
+    },
+    "top_weighted_batch_slate_tree": {
+      "wall_seconds": 113.65,
+      "cpu_seconds": 732.06,
+      "cpu_hours": 0.20335,
+      "peak_rss_mb": 4105.609,
+      "gpu_hours": 0.0,
+      "temporal_holdout_blend_primary": 0.56227469,
+      "standalone_primary": 0.59219825
+    },
+    "top_weighted_batch_slate_residual_audit": {
+      "wall_seconds": 28.572,
+      "cpu_seconds": 28.564,
+      "cpu_hours": 0.007935,
+      "peak_rss_mb": 1379.578,
+      "gpu_hours": 0.0,
+      "cross_fitted_primary": 0.6122713,
+      "fold_weights": [-0.005, 0.01, 0.025, 0.025]
+    },
+    "contrastive_long_short_sequence": {
+      "wall_seconds": 74.692,
+      "cpu_seconds": 179.227,
+      "cpu_hours": 0.049785,
+      "cpu_utilization_percent": 239.95,
+      "peak_rss_mb": 1698.734,
+      "gpu_hours": 0.0,
+      "temporal_holdout_primary": 0.55987507,
+      "selected_epoch": 3,
+      "standalone_primary": 0.6030859,
+      "standalone_gauc": 0.6697636,
+      "standalone_ndcg5": 0.5364081
+    },
+    "contrastive_long_short_residual_audit": {
+      "wall_seconds": 27.309,
+      "cpu_seconds": 27.305,
+      "cpu_hours": 0.007585,
+      "cpu_utilization_percent": 99.99,
+      "peak_rss_mb": 1378.375,
+      "gpu_hours": 0.0,
+      "cross_fitted_additive_primary": 0.6122197,
+      "fixed_additive_primary": 0.61227626,
+      "additive_fold_weights": [0.1, -0.005, -0.005, -0.015],
+      "cross_fitted_reranked_primary": 0.61228126,
+      "reranked_fold_weights": [0.075, -0.08, 0.07, -0.095]
+    },
+    "mc_dropout_lcb": {
+      "wall_seconds": 23.141,
+      "cpu_seconds": 74.679,
+      "cpu_hours": 0.020744,
+      "peak_rss_mb": 15838.984
+    },
+    "continuous_watch_margin": {
+      "wall_seconds": 41.982,
+      "cpu_seconds": 96.088,
+      "cpu_hours": 0.026691,
+      "peak_rss_mb": 16050.469
+    },
+    "exposure_density_model": {
+      "wall_seconds": 16.049,
+      "cpu_seconds": 106.563,
+      "cpu_hours": 0.029601,
+      "peak_rss_mb": 1358.516
+    },
+    "sqrt_density_weighted_deepfm": {
+      "wall_seconds": 37.328,
+      "cpu_seconds": 94.328,
+      "cpu_hours": 0.026202,
+      "peak_rss_mb": 15797.312
+    },
+    "full_density_weighted_deepfm": {
+      "wall_seconds": 37.134,
+      "cpu_seconds": 92.398,
+      "cpu_hours": 0.025666,
+      "peak_rss_mb": 15890.906
+    },
+    "supervised_slate_catboost": {
+      "wall_seconds": 412.306,
+      "cpu_seconds": 2922.563,
+      "cpu_hours": 0.811823,
+      "cpu_utilization_percent": 708.83,
+      "peak_rss_mb": 9382.891,
+      "standalone_primary": 0.6047368,
+      "cross_fitted_ensemble_primary": 0.6112029
+    },
+    "all_model_residual_scan": {
+      "candidate_artifacts": 192,
+      "wall_seconds": 96.213,
+      "cpu_seconds": 95.879,
+      "cpu_hours": 0.026633,
+      "peak_rss_mb": 973.984,
+      "gpu_hours": 0.0,
+      "accepted_nonzero_residuals": 0
+    },
+    "cross_session_gru": {
+      "wall_seconds": 67.099,
+      "cpu_seconds": 87.504,
+      "cpu_hours": 0.024307,
+      "peak_rss_mb": 3763.625,
+      "standalone_primary": 0.5987919569015503,
+      "cross_fitted_additive_primary": 0.6119788
+    },
+    "cross_session_gru_residual_audit": {
+      "wall_seconds": 21.89,
+      "cpu_seconds": 21.887,
+      "cpu_hours": 0.00608,
+      "peak_rss_mb": 1045.922
+    },
+    "multitag_history_deepfm": {
+      "wall_seconds": 40.581,
+      "cpu_seconds": 125.855,
+      "cpu_hours": 0.03496,
+      "peak_rss_mb": 16200.906,
+      "standalone_primary": 0.6077193,
+      "cross_fitted_additive_primary": 0.6120303
+    },
+    "multitag_history_residual_audit": {
+      "wall_seconds": 22.384,
+      "cpu_seconds": 22.36,
+      "cpu_hours": 0.006211,
+      "peak_rss_mb": 1027.766
+    },
+    "causal_gap_proxy_history": {
+      "wall_seconds": 32.444,
+      "cpu_seconds": 121.012,
+      "cpu_hours": 0.033614,
+      "peak_rss_mb": 2500.062,
+      "proxy_temporal_holdout_auc": 0.7556618356096326,
+      "accepted_nonzero_residuals": 0
+    },
+    "threshold_progress_catboost": {
+      "wall_seconds": 321.981,
+      "cpu_seconds": 2026.003,
+      "cpu_hours": 0.562779,
+      "peak_rss_mb": 17865.484,
+      "standalone_primary": 0.58724,
+      "cross_fitted_additive_primary": 0.6121895
+    },
+    "residual_batch_slate_tree": {
+      "wall_seconds": 113.902,
+      "cpu_seconds": 737.717,
+      "cpu_hours": 0.204921,
+      "peak_rss_mb": 4175.109,
+      "standalone_primary": 0.59226716,
+      "cross_fitted_additive_primary": 0.61221933
+    },
+    "personal_content_knn": {
+      "wall_seconds": 33.868,
+      "cpu_seconds": 34.349,
+      "cpu_hours": 0.009541,
+      "peak_rss_mb": 795.453,
+      "best_validation_primary": 0.5240389
+    },
+    "multiview_user_neighbor": {
+      "wall_seconds": 178.395,
+      "cpu_seconds": 185.55,
+      "cpu_hours": 0.051542,
+      "peak_rss_mb": 5360.344,
+      "gpu_hours": 0.0,
+      "best_standalone_primary": 0.58122635,
+      "best_fixed_ensemble_primary": 0.61280108,
+      "accepted": false
+    },
+    "multiview_user_neighbor_residual_audits": {
+      "runs": 5,
+      "wall_seconds": 98.726,
+      "cpu_seconds": 98.712,
+      "cpu_hours": 0.02742,
+      "peak_rss_mb": 1220.281,
+      "gpu_hours": 0.0
+    },
+    "user_neighbor_support_diagnostics": {
+      "wall_seconds": 7.036,
+      "cpu_seconds": 8.197,
+      "cpu_hours": 0.002277,
+      "peak_rss_mb": 4258.953,
+      "gpu_hours": 0.0,
+      "nonzero_support_fraction": 0.75161918,
+      "median_weighted_support": 0.16319597
+    },
+    "user_neighbor_confidence_scan": {
+      "candidate_count": 55,
+      "wall_seconds": 70.241,
+      "cpu_seconds": 70.228,
+      "cpu_hours": 0.019508,
+      "peak_rss_mb": 1482.844,
+      "gpu_hours": 0.0,
+      "best_fixed_primary": 0.61280525,
+      "accepted": false
+    },
+    "session_causal_transformer": {
+      "wall_seconds": 430.762,
+      "cpu_seconds": 681.754,
+      "cpu_hours": 0.189376,
+      "peak_rss_mb": 16327.859,
+      "gpu_hours": 0.0,
+      "history_coverage": 0.18153216,
+      "standalone_primary": 0.60735643,
+      "standalone_gauc": 0.67531669,
+      "standalone_ndcg5": 0.53939617,
+      "accepted": false
+    },
+    "session_causal_transformer_audits": {
+      "wall_seconds": 54.522,
+      "cpu_seconds": 54.439,
+      "cpu_hours": 0.015122,
+      "peak_rss_mb": 1215.203,
+      "gpu_hours": 0.0,
+      "best_fixed_conditional_primary": 0.61280996,
+      "accepted": false
+    },
+    "user_causal_transformer": {
+      "wall_seconds": 312.623,
+      "cpu_seconds": 510.712,
+      "cpu_hours": 0.141864,
+      "peak_rss_mb": 16594.172,
+      "gpu_hours": 0.0,
+      "history_coverage": 0.99662154,
+      "standalone_primary": 0.60686481,
+      "standalone_gauc": 0.67473698,
+      "standalone_ndcg5": 0.5389927,
+      "residual_oof_primary": 0.6127938,
+      "residual_fixed_primary": 0.612795,
+      "accepted": false
+    },
+    "user_causal_transformer_audit": {
+      "wall_seconds": 19.072,
+      "cpu_seconds": 19.006,
+      "cpu_hours": 0.005279,
+      "peak_rss_mb": 1218.156,
+      "gpu_hours": 0.0
+    },
+    "counterfactual_watch_model": {
+      "wall_seconds": 31.557,
+      "cpu_seconds": 98.424,
+      "cpu_hours": 0.02734,
+      "peak_rss_mb": 15705.5,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.56198001,
+      "accepted": false
+    },
+    "counterfactual_watch_bce_anchor": {
+      "wall_seconds": 32.451,
+      "cpu_seconds": 101.955,
+      "cpu_hours": 0.028321,
+      "peak_rss_mb": 15739.125,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.60583085,
+      "fixed_primary": 0.61280859,
+      "accepted": false
+    },
+    "counterfactual_watch_audits": {
+      "wall_seconds": 77.393,
+      "cpu_seconds": 77.301,
+      "cpu_hours": 0.021472,
+      "peak_rss_mb": 1217.859,
+      "gpu_hours": 0.0,
+      "best_threshold_standalone_primary": 0.58638322,
+      "accepted": false
+    },
+    "xdeepfm_compressed_interactions": {
+      "wall_seconds": 528.888,
+      "cpu_seconds": 2080.2,
+      "cpu_hours": 0.577833,
+      "peak_rss_mb": 16119.297,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.60725051,
+      "standalone_gauc": 0.6752702,
+      "standalone_ndcg5": 0.53923082,
+      "accepted": false
+    },
+    "xdeepfm_residual_audit": {
+      "wall_seconds": 19.04,
+      "cpu_seconds": 18.953,
+      "cpu_hours": 0.005265,
+      "peak_rss_mb": 1207.531,
+      "gpu_hours": 0.0,
+      "selected_weight": 0.0
+    },
+    "centered_item_coexposure_graph": {
+      "wall_seconds": 94.29,
+      "cpu_seconds": 94.492,
+      "cpu_hours": 0.026248,
+      "peak_rss_mb": 959.641,
+      "gpu_hours": 0.0,
+      "temporal_holdout_primary": 0.5584964,
+      "standalone_primary": 0.5807955,
+      "ranked_standalone_primary": 0.58118916,
+      "accepted": false
+    },
+    "centered_item_coexposure_residual_audit": {
+      "wall_seconds": 19.374,
+      "cpu_seconds": 19.369,
+      "cpu_hours": 0.00538,
+      "peak_rss_mb": 1206.906,
+      "gpu_hours": 0.0,
+      "selected_weight": 0.0
+    },
+    "legacy_itemknn_residual_audit": {
+      "wall_seconds": 18.872,
+      "cpu_seconds": 18.852,
+      "cpu_hours": 0.005237,
+      "peak_rss_mb": 1206.438,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.55179089,
+      "selected_weight": 0.0
+    },
+    "retained_interaction_residual_audits": {
+      "runs": 3,
+      "wall_seconds": 55.164,
+      "cpu_seconds": 55.147,
+      "cpu_hours": 0.015319,
+      "peak_rss_mb": 1221.422,
+      "gpu_hours": 0.0,
+      "dcn_standalone_primary": 0.60764265,
+      "autoint_standalone_primary": 0.60788572,
+      "numeric_bilinear_standalone_primary": 0.6073218,
+      "numeric_bilinear_fixed_primary": 0.61280066,
+      "accepted": false
+    },
+    "autoint_watch_ratio": {
+      "wall_seconds": 39.432,
+      "cpu_seconds": 128.176,
+      "cpu_hours": 0.035604,
+      "peak_rss_mb": 15970.719,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.60785049,
+      "standalone_gauc": 0.67558509,
+      "standalone_ndcg5": 0.54011589,
+      "accepted": false
+    },
+    "autoint_watch_ratio_residual_audit": {
+      "wall_seconds": 19.027,
+      "cpu_seconds": 18.918,
+      "cpu_hours": 0.005255,
+      "peak_rss_mb": 1207.188,
+      "gpu_hours": 0.0,
+      "cross_fitted_primary": 0.61279076,
+      "fixed_primary": 0.61279285,
+      "accepted": false
+    },
+    "dcn_watch_ratio": {
+      "wall_seconds": 39.795,
+      "cpu_seconds": 116.763,
+      "cpu_hours": 0.032434,
+      "peak_rss_mb": 15931.422,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.60727549,
+      "standalone_gauc": 0.67510992,
+      "standalone_ndcg5": 0.53944111,
+      "accepted": false
+    },
+    "dcn_watch_ratio_residual_audit": {
+      "wall_seconds": 19.067,
+      "cpu_seconds": 19.063,
+      "cpu_hours": 0.005295,
+      "peak_rss_mb": 1221.906,
+      "gpu_hours": 0.0,
+      "selected_weight": 0.0
+    },
+    "weekly_recurrence_prior_cycle": {
+      "wall_seconds": 38.84,
+      "cpu_seconds": 52.816,
+      "cpu_hours": 0.014671,
+      "peak_rss_mb": 1238.297,
+      "gpu_hours": 0.0,
+      "accepted": false
+    },
+    "focal_watch_ratio_deepfm": {
+      "wall_seconds": 38.027,
+      "cpu_seconds": 117.198,
+      "cpu_hours": 0.032555,
+      "peak_rss_mb": 15466.391,
+      "gpu_hours": 0.0,
+      "standalone_primary": 0.60757238,
+      "selected_weight": 0.0,
+      "accepted": false
+    },
+    "user_balance_control_sweep": {
+      "training_runs": 4,
+      "wall_seconds": 374.584,
+      "cpu_seconds": 2045.281,
+      "cpu_hours": 0.568134,
+      "maximum_observed_process_rss_mb": 11097.203,
+      "gpu_hours": 0.0,
+      "powers": [0.25, 0.375, 0.625, 0.75],
+      "accepted": false
+    },
+    "invalidated_user_balanced_catboost": {
+      "wall_seconds": 79.947,
+      "cpu_seconds": 450.638,
+      "cpu_hours": 0.125177,
+      "peak_rss_mb": 13214.641,
+      "gpu_hours": 0.0,
+      "selected_trees": 165,
+      "standalone_primary": 0.60307485,
+      "accepted_weight": 0.001875,
+      "accepted": false,
+      "reason": "The model artifact remains valid, but the tree-only promotion was invalidated after correcting ordinal-code fold reporting to actual user-ID fold membership."
+    },
+    "invalidated_user_balanced_catboost_audits": {
+      "wall_seconds": 37.528,
+      "cpu_seconds": 37.517,
+      "cpu_hours": 0.010421,
+      "peak_rss_mb": 1205.266,
+      "gpu_hours": 0.0,
+      "fine_fold_weights": [0.001875, 0.001875, 0.003125, 0.001875],
+      "corrected_oof_primary": 0.61280358,
+      "corrected_oof_fold_gains": [0.0, 0.00000453, -0.00000733, -0.00000167],
+      "accepted": false
+    },
+    "fine_retained_artifact_residual_scan": {
+      "candidates": 234,
+      "wall_seconds": 163.038,
+      "cpu_seconds": 162.634,
+      "cpu_hours": 0.045176,
+      "peak_rss_mb": 1311.812,
+      "gpu_hours": 0.0,
+      "note": "The scan surfaced the watch-ratio residual for corrected joint testing; the scan alone did not authorize promotion."
+    },
+    "accepted_joint_terminal_residual_audit": {
+      "wall_seconds": 19.204,
+      "cpu_seconds": 19.181,
+      "cpu_hours": 0.005328,
+      "peak_rss_mb": 1210.094,
+      "gpu_hours": 0.0,
+      "fold_weight_pairs": [[0.001875, 0.001875], [0.001875, 0.001875], [0.001875, 0.001875], [0.001875, 0.001875]],
+      "heldout_fold_primary_gains": [0.00004196, 0.00000453, 0.00003314, 0.00001967],
+      "accepted": true
+    },
+    "accepted_joint_terminal_final_verification": {
+      "wall_seconds": 15.914,
+      "cpu_seconds": 15.912,
+      "cpu_hours": 0.00442,
+      "peak_rss_mb": 1088.484,
+      "gpu_hours": 0.0,
+      "primary": 0.61282957,
+      "gauc": 0.68231916,
+      "ndcg5": 0.54334003
+    },
+    "post_joint_retained_artifact_scan": {
+      "candidates": 234,
+      "wall_seconds": 160.774,
+      "cpu_seconds": 160.733,
+      "cpu_hours": 0.044648,
+      "peak_rss_mb": 1296.484,
+      "gpu_hours": 0.0,
+      "accepted": false,
+      "reason": "Every retained artifact selected zero residual weight on all four corrected folds."
+    },
+    "yeti_rank_pairwise": {
+      "wall_seconds": 212.028,
+      "cpu_seconds": 1464.458,
+      "cpu_hours": 0.406794,
+      "peak_rss_mb": 3746.594,
+      "gpu_hours": 0.0,
+      "selected_trees": 72,
+      "standalone_primary": 0.61230743,
+      "global_residual_weight": 0.0
+    },
+    "yeti_structure_gate_scan": {
+      "wall_seconds": 60.766,
+      "cpu_seconds": 60.753,
+      "cpu_hours": 0.016876,
+      "peak_rss_mb": 1290.344,
+      "gpu_hours": 0.0,
+      "best_apparent_gate": "coverage_history_q1",
+      "accepted": false,
+      "reason": "The fixed gate regressed on held-out fold 0."
+    },
+    "accepted_single_session_yeti_audits": {
+      "wall_seconds": 39.065,
+      "cpu_seconds": 39.057,
+      "cpu_hours": 0.01085,
+      "peak_rss_mb": 1292.328,
+      "gpu_hours": 0.0,
+      "fold_weights": [0.78, 0.78, 0.78, 0.40],
+      "fixed_weight": 0.685,
+      "heldout_fold_primary_gains": [0.0, 0.00001597, 0.0, 0.0],
+      "audit_correction": "Zero-preferring tie resolution replaces the initially overstated all-1.0 fold weights.",
+      "accepted": true
+    },
+    "accepted_single_session_yeti_final_verification": {
+      "wall_seconds": 16.16,
+      "cpu_seconds": 16.159,
+      "cpu_hours": 0.004489,
+      "peak_rss_mb": 1087.719,
+      "gpu_hours": 0.0,
+      "primary": 0.61283362,
+      "gauc": 0.68232405,
+      "ndcg5": 0.54334313
+    },
+    "post_yeti_structure_routing_scan": {
+      "candidates": 272,
+      "wall_seconds": 342.668,
+      "cpu_seconds": 342.611,
+      "cpu_hours": 0.09517,
+      "peak_rss_mb": 1520.953,
+      "gpu_hours": 0.0,
+      "top_apparent_primary": 0.61285830,
+      "top_apparent_accepted": false,
+      "reason": "The top third-history-quartile mean-consensus candidate reduced nDCG@5 and regressed on two folds."
+    },
+    "accepted_two_three_session_median_audits": {
+      "wall_seconds": 39.34,
+      "cpu_seconds": 39.322,
+      "cpu_hours": 0.010923,
+      "peak_rss_mb": 1513.938,
+      "gpu_hours": 0.0,
+      "fold_weights": [-0.03, -0.03, -0.02, -0.03],
+      "fixed_weight": -0.0275,
+      "heldout_fold_primary_gains": [0.0, 0.00000530, 0.00001448, 0.0],
+      "accepted": true
+    },
+    "accepted_two_three_session_median_final_verification": {
+      "wall_seconds": 16.605,
+      "cpu_seconds": 16.604,
+      "cpu_hours": 0.004612,
+      "peak_rss_mb": 1107.484,
+      "gpu_hours": 0.0,
+      "primary": 0.61283851,
+      "gauc": 0.68233174,
+      "ndcg5": 0.54334527
+    },
+    "additional_depth8_yeti_seeds": {
+      "seeds": [797, 809],
+      "wall_seconds": 709.943,
+      "cpu_seconds": 5022.755,
+      "cpu_hours": 1.39521,
+      "maximum_peak_rss_mb": 3930.266,
+      "gpu_hours": 0.0,
+      "standalone_primary": {"797": 0.6120628, "809": 0.6123096},
+      "accepted": false
+    },
+    "depth8_yeti_rank_mean_and_gate_audit": {
+      "ensemble_wall_seconds": 18.59,
+      "ensemble_cpu_hours": 0.005163,
+      "ensemble_peak_rss_mb": 1108.062,
+      "scan_wall_seconds": 59.727,
+      "scan_cpu_hours": 0.016588,
+      "scan_peak_rss_mb": 1309.203,
+      "gpu_hours": 0.0,
+      "three_seed_rank_mean_primary": 0.61235535,
+      "global_residual_weight": 0.0,
+      "accepted": false,
+      "reason": "The strongest conditional gates each regressed on one held-out user fold."
+    },
+    "shallow_yeti_rank_pairwise": {
+      "wall_seconds": 122.022,
+      "cpu_seconds": 741.934,
+      "cpu_hours": 0.206093,
+      "peak_rss_mb": 3625.344,
+      "gpu_hours": 0.0,
+      "depth": 6,
+      "l2": 20.0,
+      "learning_rate": 0.04,
+      "seed": 821,
+      "selected_trees": 132,
+      "standalone_primary": 0.61223578
+    },
+    "accepted_recent_coverage_shallow_yeti_audits": {
+      "scan_wall_seconds": 62.847,
+      "scan_cpu_hours": 0.017454,
+      "scan_peak_rss_mb": 1306.141,
+      "exact_wall_seconds": 18.517,
+      "exact_cpu_hours": 0.005141,
+      "exact_peak_rss_mb": 1111.25,
+      "gpu_hours": 0.0,
+      "fold_weights": [-0.09, -0.09, -0.10, -0.09],
+      "fixed_weight": -0.0925,
+      "heldout_fold_primary_gains": [0.0000091195, 0.0000581145, 0.0000069141, 0.0000044107],
+      "accepted": true
+    },
+    "accepted_recent_coverage_shallow_yeti_final_verification": {
+      "wall_seconds": 17.493,
+      "cpu_hours": 0.004858,
+      "peak_rss_mb": 1108.156,
+      "gpu_hours": 0.0,
+      "primary": 0.61285806,
+      "gauc": 0.68235373,
+      "ndcg5": 0.54336232
+    }
+  }
+}

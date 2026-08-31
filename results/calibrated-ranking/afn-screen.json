@@ -1,0 +1,462 @@
+{
+  "experiment": "compact Adaptive Factorization Network",
+  "paper": {
+    "title": "Adaptive Factorization Network: Learning Adaptive-Order Feature Interactions",
+    "authors": "Weiyu Cheng, Yanyan Shen, Linpeng Huang",
+    "url": "https://arxiv.org/abs/1909.03276",
+    "faithful_core": "Field embeddings are mapped to log magnitude, mixed by learned per-neuron feature exponents, exponentiated, and passed through a feedforward head."
+  },
+  "status": "rejected_at_train_only_screen",
+  "protocol": {
+    "architecture_selection_fit": "2022-04-09..2022-04-11",
+    "architecture_selection_validation": "2022-04-12..2022-04-14",
+    "matched_refit": "2022-04-09..2022-04-14",
+    "locked_screen": "2022-04-15..2022-04-21",
+    "config_grid_predeclared": [
+      {
+        "name": "embedding_mlp_control",
+        "kind": "control",
+        "regularization": 0.0001
+      },
+      {
+        "name": "afn_log8_l2_1e-4",
+        "kind": "afn",
+        "regularization": 0.0001
+      },
+      {
+        "name": "afn_log8_l2_1e-3",
+        "kind": "afn",
+        "regularization": 0.001
+      }
+    ],
+    "pointwise_bce_only": true,
+    "same_seed_and_row_order": true,
+    "april_22_28_accessed": false,
+    "april_29_plus_outcomes_accessed": false,
+    "hidden_test_accessed": false
+  },
+  "data": {
+    "selection_fit_rows": 559379,
+    "selection_validation_rows": 332039,
+    "refit_rows": 891418,
+    "screen_rows": 249694,
+    "screen_users": 24262,
+    "selection_feature_dimension": 37735,
+    "refit_feature_dimension": 39174
+  },
+  "parameter_budget": {
+    "control_head": 1093,
+    "afn_interaction_and_head": 1097,
+    "difference": 4,
+    "shared_embedding_dimension": 8
+  },
+  "selection": {
+    "trials": [
+      {
+        "config": {
+          "name": "embedding_mlp_control",
+          "kind": "control",
+          "regularization": 0.0001
+        },
+        "metrics": {
+          "primary": 0.6149976253509521,
+          "gauc": 0.6716508269309998,
+          "ndcg5": 0.5583444237709045,
+          "users": 23066,
+          "rows": 332039,
+          "calibration_logloss": 0.5348498375028362,
+          "calibration_ece20": 0.03913130146551668
+        },
+        "training": {
+          "config": {
+            "name": "embedding_mlp_control",
+            "kind": "control",
+            "regularization": 0.0001
+          },
+          "seed": 8117,
+          "epochs": 5,
+          "batch_size": 8192,
+          "learning_rate": 0.003,
+          "loss": "pointwise BCE",
+          "parameter_budget": {
+            "total_trainable": 302973,
+            "shared_embedding": 301880,
+            "interaction_and_head": 1093
+          },
+          "history": [
+            {
+              "epoch": 1,
+              "loss": 0.6211222949490873
+            },
+            {
+              "epoch": 2,
+              "loss": 0.5181973982467093
+            },
+            {
+              "epoch": 3,
+              "loss": 0.4986186536268507
+            },
+            {
+              "epoch": 4,
+              "loss": 0.49163878520748483
+            },
+            {
+              "epoch": 5,
+              "loss": 0.4879020589687922
+            }
+          ],
+          "numerical_diagnostics": {
+            "nonfinite_incidents_recovered": 0,
+            "embedding_magnitude_floor_events": 0,
+            "pre_exponential_clip_events": 0,
+            "embedding_abs_floor": 1e-07,
+            "embedding_abs_ceiling": 1000.0,
+            "pre_exponential_clip": [
+              -12.0,
+              12.0
+            ]
+          }
+        },
+        "delta_vs_control": {
+          "primary": 0.0,
+          "gauc": 0.0,
+          "ndcg5": 0.0
+        },
+        "eligible": true
+      },
+      {
+        "config": {
+          "name": "afn_log8_l2_1e-4",
+          "kind": "afn",
+          "regularization": 0.0001
+        },
+        "metrics": {
+          "primary": 0.6055850982666016,
+          "gauc": 0.6627566814422607,
+          "ndcg5": 0.5484135746955872,
+          "users": 23066,
+          "rows": 332039,
+          "calibration_logloss": 0.5422626287599244,
+          "calibration_ece20": 0.0449801825166462
+        },
+        "training": {
+          "config": {
+            "name": "afn_log8_l2_1e-4",
+            "kind": "afn",
+            "regularization": 0.0001
+          },
+          "seed": 8117,
+          "epochs": 5,
+          "batch_size": 8192,
+          "learning_rate": 0.003,
+          "loss": "pointwise BCE",
+          "parameter_budget": {
+            "total_trainable": 302977,
+            "shared_embedding": 301880,
+            "interaction_and_head": 1097
+          },
+          "history": [
+            {
+              "epoch": 1,
+              "loss": 0.6246211998888203
+            },
+            {
+              "epoch": 2,
+              "loss": 0.5596639436517769
+            },
+            {
+              "epoch": 3,
+              "loss": 0.5271214365643978
+            },
+            {
+              "epoch": 4,
+              "loss": 0.5106652273956709
+            },
+            {
+              "epoch": 5,
+              "loss": 0.5018804115478385
+            }
+          ],
+          "numerical_diagnostics": {
+            "nonfinite_incidents_recovered": 0,
+            "embedding_magnitude_floor_events": 172,
+            "pre_exponential_clip_events": 0,
+            "embedding_abs_floor": 1e-07,
+            "embedding_abs_ceiling": 1000.0,
+            "pre_exponential_clip": [
+              -12.0,
+              12.0
+            ]
+          }
+        },
+        "delta_vs_control": {
+          "primary": -0.009412527084350586,
+          "gauc": -0.008894145488739014,
+          "ndcg5": -0.009930849075317383
+        },
+        "eligible": false
+      },
+      {
+        "config": {
+          "name": "afn_log8_l2_1e-3",
+          "kind": "afn",
+          "regularization": 0.001
+        },
+        "metrics": {
+          "primary": 0.6062012910842896,
+          "gauc": 0.6636077165603638,
+          "ndcg5": 0.5487948656082153,
+          "users": 23066,
+          "rows": 332039,
+          "calibration_logloss": 0.5412104225392477,
+          "calibration_ece20": 0.040644919726344556
+        },
+        "training": {
+          "config": {
+            "name": "afn_log8_l2_1e-3",
+            "kind": "afn",
+            "regularization": 0.001
+          },
+          "seed": 8117,
+          "epochs": 5,
+          "batch_size": 8192,
+          "learning_rate": 0.003,
+          "loss": "pointwise BCE",
+          "parameter_budget": {
+            "total_trainable": 302977,
+            "shared_embedding": 301880,
+            "interaction_and_head": 1097
+          },
+          "history": [
+            {
+              "epoch": 1,
+              "loss": 0.6246509080103834
+            },
+            {
+              "epoch": 2,
+              "loss": 0.5590123500803967
+            },
+            {
+              "epoch": 3,
+              "loss": 0.5271205294716772
+            },
+            {
+              "epoch": 4,
+              "loss": 0.5103816983756823
+            },
+            {
+              "epoch": 5,
+              "loss": 0.5014253103103898
+            }
+          ],
+          "numerical_diagnostics": {
+            "nonfinite_incidents_recovered": 0,
+            "embedding_magnitude_floor_events": 169,
+            "pre_exponential_clip_events": 0,
+            "embedding_abs_floor": 1e-07,
+            "embedding_abs_ceiling": 1000.0,
+            "pre_exponential_clip": [
+              -12.0,
+              12.0
+            ]
+          }
+        },
+        "delta_vs_control": {
+          "primary": -0.008796334266662598,
+          "gauc": -0.008043110370635986,
+          "ndcg5": -0.009549558162689209
+        },
+        "eligible": false
+      }
+    ],
+    "selected_config": {
+      "name": "embedding_mlp_control",
+      "kind": "control",
+      "regularization": 0.0001
+    },
+    "rule": "Best primary among configurations with nonnegative GAUC and nDCG@5 deltas; exact ties prefer the control."
+  },
+  "locked_screen": {
+    "matched_control": {
+      "primary": 0.6154348850250244,
+      "gauc": 0.6647342443466187,
+      "ndcg5": 0.5661354660987854,
+      "users": 24262,
+      "rows": 249694,
+      "calibration_logloss": 0.5492192967340346,
+      "calibration_ece20": 0.029380288491678966
+    },
+    "candidate": {
+      "primary": 0.6154348850250244,
+      "gauc": 0.6647342443466187,
+      "ndcg5": 0.5661354660987854,
+      "users": 24262,
+      "rows": 249694,
+      "calibration_logloss": 0.5492192967340346,
+      "calibration_ece20": 0.029380288491678966
+    },
+    "delta": {
+      "primary": 0.0,
+      "gauc": 0.0,
+      "ndcg5": 0.0
+    },
+    "gate": "AFN selected, primary >= +0.0001, GAUC > 0, nDCG@5 > 0",
+    "passed": false,
+    "control_training": {
+      "config": {
+        "name": "embedding_mlp_control",
+        "kind": "control",
+        "regularization": 0.0001
+      },
+      "seed": 19331,
+      "epochs": 5,
+      "batch_size": 8192,
+      "learning_rate": 0.003,
+      "loss": "pointwise BCE",
+      "parameter_budget": {
+        "total_trainable": 314485,
+        "shared_embedding": 313392,
+        "interaction_and_head": 1093
+      },
+      "history": [
+        {
+          "epoch": 1,
+          "loss": 0.5763840173544381
+        },
+        {
+          "epoch": 2,
+          "loss": 0.5064717240543503
+        },
+        {
+          "epoch": 3,
+          "loss": 0.49669726966843114
+        },
+        {
+          "epoch": 4,
+          "loss": 0.49301331420573175
+        },
+        {
+          "epoch": 5,
+          "loss": 0.4909712946006884
+        }
+      ],
+      "numerical_diagnostics": {
+        "nonfinite_incidents_recovered": 0,
+        "embedding_magnitude_floor_events": 0,
+        "pre_exponential_clip_events": 0,
+        "embedding_abs_floor": 1e-07,
+        "embedding_abs_ceiling": 1000.0,
+        "pre_exponential_clip": [
+          -12.0,
+          12.0
+        ]
+      }
+    },
+    "candidate_training": {
+      "config": {
+        "name": "embedding_mlp_control",
+        "kind": "control",
+        "regularization": 0.0001
+      },
+      "seed": 19331,
+      "epochs": 5,
+      "batch_size": 8192,
+      "learning_rate": 0.003,
+      "loss": "pointwise BCE",
+      "parameter_budget": {
+        "total_trainable": 314485,
+        "shared_embedding": 313392,
+        "interaction_and_head": 1093
+      },
+      "history": [
+        {
+          "epoch": 1,
+          "loss": 0.5763840173544381
+        },
+        {
+          "epoch": 2,
+          "loss": 0.5064717240543503
+        },
+        {
+          "epoch": 3,
+          "loss": 0.49669726966843114
+        },
+        {
+          "epoch": 4,
+          "loss": 0.49301331420573175
+        },
+        {
+          "epoch": 5,
+          "loss": 0.4909712946006884
+        }
+      ],
+      "numerical_diagnostics": {
+        "nonfinite_incidents_recovered": 0,
+        "embedding_magnitude_floor_events": 0,
+        "pre_exponential_clip_events": 0,
+        "embedding_abs_floor": 1e-07,
+        "embedding_abs_ceiling": 1000.0,
+        "pre_exponential_clip": [
+          -12.0,
+          12.0
+        ]
+      }
+    },
+    "numerical_diagnostics": {
+      "control": {
+        "nonfinite_incidents_recovered": 0,
+        "embedding_magnitude_floor_events": 0,
+        "pre_exponential_clip_events": 0,
+        "embedding_abs_floor": 1e-07,
+        "embedding_abs_ceiling": 1000.0,
+        "pre_exponential_clip": [
+          -12.0,
+          12.0
+        ]
+      },
+      "candidate": {
+        "nonfinite_incidents_recovered": 0,
+        "embedding_magnitude_floor_events": 0,
+        "pre_exponential_clip_events": 0,
+        "embedding_abs_floor": 1e-07,
+        "embedding_abs_ceiling": 1000.0,
+        "pre_exponential_clip": [
+          -12.0,
+          12.0
+        ]
+      }
+    }
+  },
+  "confirmation": {
+    "opened": false,
+    "reason": "Train-only gate failed, so April 22-28 remained sealed."
+  },
+  "incidents": [
+    "The organizer file contains no April 8 rows; April 9-11 is the available realization of the requested April 8-11 fit.",
+    "Architecture selection preferred the embedding+MLP control; the locked screen was still executed to preserve the protocol."
+  ],
+  "recommendation": "Reject compact AFN and keep April 22-28 sealed for this branch.",
+  "artifacts": {
+    "script": "scripts/train_afn_interactions.py",
+    "scores": "runtime/parallel-calibrated-ranking/afn/screen-scores.npz",
+    "report": "results/calibrated-ranking/afn-screen.json"
+  },
+  "resource_usage": {
+    "wall_seconds": 24.097,
+    "train_seconds": 24.097,
+    "cpu_seconds": 31.471,
+    "cpu_hours": 0.008742,
+    "cpu_utilization_percent": 130.6,
+    "peak_rss_mb": 977.656,
+    "gpu_count": 0,
+    "gpu_seconds": 0.0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "hardware": {
+      "logical_cpu_count": 16,
+      "architecture": "arm64",
+      "processor": "arm"
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "artifacts": [
+    "runtime/batch-slate-meta-catboost-ranker-YetiRank-s929.npz"
+  ],
+  "gate": "slate-6plus",
+  "gated_rows": 87343,
+  "champion_primary": 0.6128580570220947,
+  "candidate_primary": 0.611884593963623,
+  "protocol": "four actual-user-ID folds; select on three, report held-out fourth; zero-preferring grid",
+  "selected_weights": [
+    0.2,
+    -0.075,
+    -0.1,
+    -0.075
+  ],
+  "folds": [
+    {
+      "fold": 0,
+      "selected_weight": 0.2,
+      "selection_gain": 1.2874603271484375e-05,
+      "holdout_gain": -3.4749507904052734e-05,
+      "holdout_gauc_gain": -6.693601608276367e-05,
+      "holdout_ndcg5_gain": -2.6226043701171875e-06
+    },
+    {
+      "fold": 1,
+      "selected_weight": -0.075,
+      "selection_gain": 1.1324882507324219e-06,
+      "holdout_gain": 0.0,
+      "holdout_gauc_gain": 0.0,
+      "holdout_ndcg5_gain": 0.0
+    },
+    {
+      "fold": 2,
+      "selected_weight": -0.1,
+      "selection_gain": 4.76837158203125e-07,
+      "holdout_gain": -1.4901161193847656e-06,
+      "holdout_gauc_gain": -2.9802322387695312e-06,
+      "holdout_ndcg5_gain": 0.0
+    },
+    {
+      "fold": 3,
+      "selected_weight": -0.075,
+      "selection_gain": 1.1324882507324219e-06,
+      "holdout_gain": 0.0,
+      "holdout_gauc_gain": 0.0,
+      "holdout_ndcg5_gain": 0.0
+    }
+  ],
+  "fixed_weight": -0.0125,
+  "fixed_metrics": {
+    "primary": 0.6128580570220947,
+    "gauc": 0.6823537349700928,
+    "ndcg5": 0.5433623194694519
+  },
+  "fixed_gain": 0.0,
+  "all_holdout_folds_nonnegative": false
+}

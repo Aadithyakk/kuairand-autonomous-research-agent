@@ -1,0 +1,74 @@
+{
+  "status": "no_verified_gain",
+  "branch": "feature/experiment-resource-tracking",
+  "starting_commit": "942cea0",
+  "protocol": "Official April 8-21 train and April 22-28 validation split; no random-log or hidden-test outcomes; causal exposure histories contain only strictly earlier item, clock, duration, and tab tokens; four user-ID-modulo folds for residual selection.",
+  "retained_champion": {
+    "primary": 0.612804651260376,
+    "gauc": 0.6822999715805054,
+    "ndcg5": 0.5433093309402466,
+    "baseline_primary": 0.6014695167541504,
+    "gain_over_baseline": 0.011335134506225586,
+    "target_primary": 0.7,
+    "remaining_gap": 0.08719534873962398
+  },
+  "experiments": [
+    {
+      "name": "current-session causal exposure Transformer",
+      "result": "rejected",
+      "architecture": "Full-metadata pointwise DeepFM plus one-layer, four-head causal exposure-history Transformer; length 10, width 32, watch-ratio auxiliary weight 0.4.",
+      "evidence": "Only 18.15% of validation rows had a prior impression in the same 30-minute session. Epoch 4 reached 0.60735643 standalone (0.67531669 GAUC, 0.53939617 nDCG@5), but every global residual fold selected zero weight. Timestamp-only history gates produced a best fixed 0.61280996 on depth >=5 rows, but held-out fold 0 regressed; the candidate was not promoted.",
+      "resource_usage": {
+        "training": {
+          "wall_seconds": 430.762,
+          "cpu_seconds": 681.754,
+          "cpu_hours": 0.189376,
+          "peak_rss_mb": 16327.859
+        },
+        "global_residual_audit": {
+          "wall_seconds": 18.883,
+          "cpu_seconds": 18.813,
+          "cpu_hours": 0.005226,
+          "peak_rss_mb": 1209.062
+        },
+        "conditional_residual_audit": {
+          "wall_seconds": 35.639,
+          "cpu_seconds": 35.626,
+          "cpu_hours": 0.009896,
+          "peak_rss_mb": 1215.203
+        },
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "full-user causal exposure Transformer",
+      "result": "rejected",
+      "architecture": "The same Transformer without the 30-minute reset, retaining the most recent 10 exposures per user.",
+      "evidence": "Coverage increased to 99.66% of validation rows and mean history length to 9.70, but epoch 2 reached only 0.60686481 standalone (0.67473698 GAUC, 0.53899270 nDCG@5). Its residual OOF primary regressed to 0.61279380 and its fixed result regressed to 0.61279500, with two negative held-out folds.",
+      "resource_usage": {
+        "training": {
+          "wall_seconds": 312.623,
+          "cpu_seconds": 510.712,
+          "cpu_hours": 0.141864,
+          "peak_rss_mb": 16594.172
+        },
+        "residual_audit": {
+          "wall_seconds": 19.072,
+          "cpu_seconds": 19.006,
+          "cpu_hours": 0.005279,
+          "peak_rss_mb": 1218.156
+        },
+        "gpu_hours": 0.0
+      }
+    }
+  ],
+  "successful_tracked_run_totals": {
+    "wall_seconds": 816.979,
+    "cpu_seconds": 1265.911,
+    "cpu_hours": 0.351641,
+    "peak_rss_mb": 16594.172,
+    "gpu_hours": 0.0,
+    "note": "The lightweight timestamp-gate feature builder did not emit its own tracker record and is excluded; both model trainers and all metric audits are included."
+  },
+  "conclusion": "Causal self-attention over outcome-free exposure history did not add information beyond the existing pointwise, aggregate-history, and slate corrections. Session history was too sparse, while nearly complete full-user history was less accurate and regressed the ensemble. The 0.6128046513 champion remains authoritative."
+}

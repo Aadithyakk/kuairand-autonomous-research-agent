@@ -1,0 +1,138 @@
+{
+  "all_four_folds_all_metrics_nonnegative": false,
+  "champion_artifact_metrics": {
+    "gauc": 0.6823537349700928,
+    "ndcg5": 0.5433623194694519,
+    "primary": 0.6128580570220947,
+    "rows": 124909,
+    "users": 22377
+  },
+  "champion_metrics_recomputed": {
+    "GAUC": 0.6823537349700928,
+    "nDCG@5": 0.5433623194694519,
+    "primary": 0.6128580570220947,
+    "rows": 124909,
+    "users": 22377
+  },
+  "confirmation_labels_accessed": true,
+  "experiment": "fixed NeuralNDCG differential residual against frozen champion",
+  "fixed_champion_blend_weight": 0.05,
+  "four_actual_user_id_modulo_folds": [
+    {
+      "all_metrics_nonnegative": false,
+      "champion_metrics": {
+        "GAUC": 0.6848820447921753,
+        "nDCG@5": 0.5397460460662842,
+        "primary": 0.6123140454292297,
+        "rows": 31537,
+        "users": 5602
+      },
+      "fold": 0,
+      "gains": {
+        "GAUC": -5.185604095458984e-06,
+        "nDCG@5": 4.231929779052734e-06,
+        "primary": -4.76837158203125e-07
+      },
+      "residual_metrics": {
+        "GAUC": 0.6848768591880798,
+        "nDCG@5": 0.5397502779960632,
+        "primary": 0.6123135685920715,
+        "rows": 31537,
+        "users": 5602
+      },
+      "rows": 31537,
+      "users": 5602
+    },
+    {
+      "all_metrics_nonnegative": true,
+      "champion_metrics": {
+        "GAUC": 0.6825631856918335,
+        "nDCG@5": 0.542828381061554,
+        "primary": 0.6126958131790161,
+        "rows": 30770,
+        "users": 5589
+      },
+      "fold": 1,
+      "gains": {
+        "GAUC": 0.0,
+        "nDCG@5": 0.0,
+        "primary": 0.0
+      },
+      "residual_metrics": {
+        "GAUC": 0.6825631856918335,
+        "nDCG@5": 0.542828381061554,
+        "primary": 0.6126958131790161,
+        "rows": 30770,
+        "users": 5589
+      },
+      "rows": 30770,
+      "users": 5589
+    },
+    {
+      "all_metrics_nonnegative": false,
+      "champion_metrics": {
+        "GAUC": 0.676494836807251,
+        "nDCG@5": 0.5456936359405518,
+        "primary": 0.6110942363739014,
+        "rows": 31466,
+        "users": 5633
+      },
+      "fold": 2,
+      "gains": {
+        "GAUC": -5.900859832763672e-06,
+        "nDCG@5": -7.867813110351562e-06,
+        "primary": -6.9141387939453125e-06
+      },
+      "residual_metrics": {
+        "GAUC": 0.6764889359474182,
+        "nDCG@5": 0.5456857681274414,
+        "primary": 0.6110873222351074,
+        "rows": 31466,
+        "users": 5633
+      },
+      "rows": 31466,
+      "users": 5633
+    },
+    {
+      "all_metrics_nonnegative": true,
+      "champion_metrics": {
+        "GAUC": 0.685429036617279,
+        "nDCG@5": 0.5451765656471252,
+        "primary": 0.6153028011322021,
+        "rows": 31136,
+        "users": 5553
+      },
+      "fold": 3,
+      "gains": {
+        "GAUC": 0.0,
+        "nDCG@5": 0.0,
+        "primary": 0.0
+      },
+      "residual_metrics": {
+        "GAUC": 0.685429036617279,
+        "nDCG@5": 0.5451765656471252,
+        "primary": 0.6153028011322021,
+        "rows": 31136,
+        "users": 5553
+      },
+      "rows": 31136,
+      "users": 5553
+    }
+  ],
+  "hidden_test_outcome_fields_accessed": false,
+  "merits_promotion": false,
+  "overall_all_three_improve": false,
+  "residual_gains": {
+    "GAUC": -2.7418136596679688e-06,
+    "nDCG@5": -9.5367431640625e-07,
+    "primary": -1.9073486328125e-06
+  },
+  "residual_metrics": {
+    "GAUC": 0.6823509931564331,
+    "nDCG@5": 0.5433613657951355,
+    "primary": 0.6128561496734619,
+    "rows": 124909,
+    "users": 22377
+  },
+  "selected_differential_weight": 0.5
+}

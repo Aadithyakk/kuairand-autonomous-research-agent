@@ -1,0 +1,192 @@
+{
+  "experiment": "locked CDM/MMR contextual-diversity confirmation",
+  "status": "rejected_at_four_fold_confirmation",
+  "protocol": {
+    "screen_decision_source": "results/parallel-methods/contextual-diversity-screen.json",
+    "locked_lambda": 0.08,
+    "locked_pool_size": 10,
+    "retuned_on_confirmation": false,
+    "confirmation": "2022-04-22..2022-04-28",
+    "later_log_access": "The later log is not date-contiguous. Every line was filtered using only its first three identity/date fields; outcome fields were fully parsed only for April 22-28 and never for April 29+.",
+    "hidden_test_accessed": false,
+    "outcome_free_similarity": "0.35 author + 0.20 music + 0.10 video type + 0.35 tag Jaccard",
+    "reranking_scope": "greedy MMR within each user's top 10; lower ranks unchanged",
+    "fold_protocol": "four disjoint actual-user-ID folds; fixed candidate evaluated without any fold-specific tuning"
+  },
+  "data": {
+    "rows": 124909,
+    "users": 22377,
+    "minimum_date": 20220422,
+    "maximum_date": 20220428,
+    "champion_scores": "results/final-model/validation-scores.npz"
+  },
+  "alignment_validation": {
+    "exact_row_count_match": true,
+    "champion_metrics_match_manifest": true,
+    "manifest_validation_metrics": {
+      "primary": 0.6128580570220947,
+      "gauc": 0.6823537349700928,
+      "ndcg5": 0.5433623194694519,
+      "rows": 124909,
+      "users": 22377
+    },
+    "reproduced_champion_metrics": {
+      "primary": 0.6128580570220947,
+      "gauc": 0.6823537349700928,
+      "ndcg5": 0.5433623194694519,
+      "users": 22377,
+      "rows": 124909
+    }
+  },
+  "global": {
+    "control": {
+      "primary": 0.6128580570220947,
+      "gauc": 0.6823537349700928,
+      "ndcg5": 0.5433623194694519,
+      "users": 22377,
+      "rows": 124909
+    },
+    "candidate": {
+      "primary": 0.6128706336021423,
+      "gauc": 0.6823599934577942,
+      "ndcg5": 0.5433812737464905,
+      "users": 22377,
+      "rows": 124909
+    },
+    "delta": {
+      "primary": 1.2576580047607422e-05,
+      "gauc": 6.258487701416016e-06,
+      "ndcg5": 1.895427703857422e-05
+    },
+    "all_metric_deltas_nonnegative": true,
+    "changed_rank_rows": 255
+  },
+  "folds": [
+    {
+      "fold": 0,
+      "user_assignment": "integer user_id modulo 4 (SHA-256 fallback)",
+      "control": {
+        "primary": 0.6123140454292297,
+        "gauc": 0.6848820447921753,
+        "ndcg5": 0.5397460460662842,
+        "users": 5602,
+        "rows": 31537
+      },
+      "candidate": {
+        "primary": 0.6123169660568237,
+        "gauc": 0.6848991513252258,
+        "ndcg5": 0.5397347807884216,
+        "users": 5602,
+        "rows": 31537
+      },
+      "delta": {
+        "primary": 2.9206275939941406e-06,
+        "gauc": 1.710653305053711e-05,
+        "ndcg5": -1.1265277862548828e-05
+      },
+      "all_metric_deltas_nonnegative": false
+    },
+    {
+      "fold": 1,
+      "user_assignment": "integer user_id modulo 4 (SHA-256 fallback)",
+      "control": {
+        "primary": 0.6126958131790161,
+        "gauc": 0.6825631856918335,
+        "ndcg5": 0.542828381061554,
+        "users": 5589,
+        "rows": 30770
+      },
+      "candidate": {
+        "primary": 0.6127139329910278,
+        "gauc": 0.6825475692749023,
+        "ndcg5": 0.5428802371025085,
+        "users": 5589,
+        "rows": 30770
+      },
+      "delta": {
+        "primary": 1.811981201171875e-05,
+        "gauc": -1.5616416931152344e-05,
+        "ndcg5": 5.1856040954589844e-05
+      },
+      "all_metric_deltas_nonnegative": false
+    },
+    {
+      "fold": 2,
+      "user_assignment": "integer user_id modulo 4 (SHA-256 fallback)",
+      "control": {
+        "primary": 0.6110942363739014,
+        "gauc": 0.676494836807251,
+        "ndcg5": 0.5456936359405518,
+        "users": 5633,
+        "rows": 31466
+      },
+      "candidate": {
+        "primary": 0.6111106872558594,
+        "gauc": 0.6765007972717285,
+        "ndcg5": 0.545720636844635,
+        "users": 5633,
+        "rows": 31466
+      },
+      "delta": {
+        "primary": 1.6450881958007812e-05,
+        "gauc": 5.9604644775390625e-06,
+        "ndcg5": 2.7000904083251953e-05
+      },
+      "all_metric_deltas_nonnegative": true
+    },
+    {
+      "fold": 3,
+      "user_assignment": "integer user_id modulo 4 (SHA-256 fallback)",
+      "control": {
+        "primary": 0.6153028011322021,
+        "gauc": 0.685429036617279,
+        "ndcg5": 0.5451765656471252,
+        "users": 5553,
+        "rows": 31136
+      },
+      "candidate": {
+        "primary": 0.6153153777122498,
+        "gauc": 0.6854457259178162,
+        "ndcg5": 0.5451850295066833,
+        "users": 5553,
+        "rows": 31136
+      },
+      "delta": {
+        "primary": 1.2576580047607422e-05,
+        "gauc": 1.6689300537109375e-05,
+        "ndcg5": 8.463859558105469e-06
+      },
+      "all_metric_deltas_nonnegative": true
+    }
+  ],
+  "confirmation_gate": {
+    "required": "primary, GAUC, and nDCG@5 deltas must all be nonnegative globally and in every actual-user-ID fold",
+    "global_all_metrics_nonnegative": true,
+    "all_four_folds_all_metrics_nonnegative": false,
+    "passed": false
+  },
+  "recommendation": "Reject the diversity reranker and retain the exact frozen champion.",
+  "artifacts": {
+    "script": "scripts/train_contextual_diversity.py",
+    "scores": "runtime/parallel-contextual-diversity/confirmation-scores.npz",
+    "report": "results/parallel-methods/contextual-diversity-confirmation.json"
+  },
+  "resource_usage": {
+    "wall_seconds": 2.074,
+    "train_seconds": 2.074,
+    "cpu_seconds": 2.063,
+    "cpu_hours": 0.000573,
+    "cpu_utilization_percent": 99.48,
+    "peak_rss_mb": 93.859,
+    "gpu_count": 0,
+    "gpu_seconds": 0.0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "hardware": {
+      "logical_cpu_count": 16,
+      "architecture": "arm64",
+      "processor": "arm"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "artifact": "KuaiLab validation-best recipe",
+  "target": "long_view",
+  "metric": "0.5 * GAUC + 0.5 * nDCG@5",
+  "validation_metrics": {
+    "primary": 0.6128580570220947,
+    "gauc": 0.6823537349700928,
+    "ndcg5": 0.5433623194694519,
+    "rows": 124909,
+    "users": 22377
+  },
+  "baseline_primary": 0.6014695167541504,
+  "gain_over_baseline": 0.011388540267944336,
+  "recipe": "results/verified-slate-consensus/proposal.json",
+  "verification": "scripts/verify_slate_consensus.py",
+  "submission_exporter": "scripts/export_submission.py",
+  "autonomous_worker_experiment": "champion_residual_blend",
+  "validation_scores": "results/final-model/validation-scores.npz",
+  "validation_scores_sha256": "59df8954dc9b1e484e36575dc606293a2a100ba1c4ae049a8c4e2600647f5a9d",
+  "validation_submission": "results/final-model/validation-submission.csv",
+  "validation_submission_sha256": "ee340cab3a62a5e6ac6e12dd45e00b5b2d2810ef2ed5678684c3644448caacc7",
+  "hidden_test_accessed": false,
+  "external_training_data_used": false,
+  "notes": "The checked-in manifest and validation export identify the frozen recipe. Large prerequisite model checkpoints remain untracked and are reproducible from the documented scripts. Use the guarded exporter exactly once for the final hidden split."
+}

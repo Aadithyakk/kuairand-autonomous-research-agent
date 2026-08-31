@@ -1,0 +1,22 @@
+{
+  "measurement_scope": "final cached-candidate verification",
+  "wall_seconds": 7.318,
+  "train_seconds": 7.318,
+  "cpu_seconds": 7.302,
+  "cpu_hours": 0.002028,
+  "cpu_utilization_percent": 99.78,
+  "peak_rss_mb": 473.094,
+  "gpu_count": 0,
+  "gpu_seconds": 0.0,
+  "gpu_hours": 0.0,
+  "peak_gpu_memory_mb": 0.0,
+  "device": "cpu",
+  "retained_session_candidate_wall_seconds": 118.587,
+  "retained_base_champion_wall_seconds": 69.07,
+  "candidate_search_complete_tracking": false,
+  "hardware": {
+    "logical_cpu_count": 16,
+    "architecture": "arm64",
+    "processor": "arm"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "online_teacher_distillation": {
+    "status": "verified-research-prior",
+    "teacher": {
+      "name": "completion-safe context-gated online rank ensemble",
+      "evaluation_mode": "online/prequential validation; not a static submission",
+      "validation_rows": 124909,
+      "validation_users": 22377,
+      "metrics": {
+        "primary": 0.7234153747558594,
+        "gauc": 0.8215715289115906,
+        "ndcg5": 0.6252591609954834
+      },
+      "strongest_atomic_challenger": {
+        "method": "24-hour PairLogitPairwise CatBoost ranker",
+        "primary": 0.688687801361084,
+        "gauc": 0.7768656015396118,
+        "ndcg5": 0.6005100607872009
+      }
+    },
+    "transferable_strategy": [
+      "Use within-user ordinal ranks rather than calibrated probabilities when blending heterogeneous rankers.",
+      "Model recent user, item, author, music, tag, type, duration, and user-context state at several time scales.",
+      "Route small residual corrections by outcome-free slate size, session count, activity, and training-history coverage.",
+      "Treat weak diverse models as possible signed residuals or anti-experts, with zero-preferring weights.",
+      "Accept a correction only when its locked direction is stable across disjoint actual-user-ID folds."
+    ],
+    "submission_safe_translation": [
+      "Never expose evaluation-period long_view, play_time_ms, click, like, follow, comment, forward, or hate outcomes to the student at prediction time.",
+      "Distill the teacher's within-user ranks or residuals into a frozen student using only identity, metadata, time, exposure order, repeat, slate, session, and training-history features available before the target period.",
+      "Select the student on an earlier temporal screen, freeze it, and evaluate on a later untouched period; do not train on teacher targets from the period being scored.",
+      "For the final hidden export, refit only on information dated no later than 2022-04-28 and generate every hidden score in one pass without hidden outcomes."
+    ],
+    "priority_experiments": [
+      "Ablate outcome-free exposure and session-state proxies for the teacher's unavailable feedback features.",
+      "Use a multi-task student anchored by observed training labels and regularized by teacher ordering, rather than imitating the teacher score alone.",
+      "Train separate sparse-user and dense-user students, then route with a frozen training-coverage gate.",
+      "Use the 24-hour pairwise ranker as the first simpler teacher before attempting the full gated ensemble."
+    ],
+    "completed_static_attempts": [
+      {
+        "method": "CatBoost RMSE residual distillation",
+        "result": "zero weight selected; no locked change"
+      },
+      {
+        "method": "CatBoost YetiRankPairwise teacher-rank distillation",
+        "selection_weight": 0.3,
+        "locked_primary_delta": -0.0004469156265258789,
+        "locked_gauc_delta": -0.0009139776229858398,
+        "locked_ndcg5_delta": 0.000020205974578857422,
+        "result": "rejected; do not repeat plain score or rank imitation"
+      }
+    ],
+    "prohibited_claim": "Do not report 0.723415 as a static or hidden-test score; it is evidence for experiment design only."
+  }
+}

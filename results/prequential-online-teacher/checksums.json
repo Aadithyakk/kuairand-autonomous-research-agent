@@ -1,0 +1,1053 @@
+{
+  "schema_version": 1,
+  "hash_algorithm": "sha256",
+  "dataset_license_note": "Dataset is not redistributed. Download KuaiRand-Pure from its source and verify these hashes.",
+  "dataset": [
+    {
+      "path": "external/KuaiRand-Pure/data/log_random_4_22_to_5_08_pure.csv",
+      "size": 87086116,
+      "sha256": "60b80994da969cd53da4d50c37ba3dafd6fb185df804c92c8410df34845a9d2c"
+    },
+    {
+      "path": "external/KuaiRand-Pure/data/log_standard_4_08_to_4_21_pure.csv",
+      "size": 83961282,
+      "sha256": "5bb6eb0b3d9f47e5436cb5dc82ee1899b845ebf9750a5560b801e929e18bd41c"
+    },
+    {
+      "path": "external/KuaiRand-Pure/data/log_standard_4_22_to_5_08_pure.csv",
+      "size": 21765075,
+      "sha256": "429e3b948828942e572f2c3a5be5a25799ffe75591d22d18cf417b9b534d31fd"
+    },
+    {
+      "path": "external/KuaiRand-Pure/data/user_features_pure.csv",
+      "size": 3519028,
+      "sha256": "dc729a656301b4c6d07f713fe41d05ec9bfaab670b90e531c70037caf033c011"
+    },
+    {
+      "path": "external/KuaiRand-Pure/data/video_features_basic_pure.csv",
+      "size": 626669,
+      "sha256": "a6f7ee02684c5777422306cdc416e170302288aa89aca9dfea995edbd625bcc2"
+    },
+    {
+      "path": "external/KuaiRand-Pure/data/video_features_statistic_pure.csv",
+      "size": 6559217,
+      "sha256": "d5c9e237ef2c6c1fc0e7f27e952f215d6626ecd934b01a6c53ecfcc72540f6b6"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "runtime/batch-slate-meta-catboost-s751.npz",
+      "role": "frozen_static_model",
+      "size": 780148,
+      "sha256": "0d3f2f92c477e099be728d4e6f498ed44dde4dacbc086022c7e487b36d804329"
+    },
+    {
+      "path": "runtime/cross-session-gru-e8-h64-head128-s431.npz",
+      "role": "frozen_static_model",
+      "size": 457512,
+      "sha256": "13f11c89d1d3d088bead79ae6849627c25579e675ff645bdd77e3dcd6445c9fc"
+    },
+    {
+      "path": "runtime/din-h20-k16-hidden128-lr0.001-s0.npz",
+      "role": "frozen_static_model",
+      "size": 456875,
+      "sha256": "2a8edfd183a51449d34b9612464fc796645924b0e4cdba0cd690413c23b22999"
+    },
+    {
+      "path": "runtime/ffm-base-star-k16-lr0.001-s401.npz",
+      "role": "frozen_static_model",
+      "size": 455458,
+      "sha256": "189a21eb470f78963b2c60537833ad54435638466da2d71b347d8d062bf6425f"
+    },
+    {
+      "path": "runtime/final-sessionx-consensus.npz",
+      "role": "frozen_static_model",
+      "size": 408847,
+      "sha256": "82be4fb7a07695ee2d89567a1cd7eef33206e9373deed2d158ee3ea32fa0dbbd"
+    },
+    {
+      "path": "runtime/history-catboost-classifier-probe-i250-seq40-plain-s151.npz",
+      "role": "frozen_static_model",
+      "size": 455684,
+      "sha256": "bd6b9e0bd720a73b4f8dc9bf264d718fd0da8174ba887389d7d128eea4213e11"
+    },
+    {
+      "path": "runtime/history-catboost-classifier-refit-i500-seq40-session-fullmeta-s257.npz",
+      "role": "frozen_static_model",
+      "size": 461805,
+      "sha256": "ba11a01e7ecf6888be13687a9aa07da5ddb6c3fb6b5388724c196808f5983e73"
+    },
+    {
+      "path": "runtime/history-catboost-ranker-probe-i220-seq40-session-s157.npz",
+      "role": "frozen_static_model",
+      "size": 448616,
+      "sha256": "40892ffd5de70f26f04dd9eab7bf3ce6dae32d6bd835c2d7f91ba90d1ab387ea"
+    },
+    {
+      "path": "runtime/history-deepfm-k16-h128-lr0.001-session-fullmeta-aux0.15-s337.npz",
+      "role": "frozen_static_model",
+      "size": 463011,
+      "sha256": "3bb355413c69bcec150b4f3f1f30f5af97262227c805bce253bc6905f9681938"
+    },
+    {
+      "path": "runtime/history-deepfm-k16-h128-lr0.001-session-fullmeta-s293.npz",
+      "role": "frozen_static_model",
+      "size": 463500,
+      "sha256": "349072e1ceec8f1c048dbbac0c2622f2a73c9a7c3383c83880252b8000770f10"
+    },
+    {
+      "path": "runtime/history-deepfm-k16-h128-lr0.001-session-fullmeta-sessionmargin0.05m1.0f0.1-s293.npz",
+      "role": "frozen_static_model",
+      "size": 462784,
+      "sha256": "ef6217007bbea5e5cfefedbf2738f7e8bac4dd016e682d558bbf5291a1301326"
+    },
+    {
+      "path": "runtime/history-deepfm-k16-h128-lr0.001-session-fullmeta-watchratio0.4-s293.npz",
+      "role": "frozen_static_model",
+      "size": 463530,
+      "sha256": "e468bed4277b0325fe095192e90cd030cc3ad56a7cd6f326912d285a6496c938"
+    },
+    {
+      "path": "runtime/lgbm-lambdarank-r500-l31-lr0.03-leaf100-s0.npz",
+      "role": "frozen_static_model",
+      "size": 435394,
+      "sha256": "98da64388767203e0dea8f2c7e6d2e29df3c20b69c9a9fc7c57e66b86eb3762c"
+    },
+    {
+      "path": "runtime/lightgcn-k32-l2-lr0.01-s0.npz",
+      "role": "frozen_static_model",
+      "size": 453928,
+      "sha256": "7fa3b7c47c61ad41d7d4f3d20baeee74a5e0ddbc278f8a7a4bec14a9110eb19d"
+    },
+    {
+      "path": "runtime/multitask-a0.2-k16-h128-lr0.001-s71.npz",
+      "role": "frozen_static_model",
+      "size": 456147,
+      "sha256": "97ead77546082b0e2039364139095af5078c697804cd3024f94a196e8d6582c0"
+    },
+    {
+      "path": "runtime/ordinal-watch-a0.3-k16-h128-lr0.001-s121.npz",
+      "role": "frozen_static_model",
+      "size": 456173,
+      "sha256": "26ba8e194c91cc651f90ebe9b37400cf4dc6c120f3f5b4fc2b283fd05eea8bb0"
+    },
+    {
+      "path": "runtime/stacked-catboost-classifier-scores-extended-cutoff20220413-session1-sessionx1-sessionw0-multir0-trend0-affinity0-ctx0.npz",
+      "role": "frozen_static_model",
+      "size": 1159870,
+      "sha256": "3352eb9d6462cf8b62bc8d6a7901bc672f1cb9997cd6227569c966fa273ab48f"
+    },
+    {
+      "path": "runtime/stacked-linear-scores-history-cutoff20220413-rolling0-components0-session1-sessionx1-sessionw0-multir0-trend0-affinity0-ctx0-transition1.npz",
+      "role": "frozen_static_model",
+      "size": 1095420,
+      "sha256": "56001843d2b5fa4a067666e339bfcd97be338030152574e0c910f3201a7fdae4"
+    },
+    {
+      "path": "runtime/stacked-reranker-scores-history-rank_xendcg-cutoff20220413-rolling0-components0-session1-sessionx1-sessionw1.npz",
+      "role": "frozen_static_model",
+      "size": 1149709,
+      "sha256": "6741501c519a41ff3b319693316a6e58b41b4f5bdead30216b74b77a76140819"
+    },
+    {
+      "path": "runtime/threshold-deepfm-a0.3-k16-h128-lr0.001-s131.npz",
+      "role": "frozen_static_model",
+      "size": 456777,
+      "sha256": "8687d74837a8032985c578b505b736612ee4a3e2788ae013ca90d1f7ac6279fd"
+    },
+    {
+      "path": "work/best_verified_online_scores.npz",
+      "role": "canonical_final_score",
+      "size": 928976,
+      "sha256": "af67d1dd772db26ad154727965ed70c094bdde2ecefec39cd9edd58b43a178eb"
+    },
+    {
+      "path": "work/causal_decayed_random_features.npz",
+      "role": "causal_feature_cache",
+      "size": 10542648,
+      "sha256": "d72ea3ad6849d3139cf85a2435bf78058f8b2d2bc8b49d9d321398cfa7640d1a"
+    },
+    {
+      "path": "work/causal_random_action_state_features.npz",
+      "role": "causal_feature_cache",
+      "size": 190058,
+      "sha256": "b39159d37fea608a9a46a80a624f90b0401a1e48da0d7745361b856d84816835"
+    },
+    {
+      "path": "work/causal_random_transition_features.npz",
+      "role": "causal_feature_cache",
+      "size": 590972,
+      "sha256": "3d0b03ebe48c78654325942591ed87f022527f40ad8070b5b986b6f8b4f8e504"
+    },
+    {
+      "path": "work/causal_random_user_state_features.npz",
+      "role": "causal_feature_cache",
+      "size": 4658125,
+      "sha256": "4063304a8788ef2267c6dd157e1ad7b5ff1a8d30d5695991b6463d3e51bff39b"
+    },
+    {
+      "path": "work/causal_random_watch_features.npz",
+      "role": "causal_feature_cache",
+      "size": 14940811,
+      "sha256": "9d18f9e76e9f7d65282f6ec73bc6caebb826692cce85d764cfbffaed3df61a5f"
+    },
+    {
+      "path": "work/causal_streaming_random_features.npz",
+      "role": "causal_feature_cache",
+      "size": 14760790,
+      "sha256": "63fd1ff0f22ef602a7da80fc86522eb76a302c0fe3a554c3afb672efb9107d01"
+    },
+    {
+      "path": "work/d5_pair_only_source.npz",
+      "role": "stage_source",
+      "size": 461254,
+      "sha256": "595e54126319c7ac1212f4ea71071d47cc15e8e9c546fd33ba87cf263b949cc8"
+    },
+    {
+      "path": "work/d8_pair_gated_final_results.json",
+      "role": "promotion_report",
+      "size": 42921,
+      "sha256": "02691433e7e5dcd018dba6048fc462b866f4ec9724782604e220e516278f996c"
+    },
+    {
+      "path": "work/d8_pair_gated_final_scores.npz",
+      "role": "promotion_output",
+      "size": 928976,
+      "sha256": "af67d1dd772db26ad154727965ed70c094bdde2ecefec39cd9edd58b43a178eb"
+    },
+    {
+      "path": "work/d8_pair_source.npz",
+      "role": "stage_source",
+      "size": 462159,
+      "sha256": "553566b9c369a7aae3cb501706c0d2cf26d8696b5fb9e874d73f7aad68f51646"
+    },
+    {
+      "path": "work/diverse_existing_gated_results.json",
+      "role": "promotion_report",
+      "size": 193240,
+      "sha256": "6bad26567db5c3ba30bbb00b81a821a3f117b37a8398b062cef58dbe3a6fcfc0"
+    },
+    {
+      "path": "work/diverse_existing_gated_scores.npz",
+      "role": "promotion_output",
+      "size": 928842,
+      "sha256": "5f16285d4b9b1bca0e38f7cc93237355f8f56c2a0a900013ddc0f44dd5a65d9c"
+    },
+    {
+      "path": "work/diverse_existing_sources.npz",
+      "role": "stage_source",
+      "size": 7601857,
+      "sha256": "c10c734c16cdb7a8217220dd41e0861ff98ed7713e0159d08aa39f17f4987548"
+    },
+    {
+      "path": "work/fine_d5_pair_on_yeti_results.json",
+      "role": "promotion_report",
+      "size": 6167,
+      "sha256": "6876c1450be367daa62d60f9fecf142b4d4dc26ae4632de67d0faa5e3dcc046f"
+    },
+    {
+      "path": "work/fine_d5_pair_on_yeti_scores.npz",
+      "role": "promotion_output",
+      "size": 928803,
+      "sha256": "e00468c9e67972424b20ac627a2ea36a08a42c118488f057cedbad5bb925289c"
+    },
+    {
+      "path": "work/new_base_classifier_gated_results.json",
+      "role": "promotion_report",
+      "size": 114199,
+      "sha256": "eccd7c04430e553af54fb41d3a535d5b9f2fa324aadad722b3a346a5f0c8df49"
+    },
+    {
+      "path": "work/new_base_classifier_gated_scores.npz",
+      "role": "promotion_output",
+      "size": 928792,
+      "sha256": "ff45bc9a9a0cc8d502e6368920d3e9d62f4a71a67230972e027d825d4eab7528"
+    },
+    {
+      "path": "work/new_base_classifier_sources.npz",
+      "role": "stage_source",
+      "size": 913623,
+      "sha256": "ae03a5b895407a20a6442d2be13a51c353ef6910bec95129865a775fa7d2a5d0"
+    },
+    {
+      "path": "work/new_objective_diversity_gated_results.json",
+      "role": "promotion_report",
+      "size": 134114,
+      "sha256": "741a0de716ddb286c009666a1bfb2903b3080ff1dddfdc37244d9c2419bf3998"
+    },
+    {
+      "path": "work/new_objective_diversity_gated_scores.npz",
+      "role": "promotion_output",
+      "size": 928846,
+      "sha256": "6236c76567f2bf002b38d151b3ec559ce09218f8b0147e968223207a5513200d"
+    },
+    {
+      "path": "work/new_objective_diversity_sources.npz",
+      "role": "stage_source",
+      "size": 1790702,
+      "sha256": "dbe4802eed695d4126440f927d1cd5f20f267a994b0b0a35889b1d8368919d55"
+    },
+    {
+      "path": "work/new_queryrmse_source.npz",
+      "role": "stage_source",
+      "size": 463208,
+      "sha256": "77c6785d7b9f8b2d4dbe27940472986164ce029f83ed343487013072993902fb"
+    },
+    {
+      "path": "work/postd5_yeti12_results.json",
+      "role": "promotion_report",
+      "size": 83328,
+      "sha256": "12a58483eb74037426434d30aeaaf2424b06fd3a1142a9899a53ec128bd402f5"
+    },
+    {
+      "path": "work/postd5_yeti12_scores.npz",
+      "role": "promotion_output",
+      "size": 928815,
+      "sha256": "38586f04dcb13c2fe976663cfda539e65f31ee192898fd4daeda0ff8b2024e11"
+    },
+    {
+      "path": "work/postfinal_pair1_results.json",
+      "role": "promotion_report",
+      "size": 100018,
+      "sha256": "1ffaa55cb1f8831c938300d610a9bd4cb2493f89b1cefafb31e3ef4f232b038c"
+    },
+    {
+      "path": "work/postfinal_pair1_scores.npz",
+      "role": "promotion_output",
+      "size": 929112,
+      "sha256": "3c221e964101b41e2a5c735b43b2740c45abac4da7459b85b7fe6b3c1c38d658"
+    },
+    {
+      "path": "work/postpair1_d5_results.json",
+      "role": "promotion_report",
+      "size": 84971,
+      "sha256": "a7bcf1a78217e8efd947d9742d5dd0bfa50109c592a47f821fd7dfa9fdfd0f1b"
+    },
+    {
+      "path": "work/postpair1_d5_scores.npz",
+      "role": "promotion_output",
+      "size": 929054,
+      "sha256": "dcfdc33cd1167bafeb71ff43e7e7173e48e1783f1a4bb1f309f382a143950ffa"
+    },
+    {
+      "path": "work/prequential_immediate_feedback_features.npz",
+      "role": "causal_feature_cache",
+      "size": 12340169,
+      "sha256": "004cb93f2a3988587a4a1636da51576f34c01a944094daedb3ad208fe411e097"
+    },
+    {
+      "path": "work/prequential_standard_feedback_features.npz",
+      "role": "causal_feature_cache",
+      "size": 20947915,
+      "sha256": "b481155ce80bf207dc3156c0a4c68ada399341639b32c064b5d72bf7e3239b58"
+    },
+    {
+      "path": "work/queryrmse_gated_on_classifier_best_results.json",
+      "role": "promotion_report",
+      "size": 67871,
+      "sha256": "07e7a389ab6b1f35a1729a8f92110ec81b4986686c6a0429377db7280500baf8"
+    },
+    {
+      "path": "work/queryrmse_gated_on_classifier_best_scores.npz",
+      "role": "promotion_output",
+      "size": 928844,
+      "sha256": "8f92d6634531931009c9b3aa78cdb6f51339c548cb41cf5bf917d23258326691"
+    },
+    {
+      "path": "work/refresh_classifier_gated_results.json",
+      "role": "promotion_report",
+      "size": 121609,
+      "sha256": "34f6fa6d0211e2af48006f7729fc192475a9f0469cbac901f01863e94823030c"
+    },
+    {
+      "path": "work/refresh_classifier_gated_scores.npz",
+      "role": "promotion_output",
+      "size": 928767,
+      "sha256": "fb3bd96b3ffb4a74bc5f707af666efe7af632b101dff080c657df9164cbaa163"
+    },
+    {
+      "path": "work/refresh_classifier_sources.npz",
+      "role": "stage_source",
+      "size": 1824992,
+      "sha256": "4e7e8e7c0ec2869823df4e46eabb1cdb77c038a8ad59a90bba47e8f12847149a"
+    },
+    {
+      "path": "work/refresh_only_gated_results.json",
+      "role": "promotion_report",
+      "size": 121030,
+      "sha256": "dda140d2908c618ee596905c0e25fdf4115a49159e71bfede5576c326ef17aab"
+    },
+    {
+      "path": "work/refresh_only_gated_scores.npz",
+      "role": "promotion_output",
+      "size": 928754,
+      "sha256": "7c31e91ab038bf1c733b04ce3cbeef823b861704935e7ae05e05862ea231e9a5"
+    },
+    {
+      "path": "work/refresh_only_sources.npz",
+      "role": "stage_source",
+      "size": 1823343,
+      "sha256": "2e88f97db20097b8c3e03a45c9f4cd49d45f1e0b562659d1b2f42bab5619d480"
+    },
+    {
+      "path": "work/strict_10h_pairlogit_catboost_fine_results.json",
+      "role": "promotion_report",
+      "size": 56305,
+      "sha256": "17cb16017997850e8e9603d520ca6e16c96201b78a0ed9c65761d1e22bb8a3a0"
+    },
+    {
+      "path": "work/strict_10h_pairlogit_catboost_fine_scores.npz",
+      "role": "promotion_output",
+      "size": 928956,
+      "sha256": "615af428d4f8684b60c0d910669b6ee89cb5ee2de6c1bd58b829323863df3e1c"
+    },
+    {
+      "path": "work/strict_10h_pairlogit_catboost_full_results.json",
+      "role": "source_report",
+      "size": 34048,
+      "sha256": "9fdf807628f98ba2250e9ec2e61f548e6b2f368413be5c376b6750a6c23af177"
+    },
+    {
+      "path": "work/strict_10h_pairlogit_catboost_full_scores.npz",
+      "role": "stage_source",
+      "size": 909890,
+      "sha256": "e6047000f72e21806695f0a5ab6b00db7f34d8fa23462c545e46aa98c7845070"
+    },
+    {
+      "path": "work/strict_12h_catboost_ranker_full_on_best_results.json",
+      "role": "promotion_report",
+      "size": 130254,
+      "sha256": "d91d4b947ff1be6653af581eab9e0d54b83a3a76a8a22dc18fb8180102e41e51"
+    },
+    {
+      "path": "work/strict_12h_catboost_ranker_full_on_best_scores.npz",
+      "role": "promotion_output",
+      "size": 915331,
+      "sha256": "4eca3b7e95fe909a82869498a49013d6e6d27ba2162481f3586984471018982e"
+    },
+    {
+      "path": "work/strict_12h_catboost_ranker_full_results.json",
+      "role": "source_report",
+      "size": 33685,
+      "sha256": "3f8c2198c615cacac8d5356dd7d6a2784fddd1c523324ded6b206bbe52c3ee1f"
+    },
+    {
+      "path": "work/strict_12h_catboost_ranker_full_scores.npz",
+      "role": "stage_source",
+      "size": 859553,
+      "sha256": "af59660b040299a0e6e4f6765ad75d7ca3e8443f798d6f7bb84c646026191b9f"
+    },
+    {
+      "path": "work/strict_12h_on_1h_results.json",
+      "role": "promotion_report",
+      "size": 117508,
+      "sha256": "5ce33395fc03a93eab8f4f2765c0c8d425907004f80af311a2e88c793b34aec4"
+    },
+    {
+      "path": "work/strict_12h_on_1h_scores.npz",
+      "role": "promotion_output",
+      "size": 918148,
+      "sha256": "c48f7c89fc60ccd858ccdb5d9c60d48e1cee9948310068731ac874dbab39e1a0"
+    },
+    {
+      "path": "work/strict_12h_pairlogit_catboost_fine_results.json",
+      "role": "promotion_report",
+      "size": 58862,
+      "sha256": "3c0cde3952bc8bf992a6fd6c637a631c8ea753074cfcf3a3d4898c73de7d4108"
+    },
+    {
+      "path": "work/strict_12h_pairlogit_catboost_fine_scores.npz",
+      "role": "promotion_output",
+      "size": 920562,
+      "sha256": "a4e8fd7bd526f38019a3b15403bf618911ae4da76f61ab8ba5310d7aab2efafb"
+    },
+    {
+      "path": "work/strict_12h_pairlogit_catboost_full_results.json",
+      "role": "source_report",
+      "size": 33691,
+      "sha256": "be4c569ece38bfbf494a8f2e1e05dc94e969696365c2d963b9fda61336d32517"
+    },
+    {
+      "path": "work/strict_12h_pairlogit_catboost_full_scores.npz",
+      "role": "stage_source",
+      "size": 907817,
+      "sha256": "4acbfe5da926d96b9691df7946d362923f268741b9e5382ac678d51486473161"
+    },
+    {
+      "path": "work/strict_12h_pairwise_immediate_results.json",
+      "role": "source_report",
+      "size": 34610,
+      "sha256": "b5c43806989e241c789e182db8a065bfb1857c35282b976b5ce5253adb1ffbd0"
+    },
+    {
+      "path": "work/strict_12h_pairwise_immediate_scores.npz",
+      "role": "stage_source",
+      "size": 904996,
+      "sha256": "34e41e8deb8971877593e816b5337c78687f6fa5df6745eb036fce5959ba89fb"
+    },
+    {
+      "path": "work/strict_12h_pairwise_post_pairlogit_fine_results.json",
+      "role": "promotion_report",
+      "size": 37362,
+      "sha256": "dec4ad9175711839023ec4c9da2567dd65a5cc820a1aa1a353ed07ff42503d77"
+    },
+    {
+      "path": "work/strict_12h_pairwise_post_pairlogit_fine_scores.npz",
+      "role": "promotion_output",
+      "size": 922735,
+      "sha256": "c8d5dfb0b3c564a048b0ecedefd34c7aa8ca7233a337598c46cfce76b48e91b3"
+    },
+    {
+      "path": "work/strict_12h_post_catboost_results.json",
+      "role": "promotion_report",
+      "size": 47796,
+      "sha256": "657c7ced7048f85c1aa517a69fedf4a6dc273c716acd338fe813c4b4c7e064cd"
+    },
+    {
+      "path": "work/strict_12h_post_catboost_scores.npz",
+      "role": "promotion_output",
+      "size": 915850,
+      "sha256": "1d05b2ef48dcb7ae8b5bbe8307702fb080ebc3e96ea0a60a2b1843cbca8b2554"
+    },
+    {
+      "path": "work/strict_14h_pairlogit_catboost_full_results.json",
+      "role": "source_report",
+      "size": 33455,
+      "sha256": "e35f5f081ecf4f7510a112710406bcf582c2e6748479d5b94002a4f76eb80c4c"
+    },
+    {
+      "path": "work/strict_14h_pairlogit_catboost_full_scores.npz",
+      "role": "stage_source",
+      "size": 903649,
+      "sha256": "60ffe1a7d47a5f339aaceef93d8b2ba16bf7322512ee9c8f557599ae4b10fa39"
+    },
+    {
+      "path": "work/strict_14h_post20h_results.json",
+      "role": "promotion_report",
+      "size": 33574,
+      "sha256": "7129f5f54bedbe29e27eee8d857778210e6c154c5af5cd52fc6233607c0f20e1"
+    },
+    {
+      "path": "work/strict_14h_post20h_scores.npz",
+      "role": "promotion_output",
+      "size": 928866,
+      "sha256": "e5329c1ff050f3597485283d0041ce8e9dedffee9bf0df6b6de7ce24596c085e"
+    },
+    {
+      "path": "work/strict_16h_pairlogit_catboost_full_results.json",
+      "role": "source_report",
+      "size": 33216,
+      "sha256": "b10e6b15d9fb2ea5c703a458317d3add7e85a1c757fb5ec3dca74b82b9be200c"
+    },
+    {
+      "path": "work/strict_16h_pairlogit_catboost_full_scores.npz",
+      "role": "stage_source",
+      "size": 907393,
+      "sha256": "9b320ca8e3f138b5b4cd585fc50bdcd48d881a5f3bd171295faa2c1c617fe8b6"
+    },
+    {
+      "path": "work/strict_16h_pairlogit_catboost_on_best_results.json",
+      "role": "promotion_report",
+      "size": 106885,
+      "sha256": "14f9a2551bd2616782a3b792ab5780f4c7b57be4a2de3c35b45a9af0942c454c"
+    },
+    {
+      "path": "work/strict_16h_pairlogit_catboost_on_best_scores.npz",
+      "role": "promotion_output",
+      "size": 928835,
+      "sha256": "60a9448dade7c69a4f2e291429b846492eb76156559e444dda6501b3d70a8b66"
+    },
+    {
+      "path": "work/strict_1h_on_current_results.json",
+      "role": "promotion_report",
+      "size": 134027,
+      "sha256": "4db2369c188897c582a46421ccb58f90bbd06d6370a9512be9c052b74c3f5c02"
+    },
+    {
+      "path": "work/strict_1h_on_current_scores.npz",
+      "role": "promotion_output",
+      "size": 918207,
+      "sha256": "d31af3b789c4ca81bb83e970bbaedb350a78769c7e9d5a68846ae42cb3082c5d"
+    },
+    {
+      "path": "work/strict_1h_pairwise_immediate_results.json",
+      "role": "source_report",
+      "size": 60808,
+      "sha256": "3ee6578d9ff6c0f1867553bedf772a47054cf3d849bdbc20aae3629c984557f5"
+    },
+    {
+      "path": "work/strict_1h_pairwise_immediate_scores.npz",
+      "role": "stage_source",
+      "size": 906121,
+      "sha256": "17846abb795f059b21f7fef060794cd68b8a802254c02961b302baf3b984eff1"
+    },
+    {
+      "path": "work/strict_1h_pairwise_post_12hpairwise_results.json",
+      "role": "promotion_report",
+      "size": 54349,
+      "sha256": "7fe92d027f3ce4906782ab948754c18ec16732dc082767d2354dd91b3f3ed964"
+    },
+    {
+      "path": "work/strict_1h_pairwise_post_12hpairwise_scores.npz",
+      "role": "promotion_output",
+      "size": 922653,
+      "sha256": "19f892e9e0fab70cb67364ffd386082f74cfa1f945af744687a5b46a9691f844"
+    },
+    {
+      "path": "work/strict_1h_post_best_results.json",
+      "role": "promotion_report",
+      "size": 66784,
+      "sha256": "cb66f1be596ead5bef88f45feb3b4100dc4aaf01bb203a4fd63a973e1bd0b72b"
+    },
+    {
+      "path": "work/strict_1h_post_best_scores.npz",
+      "role": "promotion_output",
+      "size": 915512,
+      "sha256": "d5ec9d9d5f85a5f0242a9f10afdaa9ba330524d0aa10d9af38ef9af9a5c733b4"
+    },
+    {
+      "path": "work/strict_20h_pairlogit_catboost_full_results.json",
+      "role": "source_report",
+      "size": 32980,
+      "sha256": "df03749ecb3da5828c957ef2466951a917dfb9cfd4647d520949d69934b16e2f"
+    },
+    {
+      "path": "work/strict_20h_pairlogit_catboost_full_scores.npz",
+      "role": "stage_source",
+      "size": 903754,
+      "sha256": "077a4db7144e4a86a34f269a23fbbc0a578e569c04721fdeee5bdbf0bdf07b6e"
+    },
+    {
+      "path": "work/strict_20h_pairlogit_catboost_on_best_results.json",
+      "role": "promotion_report",
+      "size": 76665,
+      "sha256": "756c91609c16cf485e3f9c15d66836126c4e550ddafe361769a55e64b37f92aa"
+    },
+    {
+      "path": "work/strict_20h_pairlogit_catboost_on_best_scores.npz",
+      "role": "promotion_output",
+      "size": 928876,
+      "sha256": "b7e5a91422041edffd1d98789d54357c61cafd181a94c9f4fde66ce606c1e045"
+    },
+    {
+      "path": "work/strict_2h_pairlogit_catboost_fine_results.json",
+      "role": "promotion_report",
+      "size": 25137,
+      "sha256": "5b31d680aa816282b1e6d421a64f9ca9fb69d01a53a02bc57eaa6334801737c8"
+    },
+    {
+      "path": "work/strict_2h_pairlogit_catboost_fine_scores.npz",
+      "role": "promotion_output",
+      "size": 925949,
+      "sha256": "17e93292f99434bbb998176cabec66b261a565234b572cd2513a589c575fc08c"
+    },
+    {
+      "path": "work/strict_2h_pairlogit_catboost_full_results.json",
+      "role": "source_report",
+      "size": 41961,
+      "sha256": "64a83a29e9541ba7525afd5e0d670e1f553efd156b7f57b1e5aa15523c279266"
+    },
+    {
+      "path": "work/strict_2h_pairlogit_catboost_full_scores.npz",
+      "role": "stage_source",
+      "size": 909110,
+      "sha256": "e9fbcf79fa0e385973c64a1ea1af67344382ab2b394b3bcb3aa9158f508d3399"
+    },
+    {
+      "path": "work/strict_3h_catboost_ranker_full_on_best_results.json",
+      "role": "promotion_report",
+      "size": 54678,
+      "sha256": "06ba0a1de81cba851cdbb4032a18c21d835ed3b1dc3ad78bfd2315616c76520d"
+    },
+    {
+      "path": "work/strict_3h_catboost_ranker_full_on_best_scores.npz",
+      "role": "promotion_output",
+      "size": 915414,
+      "sha256": "0ab03980b849ad366c09fa31f6e59e8257c7efd758403a50b42c7502aec41a84"
+    },
+    {
+      "path": "work/strict_3h_catboost_ranker_full_results.json",
+      "role": "source_report",
+      "size": 38725,
+      "sha256": "8fdb11acbd973cd8f56182dabc823319991be89a32e6193e38f4f6b41c424a3c"
+    },
+    {
+      "path": "work/strict_3h_catboost_ranker_full_scores.npz",
+      "role": "stage_source",
+      "size": 853491,
+      "sha256": "889dbba596be0ec2324757554197db4c1f0b693e24e406462f3e06a6cb7e573b"
+    },
+    {
+      "path": "work/strict_3h_pairlogit_catboost_fine_results.json",
+      "role": "promotion_report",
+      "size": 25579,
+      "sha256": "f74a8e46a9293d119c26e94f0a5f87a0bf9e84ff841a17b1a5cb976a5daa483f"
+    },
+    {
+      "path": "work/strict_3h_pairlogit_catboost_fine_scores.npz",
+      "role": "promotion_output",
+      "size": 922781,
+      "sha256": "bd57521f93d745d0ee7abf010aa89b39775eba05162d378acc457ad0d9a44d01"
+    },
+    {
+      "path": "work/strict_3h_pairlogit_catboost_full_results.json",
+      "role": "source_report",
+      "size": 38731,
+      "sha256": "c422da78676fff62f04288d56221d10e26e8aaa8c3d01483504c91cbfb047751"
+    },
+    {
+      "path": "work/strict_3h_pairlogit_catboost_full_scores.npz",
+      "role": "stage_source",
+      "size": 909712,
+      "sha256": "16881cccebab55b15959f6ccf273de96d7dbfe945908ab3f0b961aa6eb744c09"
+    },
+    {
+      "path": "work/strict_4h_on_12h1h_results.json",
+      "role": "promotion_report",
+      "size": 53496,
+      "sha256": "315014eb58a6f479e0ef43e67b139cb7befdbb0a28d90d67819c45d5bd277ae7"
+    },
+    {
+      "path": "work/strict_4h_on_12h1h_scores.npz",
+      "role": "promotion_output",
+      "size": 918141,
+      "sha256": "2bc99b811da30746601b2fe24bc0c773f3c8a60db289fe53e8ea128f2825e0cb"
+    },
+    {
+      "path": "work/strict_4h_pairlogit_catboost_fine_results.json",
+      "role": "promotion_report",
+      "size": 13628,
+      "sha256": "2fa311328947a6b92548078cb3901a7547b87b7384f8be33a69005ff24f74ebb"
+    },
+    {
+      "path": "work/strict_4h_pairlogit_catboost_fine_scores.npz",
+      "role": "promotion_output",
+      "size": 929168,
+      "sha256": "01cda2402a861d8d73a96385a8a7e2ca2d6953066b943586248b873a7b2e976f"
+    },
+    {
+      "path": "work/strict_4h_pairlogit_catboost_full_results.json",
+      "role": "source_report",
+      "size": 36938,
+      "sha256": "aa8d769a1a34bab6e75dd6176f476cee7bf6acfdfe233766bede878e559360bc"
+    },
+    {
+      "path": "work/strict_4h_pairlogit_catboost_full_scores.npz",
+      "role": "stage_source",
+      "size": 909459,
+      "sha256": "f24e6cd38642ac447b69c91920d80562561cddcbaf0bc272167a50b22ce193a9"
+    },
+    {
+      "path": "work/strict_4h_pairwise_immediate_results.json",
+      "role": "source_report",
+      "size": 39290,
+      "sha256": "cf58c1ca05180f8f84ac47b23fd953555f07bbbaa1203151440e4dfa9b3fc90e"
+    },
+    {
+      "path": "work/strict_4h_pairwise_immediate_scores.npz",
+      "role": "stage_source",
+      "size": 906250,
+      "sha256": "8ab201b26b39d7e1ee90d29f56ceed4cfb69e337c09a7ee01cedcfbc07beeaca"
+    },
+    {
+      "path": "work/strict_6h_catboost_ranker_full_fine_results.json",
+      "role": "promotion_report",
+      "size": 52411,
+      "sha256": "96aa3f09856d45b7ba8806c9324613083deb53fa6a27f2b55afc5fa2f92365ab"
+    },
+    {
+      "path": "work/strict_6h_catboost_ranker_full_fine_scores.npz",
+      "role": "promotion_output",
+      "size": 915396,
+      "sha256": "219ebf442892f5933ca1c5355da493a5d42904a0b49ae939a2bc26613c32d717"
+    },
+    {
+      "path": "work/strict_6h_catboost_ranker_full_results.json",
+      "role": "source_report",
+      "size": 35345,
+      "sha256": "3594bb10bc1edd545ddb30f1a818b58348c80c9478db8b0fe226805c598ed05e"
+    },
+    {
+      "path": "work/strict_6h_catboost_ranker_full_scores.npz",
+      "role": "stage_source",
+      "size": 860212,
+      "sha256": "d612bc633c53cada25f3abc614edf42c8967f79b50a883dd04447f3dad482df6"
+    },
+    {
+      "path": "work/strict_6h_classifier_base_results.json",
+      "role": "source_component_report",
+      "size": 26339,
+      "sha256": "1ae0713f21c245b1b21e80574cfbaf5f54552309ed0672bde3ed56c70264938b"
+    },
+    {
+      "path": "work/strict_6h_classifier_base_scores.npz",
+      "role": "source_component",
+      "size": 902555,
+      "sha256": "ace4fa49e54d1eb821a37cb0bea4d5de1c523e1ae5db11240b4ca39e6e57bdeb"
+    },
+    {
+      "path": "work/strict_6h_pairlogit_catboost_fine_results.json",
+      "role": "promotion_report",
+      "size": 45489,
+      "sha256": "0a56b4974d62b822bd222d813ccb3942851be3abed6d50fd79b41dca0f924f7c"
+    },
+    {
+      "path": "work/strict_6h_pairlogit_catboost_fine_scores.npz",
+      "role": "promotion_output",
+      "size": 921915,
+      "sha256": "10c1863689256fa6dcad239d1bf7a834f452a990b3fdbd188a5759d433aff9d6"
+    },
+    {
+      "path": "work/strict_6h_pairlogit_catboost_full_results.json",
+      "role": "source_report",
+      "size": 35350,
+      "sha256": "34e19a7d2553b038eeecde261b06b98c8263c97e8826261f27698e6c0a72f9cd"
+    },
+    {
+      "path": "work/strict_6h_pairlogit_catboost_full_scores.npz",
+      "role": "stage_source",
+      "size": 909795,
+      "sha256": "19b84b5e65a1a3e3ebd147b0d64817e0867f4581f0fad44f2546d3427ef80a6e"
+    },
+    {
+      "path": "work/strict_8h_on_current_results.json",
+      "role": "promotion_report",
+      "size": 109902,
+      "sha256": "54b33aa2bd4ffddb432a6bf9fd2a51e061dd3bf824cb82747e1903552392473b"
+    },
+    {
+      "path": "work/strict_8h_on_current_scores.npz",
+      "role": "promotion_output",
+      "size": 917888,
+      "sha256": "3e5ce24c2c5f15fdf35e6bfa5ccd67491f9f6364c90d44cf6873c988b726a5d6"
+    },
+    {
+      "path": "work/strict_8h_pairlogit_catboost_fine_results.json",
+      "role": "promotion_report",
+      "size": 28077,
+      "sha256": "2bbb252e5fc013422f2f80d3eedb65489670da293750d035efe841d631d9194e"
+    },
+    {
+      "path": "work/strict_8h_pairlogit_catboost_fine_scores.npz",
+      "role": "promotion_output",
+      "size": 929212,
+      "sha256": "38b99b4f279fc34786722669e13681cc8d2b9025d23e15cb8462a56b3a10916d"
+    },
+    {
+      "path": "work/strict_8h_pairlogit_catboost_full_results.json",
+      "role": "source_report",
+      "size": 34402,
+      "sha256": "c86f79ff49b0a8c34c29a8df5899a0981b79547eb6d0d40ab1b55d294132aaf4"
+    },
+    {
+      "path": "work/strict_8h_pairlogit_catboost_full_scores.npz",
+      "role": "stage_source",
+      "size": 907718,
+      "sha256": "063a4a750a04432f76b5936b3843cc2884e2024acb78c4f8e42c85eb67b51bf2"
+    },
+    {
+      "path": "work/strict_8h_pairwise_immediate_results.json",
+      "role": "source_report",
+      "size": 35640,
+      "sha256": "b66f1a25aa6c3ce0daa37a89c507d72d6173802d11fe1fcb8b645505a8cc10ae"
+    },
+    {
+      "path": "work/strict_8h_pairwise_immediate_scores.npz",
+      "role": "stage_source",
+      "size": 904625,
+      "sha256": "d4a855eb7dcaebbb1e99384ed507cbea2382b2ed7674d119088d0be09f4bf365"
+    },
+    {
+      "path": "work/strict_8h_post_12hcatboost_results.json",
+      "role": "promotion_report",
+      "size": 79923,
+      "sha256": "7c3faef408aa29e10b904f7eaf366d5ae601f82fa6cc2d3dc1b26e65b9247cf2"
+    },
+    {
+      "path": "work/strict_8h_post_12hcatboost_scores.npz",
+      "role": "promotion_output",
+      "size": 915869,
+      "sha256": "79400a7143f0a445186c5f5e419855ddaddf5aab248d3b5775b56010e12a327c"
+    },
+    {
+      "path": "work/strict_daily_catboost_classifier_results.json",
+      "role": "source_component_report",
+      "size": 23859,
+      "sha256": "2248371653fd1f304ad55907c7011ec11cf610b8d5067d36db411c0682bac9a9"
+    },
+    {
+      "path": "work/strict_daily_catboost_classifier_scores.npz",
+      "role": "source_component",
+      "size": 902059,
+      "sha256": "cdd4a3953d905a5afb9ffd97c2fcc555770b69d670945b210931251d821985a7"
+    },
+    {
+      "path": "work/strict_daily_catboost_ranker_full_fine_results.json",
+      "role": "promotion_report",
+      "size": 128132,
+      "sha256": "8288818a4688bd360f80a09460c251b70bfee8b140351a13f03f15b5b8a0aa3f"
+    },
+    {
+      "path": "work/strict_daily_catboost_ranker_full_fine_scores.npz",
+      "role": "promotion_output",
+      "size": 916039,
+      "sha256": "1c75d2ddaa916bfdd9d8cd75c5683e659e110a17986ec8e1475c538004846a3d"
+    },
+    {
+      "path": "work/strict_daily_catboost_ranker_full_results.json",
+      "role": "source_report",
+      "size": 32857,
+      "sha256": "5fa2fde01ebb81b996a728337822175ccb1683b7b5db1fe1b37a788bddd68b30"
+    },
+    {
+      "path": "work/strict_daily_catboost_ranker_full_scores.npz",
+      "role": "stage_source",
+      "size": 851608,
+      "sha256": "50a987d4a3a63468153c5eaf255bfbf873e0e4a0825d5a98fa8ca6d083e36e6d"
+    },
+    {
+      "path": "work/strict_daily_catboost_ranker_on_current_results.json",
+      "role": "promotion_report",
+      "size": 132203,
+      "sha256": "5bda940cf00efd476749db9fc23d6f07f3b5edca9ad4b18ea4f80c49baf6bd29"
+    },
+    {
+      "path": "work/strict_daily_catboost_ranker_on_current_scores.npz",
+      "role": "promotion_output",
+      "size": 917020,
+      "sha256": "c9d3f5a1581ed6a7e53f07af62b42c0e234425a0252c01f183333e97add292fb"
+    },
+    {
+      "path": "work/strict_daily_catboost_ranker_results.json",
+      "role": "source_report",
+      "size": 23847,
+      "sha256": "76bbbce703da7b43141c1f60cce5838f7aacdf4fde32a865a90344b607541593"
+    },
+    {
+      "path": "work/strict_daily_catboost_ranker_scores.npz",
+      "role": "stage_source",
+      "size": 794845,
+      "sha256": "8eac58ef2d698a2bd900a8823698ba24302d2baa866881df5837853752988303"
+    },
+    {
+      "path": "work/strict_daily_d5_catboost_ranker_full_results.json",
+      "role": "source_report",
+      "size": 32863,
+      "sha256": "31c6dd83b0f1700085fcac046772f9ccbb1ab3179f2311c62537a65406be8121"
+    },
+    {
+      "path": "work/strict_daily_d5_catboost_ranker_full_scores.npz",
+      "role": "stage_source",
+      "size": 866421,
+      "sha256": "4eb142bb6d4ca37f7c3ebb8f84226bc2c4021d3365a4c4255a23d2a4c60b4f60"
+    },
+    {
+      "path": "work/strict_daily_d5_catboost_ranker_on_best_results.json",
+      "role": "promotion_report",
+      "size": 62916,
+      "sha256": "67e0f9141dd70fae067233fad72f1d187e7d13a1f77d6d30e879337eb5484904"
+    },
+    {
+      "path": "work/strict_daily_d5_catboost_ranker_on_best_scores.npz",
+      "role": "promotion_output",
+      "size": 915430,
+      "sha256": "af8395e19e1a7f00741397c90b2e75cea24eaeebd00e37c2f09f7a0d530aafd2"
+    },
+    {
+      "path": "work/strict_daily_d5_classifier_base_results.json",
+      "role": "source_component_report",
+      "size": 23857,
+      "sha256": "5752016f46bffaf3142d04e7823512f657d04f590edb8df17432db3d058430b0"
+    },
+    {
+      "path": "work/strict_daily_d5_classifier_base_scores.npz",
+      "role": "source_component",
+      "size": 902956,
+      "sha256": "5a8f566b4a999abc441f14c73cbda52a10f6010e4cdf9c9edd3229e8825d9b76"
+    },
+    {
+      "path": "work/strict_daily_d5_pairlogit_catboost_full_results.json",
+      "role": "source_component_report",
+      "size": 32869,
+      "sha256": "e62094bf1df92547de4e8ef0a79bddad8793ef911fca18ebb0a99166fe5db0c0"
+    },
+    {
+      "path": "work/strict_daily_d5_pairlogit_catboost_full_scores.npz",
+      "role": "source_component",
+      "size": 906959,
+      "sha256": "7d5ee464fb459dc18cb761b2013c18ec1d38f832cd8968759264f0648ceefda9"
+    },
+    {
+      "path": "work/strict_daily_d6_classifier_base60_results.json",
+      "role": "source_component_report",
+      "size": 24029,
+      "sha256": "4a51f23c386c9ebfccab569746cc36afa1fead097586e588bf420537d492bd6b"
+    },
+    {
+      "path": "work/strict_daily_d6_classifier_base60_scores.npz",
+      "role": "source_component",
+      "size": 899307,
+      "sha256": "20f4fab3a40d04c3ddcc6367a9f9fe5dfb6e5eec92ed839fbf781b649433bffa"
+    },
+    {
+      "path": "work/strict_daily_d6_queryrmse_catboost_full_results.json",
+      "role": "source_component_report",
+      "size": 32869,
+      "sha256": "ecee1a1ab8dfa29d600a103c54986de3a1fb592d455a8c433baccd70ab016c0b"
+    },
+    {
+      "path": "work/strict_daily_d6_queryrmse_catboost_full_scores.npz",
+      "role": "source_component",
+      "size": 908891,
+      "sha256": "fb21a8e362a7aa7aae620057c6144716d56f3a4806b75a7f8c04b7bf160f928e"
+    },
+    {
+      "path": "work/strict_daily_d6_yetirankpairwise_catboost_full_results.json",
+      "role": "source_component_report",
+      "size": 32883,
+      "sha256": "19038f86b9502c585b47fd7b8df6a22734c63969c508706484a2c8605a82a03f"
+    },
+    {
+      "path": "work/strict_daily_d6_yetirankpairwise_catboost_full_scores.npz",
+      "role": "source_component",
+      "size": 862991,
+      "sha256": "6f1069b1d944d0310d3e3d6a19ad79918b072564d7258c0827ce546d91ee3a18"
+    },
+    {
+      "path": "work/strict_daily_d8_pairlogit_catboost_full_results.json",
+      "role": "source_component_report",
+      "size": 32868,
+      "sha256": "ead69ea478d63125197a62985d0714941e9996844413a95701b58c66ad2c74f6"
+    },
+    {
+      "path": "work/strict_daily_d8_pairlogit_catboost_full_scores.npz",
+      "role": "source_component",
+      "size": 907864,
+      "sha256": "4087bee223f8a9a9d5ff11c0db9b8d3d6bd63d333a122ac61909dedec9f69791"
+    },
+    {
+      "path": "work/strict_daily_pairlogit_catboost_fine_results.json",
+      "role": "promotion_report",
+      "size": 54238,
+      "sha256": "08a90f5b73ee07f09a228ac32eef11f72bc1781f6e17c7a7c0796f171076a4b9"
+    },
+    {
+      "path": "work/strict_daily_pairlogit_catboost_fine_scores.npz",
+      "role": "promotion_output",
+      "size": 917776,
+      "sha256": "a7dcd41edb3d175d3e4b34b6e4269b1f9777d6a2cb3bae9dc289b86e48937e21"
+    },
+    {
+      "path": "work/strict_daily_pairlogit_catboost_full_results.json",
+      "role": "source_report",
+      "size": 32863,
+      "sha256": "07415610e0377f17af3a7edd6ea42e1be2e449baa3d017e8ea1e89ddd34a3b4b"
+    },
+    {
+      "path": "work/strict_daily_pairlogit_catboost_full_scores.npz",
+      "role": "stage_source",
+      "size": 906911,
+      "sha256": "a2af4573d07cad02a6a2f44044c301a7b52631e1216544998c8a95bd53d1e48b"
+    }
+  ]
+}

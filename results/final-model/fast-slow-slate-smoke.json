@@ -1,0 +1,43 @@
+{
+  "protocol": {
+    "fast_train": "2022-04-08..2022-04-14",
+    "fast_validation": "2022-04-15..2022-04-21",
+    "slow_train": "2022-04-08..2022-04-21",
+    "slow_confirmation": "2022-04-22..2022-04-28",
+    "hidden_test_accessed": false
+  },
+  "fast_baseline": {
+    "model": "organizer_pointwise_fm",
+    "primary": 0.6128751039505005,
+    "gauc": 0.662117600440979,
+    "ndcg5": 0.5636326670646667,
+    "train_seconds": 14.755,
+    "wall_seconds": 16.4,
+    "cpu_hours": 0.004549,
+    "gpu_hours": 0.0,
+    "peak_rss_mb": 682.0
+  },
+  "fast_candidate": {
+    "model": "slate_context_deepfm",
+    "seed": 881,
+    "primary": 0.6173250675201416,
+    "gauc": 0.6662632822990417,
+    "ndcg5": 0.5683869123458862,
+    "gain_over_fast_baseline": 0.004449963569641113,
+    "train_seconds": 22.096,
+    "wall_seconds": 23.815,
+    "cpu_hours": 0.009009,
+    "gpu_hours": 0.0,
+    "peak_rss_mb": 1202.0,
+    "screen_passed": true
+  },
+  "slow_confirmation": {
+    "frozen_champion_primary": 0.6128580570220947,
+    "candidate_standalone_primary": 0.6035704612731934,
+    "best_fixed_residual_gain": 0.000006318092346191406,
+    "held_out_user_folds_nonnegative": false,
+    "held_out_user_folds_regressing": 3,
+    "decision": "rejected"
+  },
+  "conclusion": "The train-only proxy correctly admitted a promising candidate, but the locked confirmation and user-fold audit prevented a false promotion caused by temporal proxy mismatch."
+}

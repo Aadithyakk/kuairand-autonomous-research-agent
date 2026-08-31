@@ -1,0 +1,53 @@
+{
+  "experiment": "Contextual Distillation Model follow-up",
+  "paper": "https://arxiv.org/abs/2406.09021",
+  "status": "attempted-rejected",
+  "decision": "retain frozen champion",
+  "champion_primary": 0.6128580570220947,
+  "static_context_grid": {
+    "configurations": 360,
+    "best_global_primary": 0.6129083037376404,
+    "best_global_gain": 0.0000502467155456543,
+    "best_global_gauc_gain": 0.0001246333122253418,
+    "best_global_ndcg5_gain": -0.000024080276489257812,
+    "robust_configuration_count": 24,
+    "best_all_fold_safe_primary": 0.6128604412078857,
+    "best_all_fold_safe_gain": 0.000002384185791015625,
+    "leave_one_fold_out_consensus": false,
+    "artifact": "results/context-distillation/cdm-context-grid.json"
+  },
+  "fixed_author_replication": {
+    "configuration": "author-only, top 5, lambda 0.04",
+    "april14_primary_gain": 0.0,
+    "april15_21_primary_gain": 0.0000133514404296875,
+    "april15_21_gauc_gain": 0.000007450580596923828,
+    "april15_21_ndcg5_gain": 0.00001913309097290039,
+    "passed_predeclared_two_window_gate": false,
+    "artifact": "results/context-distillation/cdm-author-replication.json"
+  },
+  "learned_context_gate": {
+    "selection_examples": 423,
+    "best_all_metric_oof_fraction": 0.2,
+    "best_all_metric_oof_primary_gain": 0.000008821487426757812,
+    "predeclared_materiality_threshold": 0.00001,
+    "selected_fraction": 0.0,
+    "confirmation_opened": false,
+    "artifact": "results/context-distillation/cdm-context-gate-screen.json"
+  },
+  "resources": {
+    "successful_artifact_wall_seconds": 171.763,
+    "successful_artifact_cpu_seconds": 190.271,
+    "successful_artifact_cpu_hours": 0.052853,
+    "peak_rss_mb": 497.344,
+    "gpu_hours": 0.0,
+    "report_only_recovery_runs": 2,
+    "approximate_extra_recovery_wall_seconds": 281.6,
+    "approximate_total_observed_wall_seconds": 453.4
+  },
+  "integrity": {
+    "outcomes_used_as_inference_features": false,
+    "hidden_test_outcomes_parsed": false,
+    "integrity_incidents": []
+  },
+  "recommendation": "Do not promote the post-hoc maximum or the tiny safe rule. Move to a non-diversity signal; the frozen 0.612858057 champion remains authoritative."
+}

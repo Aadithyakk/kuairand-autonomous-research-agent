@@ -1,0 +1,139 @@
+{
+  "status": "verified_improvement",
+  "objective": "recent-coverage shallow-Yeti extrapolation",
+  "branch": "feature/experiment-resource-tracking",
+  "starting_commit": "3214b84",
+  "protocol": {
+    "ranker": "CatBoost YetiRankPairwise",
+    "fit_dates": "20220414-20220419",
+    "temporal_holdout_dates": "20220420-20220421",
+    "refit_dates": "20220414-20220421",
+    "validation_dates": "20220422-20220428",
+    "ranker_depth": 6,
+    "ranker_l2": 20.0,
+    "learning_rate": 0.04,
+    "seed": 821,
+    "selected_trees": 132,
+    "gate": "validation users whose April 19-21 training-row count is at or above its row-weighted 75th percentile",
+    "candidate": "gate * (shallow-Yeti within-user fractional rank - preceding champion rank)",
+    "final_selection": "zero-preferring scalar selection on four disjoint folds assigned by actual user_id modulo four",
+    "validation_outcomes_used_as_features": false,
+    "hidden_test_accessed": false
+  },
+  "previous_champion": {
+    "primary": 0.6128385066986084,
+    "gauc": 0.6823317408561707,
+    "ndcg5": 0.5433452725410461
+  },
+  "new_champion": {
+    "primary": 0.6128580570220947,
+    "gauc": 0.6823537349700928,
+    "ndcg5": 0.5433623194694519,
+    "users": 22377,
+    "rows": 124909
+  },
+  "gain": {
+    "primary": 0.000019550323486328125,
+    "gauc": 0.00002199411392211914,
+    "ndcg5": 0.00001704692840576172,
+    "over_baseline_primary": 0.011388540267944336,
+    "relative_over_baseline_percent": 1.8934526107662046
+  },
+  "selection_evidence": {
+    "standalone_primary": 0.6122357845306396,
+    "fold_weights": [-0.09, -0.09, -0.10, -0.09],
+    "fixed_weight": -0.0925,
+    "oof_primary": 0.6128561496734619,
+    "fixed_primary": 0.6128580570220947,
+    "heldout_fold_primary_gains": [0.0000091195, 0.0000581145, 0.0000069141, 0.0000044107],
+    "changed_users": 128,
+    "changed_top_items": 1,
+    "changed_pair_orderings": 225,
+    "all_folds_improved": true,
+    "both_aggregate_metrics_improved": true
+  },
+  "rejected_candidates": [
+    {
+      "name": "depth-8 YetiRank seed ensemble",
+      "seed_standalone_primary": {
+        "787": 0.61230743,
+        "797": 0.6120628,
+        "809": 0.6123096
+      },
+      "three_seed_rank_mean_primary": 0.612355351,
+      "reason": "The global residual selected zero. Its strongest two-active-day and low-history gates each regressed on one held-out fold."
+    },
+    {
+      "name": "five-plus-active-day shallow-Yeti gate",
+      "fold_weights": [-0.08, -0.08, -0.08, -0.09],
+      "reason": "It ranked below the accepted high-recent-coverage gate and was not promoted after the stronger pre-specified gate passed every criterion."
+    },
+    {
+      "name": "size-11-20 shallow-Yeti gate",
+      "fold_weights": [-0.19, -0.19, -0.22, -0.24],
+      "reason": "It ranked below the accepted high-recent-coverage gate and was not stacked post hoc."
+    }
+  ],
+  "resource_usage": {
+    "depth8_seed_797_training": {
+      "wall_seconds": 454.022,
+      "cpu_seconds": 3253.049,
+      "cpu_hours": 0.903625,
+      "peak_rss_mb": 3930.266,
+      "gpu_hours": 0.0
+    },
+    "depth8_seed_809_training": {
+      "wall_seconds": 255.921,
+      "cpu_seconds": 1769.706,
+      "cpu_hours": 0.491585,
+      "peak_rss_mb": 3833.688,
+      "gpu_hours": 0.0
+    },
+    "depth8_seed_ensemble": {
+      "wall_seconds": 18.59,
+      "cpu_hours": 0.005163,
+      "peak_rss_mb": 1108.062,
+      "gpu_hours": 0.0
+    },
+    "depth8_ensemble_structure_scan": {
+      "wall_seconds": 59.727,
+      "cpu_hours": 0.016588,
+      "peak_rss_mb": 1309.203,
+      "gpu_hours": 0.0
+    },
+    "shallow_yeti_training": {
+      "wall_seconds": 122.022,
+      "cpu_seconds": 741.934,
+      "cpu_hours": 0.206093,
+      "peak_rss_mb": 3625.344,
+      "gpu_hours": 0.0
+    },
+    "structural_gate_scan": {
+      "wall_seconds": 62.847,
+      "cpu_hours": 0.017454,
+      "peak_rss_mb": 1306.141,
+      "gpu_hours": 0.0
+    },
+    "exact_fold_audit": {
+      "wall_seconds": 18.517,
+      "cpu_hours": 0.005141,
+      "peak_rss_mb": 1111.25,
+      "gpu_hours": 0.0
+    },
+    "canonical_verification": {
+      "wall_seconds": 17.493,
+      "cpu_hours": 0.004858,
+      "peak_rss_mb": 1108.156,
+      "gpu_hours": 0.0
+    },
+    "skip_control": {
+      "wall_seconds": 17.198,
+      "cpu_hours": 0.004777,
+      "peak_rss_mb": 1105.219,
+      "gpu_hours": 0.0
+    }
+  },
+  "target_primary": 0.7,
+  "target_reached": false,
+  "remaining_gap": 0.08714194297790523
+}

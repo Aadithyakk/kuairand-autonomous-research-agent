@@ -1,0 +1,126 @@
+{
+  "artifacts": {
+    "script": "scripts/train_masknet_interactions.py",
+    "training_details": "runtime/parallel-masknet/training-details.json",
+    "within_user_ranks": "runtime/parallel-masknet/screen-ranks.npz"
+  },
+  "candidate": {
+    "architecture": "two_instance_guided_multiplicative_masks_plus_mlp",
+    "checkpoint": "runtime/parallel-masknet/masknet-interactions-checkpoint.pt",
+    "evaluation_metrics": {
+      "GAUC": 0.6655305624008179,
+      "nDCG@5": 0.5673600435256958,
+      "primary": 0.6164453029632568,
+      "rows": 249694,
+      "users": 24262
+    },
+    "name": "masknet-interactions",
+    "objective": "pointwise_binary_cross_entropy",
+    "resource_usage": {
+      "cpu_hours": 0.006149,
+      "cpu_seconds": 22.138,
+      "cpu_utilization_percent": 161.38,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 872.359,
+      "wall_seconds": 13.718
+    },
+    "seed": 260830,
+    "selected_epoch": 4,
+    "selection_metrics": {
+      "GAUC": 0.6717310547828674,
+      "nDCG@5": 0.5590767860412598,
+      "primary": 0.6154038906097412
+    }
+  },
+  "control": {
+    "architecture": "plain_wide_mlp",
+    "checkpoint": "runtime/parallel-masknet/plain-mlp-control-checkpoint.pt",
+    "evaluation_metrics": {
+      "GAUC": 0.6654301881790161,
+      "nDCG@5": 0.5665630102157593,
+      "primary": 0.6159965991973877,
+      "rows": 249694,
+      "users": 24262
+    },
+    "name": "plain-mlp-control",
+    "objective": "pointwise_binary_cross_entropy",
+    "resource_usage": {
+      "cpu_hours": 0.005319,
+      "cpu_seconds": 19.148,
+      "cpu_utilization_percent": 144.84,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 829.781,
+      "wall_seconds": 13.22
+    },
+    "seed": 260830,
+    "selected_epoch": 5,
+    "selection_metrics": {
+      "GAUC": 0.6719675064086914,
+      "nDCG@5": 0.5597240924835205,
+      "primary": 0.615845799446106
+    }
+  },
+  "deltas": {
+    "GAUC": 0.00010037422180175781,
+    "nDCG@5": 0.0007970333099365234,
+    "primary": 0.0004487037658691406
+  },
+  "experiment": "MaskNet-style multiplicative feature interactions",
+  "hardware": {
+    "architecture": "arm64",
+    "logical_cpu_count": 16,
+    "torch_version": "2.10.0"
+  },
+  "matched_configuration": {
+    "batch_size": 8192,
+    "dropout": 0.05,
+    "embedding_dim": 12,
+    "fields": [
+      "user_id",
+      "video_id",
+      "author_id",
+      "tab",
+      "dur_bucket"
+    ],
+    "hidden": 64,
+    "learning_rate": 0.001,
+    "maximum_epochs": 15,
+    "patience": 4,
+    "seed": 260830,
+    "threads": 6,
+    "weight_decay": 1e-06
+  },
+  "merits_confirmation": true,
+  "protocol": {
+    "core_training": "2022-04-08..2022-04-11",
+    "epoch_selection": "2022-04-12..2022-04-14",
+    "evaluation": "2022-04-15..2022-04-21",
+    "hidden_test_accessed": false,
+    "protected_dates_read": false,
+    "ranking_output": "stable within-user fractional ranks",
+    "refit": "2022-04-08..2022-04-14"
+  },
+  "resource_usage_total": {
+    "cpu_hours": 0.014016,
+    "cpu_seconds": 50.458,
+    "cpu_utilization_percent": 139.39,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 872.359,
+    "wall_seconds": 36.199
+  },
+  "rows": {
+    "core_training": 559379,
+    "epoch_selection": 332039,
+    "evaluation": 249694
+  },
+  "status": "screen_passed"
+}

@@ -1,0 +1,136 @@
+{
+  "status": "rejected_after_fast_slow_and_user_fold_audit",
+  "target": "long_view",
+  "metric": "0.5 * GAUC + 0.5 * nDCG@5",
+  "frozen_champion": {
+    "primary": 0.6128580570220947,
+    "gauc": 0.6823537349700928,
+    "ndcg5": 0.5433623194694519
+  },
+  "hidden_test_accessed": false,
+  "experiments": [
+    {
+      "name": "direct CatBoost YetiRank NDCG@5",
+      "screen_gain": 0.003023207187652588,
+      "confirmation_standalone_primary": 0.6118130683898926,
+      "decision": "rejected; residual fold signs disagreed",
+      "resource_usage": {
+        "wall_seconds": 46.981,
+        "cpu_hours": 0.054659,
+        "peak_rss_mb": 3659.219,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "CatBoost StochasticRank NDCG@5 from scratch",
+      "screen_gain": 0.0039847493171691895,
+      "confirmation_standalone_primary": 0.6115530729293823,
+      "decision": "rejected; fixed residual regressed",
+      "resource_usage": {
+        "wall_seconds": 38.097,
+        "cpu_hours": 0.040878,
+        "peak_rss_mb": 3581.562,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "recency-weighted pointwise FM",
+      "screen_primary": {
+        "unweighted_control": 0.6124499440193176,
+        "half_life_2_days": 0.6114969253540039,
+        "half_life_4_days": 0.6119880676269531,
+        "half_life_7_days": 0.6122543811798096
+      },
+      "decision": "rejected at screen; confirmation skipped",
+      "resource_usage": {
+        "summed_process_wall_seconds": 66.667,
+        "cpu_hours": 0.01837,
+        "peak_process_rss_mb": 747.531,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "Bayesian exact user-video outcome prior",
+      "screen_gain": 0.00001424551010131836,
+      "confirmation_primary": 0.6128584146499634,
+      "confirmation_gain": 3.5762786865234375e-7,
+      "decision": "rejected; nDCG fell and three held-out folds regressed",
+      "resource_usage": {
+        "wall_seconds": 51.257,
+        "cpu_hours": 0.014228,
+        "peak_rss_mb": 836.734,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "nested ordinal watch-progress DeepFM",
+      "screen_primary": 0.6152493953704834,
+      "screen_gain_over_fm": 0.00237429141998291,
+      "fixed_confirmation_primary": 0.6128568053245544,
+      "best_unstable_fixed_primary": 0.6128672361373901,
+      "decision": "rejected; global and long-video gates retained regressing folds",
+      "resource_usage": {
+        "screen_cpu_hours": 0.004404,
+        "confirmation_cpu_hours": 0.00641,
+        "peak_rss_mb": 1072.312,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "static user-profile DeepFM",
+      "screen_primary": 0.6151328086853027,
+      "screen_gain_over_fm": 0.002257704734802246,
+      "fixed_confirmation_primary": 0.6128582954406738,
+      "best_unstable_fixed_primary": 0.6128771305084229,
+      "best_unstable_fixed_gauc": 0.6823673248291016,
+      "best_unstable_fixed_ndcg5": 0.5433868765830994,
+      "fold_weights": [-0.085, -0.085, -0.085, -0.095],
+      "decision": "rejected; two held-out folds had micro-regressions",
+      "resource_usage": {
+        "screen_cpu_hours": 0.009966,
+        "confirmation_cpu_hours": 0.019213,
+        "peak_rss_mb": 2007.672,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "three-seed static user-profile DeepFM",
+      "screen_primary": 0.6159665584564209,
+      "screen_gain_over_fm": 0.00309145450592041,
+      "fixed_confirmation_primary": 0.6128585338592529,
+      "decision": "rejected; ensemble fold directions disagreed",
+      "resource_usage": {
+        "screen_cpu_hours": 0.031981,
+        "confirmation_cpu_hours": 0.04885,
+        "peak_rss_mb": 2026.609,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "profile-aware pointwise CatBoost",
+      "screen_gain": 0.00477445125579834,
+      "confirmation_standalone_primary": 0.6049067974090576,
+      "decision": "rejected; global residual fold signs split",
+      "resource_usage": {
+        "wall_seconds": 268.621,
+        "cpu_hours": 0.524796,
+        "peak_rss_mb": 6997.781,
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "profile plus user-ID pointwise CatBoost",
+      "screen_gain": 0.0056192874908447266,
+      "confirmation_standalone_primary": 0.6043549180030823,
+      "best_unstable_fixed_primary": 0.612859845161438,
+      "decision": "rejected; three held-out folds regressed",
+      "resource_usage": {
+        "wall_seconds": 281.794,
+        "cpu_hours": 0.553165,
+        "peak_rss_mb": 6823.547,
+        "gpu_hours": 0.0
+      }
+    }
+  ],
+  "conclusion": "No candidate satisfied the frozen champion's all-fold and dual-metric promotion guard. The verified champion remains unchanged; the autonomous executor now supports recency weighting, direct NDCG objectives, ordinal watch supervision, and static user-profile embeddings while its method memory prevents repeating these rejected configurations."
+}

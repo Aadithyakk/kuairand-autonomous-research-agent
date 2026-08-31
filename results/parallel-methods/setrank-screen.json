@@ -1,0 +1,257 @@
+{
+  "method": "SetRank-style bounded whole-user-slate attention residual",
+  "status": "rejected_on_train_only_screen",
+  "protocol": {
+    "base_training": "2022-04-08..2022-04-11",
+    "selection": "2022-04-12..2022-04-14",
+    "refit": "2022-04-08..2022-04-14",
+    "evaluation": "2022-04-15..2022-04-21",
+    "hidden_confirmation_labels_read": false,
+    "unit": "complete user slate; no positional encoding",
+    "objective": "pointwise BCE; frozen mean-pool base plus bounded attention residual"
+  },
+  "configuration": {
+    "seed": 1223,
+    "embedding_dim": 16,
+    "hidden_dim": 64,
+    "attention_dim": 32,
+    "attention_heads": 2,
+    "maximum_logit_residual": 0.15,
+    "selected_base_epoch": 5,
+    "selected_residual_epoch": 1,
+    "selected_residual_weight": 0.25,
+    "numeric_features": [
+      "log_slate_rows",
+      "active_days",
+      "log_session_count",
+      "session_fraction",
+      "log_session_rows",
+      "session_position_fraction",
+      "log_video_count",
+      "video_occurrence_fraction",
+      "log_author_count",
+      "author_occurrence_fraction",
+      "log_gap_minutes",
+      "relative_day",
+      "hour_sin",
+      "hour_cos",
+      "log_duration_seconds"
+    ]
+  },
+  "metrics": {
+    "matched_mean_pool_control": {
+      "primary": 0.6174052953720093,
+      "gauc": 0.6664835214614868,
+      "ndcg5": 0.5683270692825317,
+      "users": 24262,
+      "rows": 249694
+    },
+    "raw_attention": {
+      "primary": 0.6173819303512573,
+      "gauc": 0.6664187908172607,
+      "ndcg5": 0.5683451294898987,
+      "users": 24262,
+      "rows": 249694
+    },
+    "selected_attention": {
+      "primary": 0.6173968315124512,
+      "gauc": 0.6664941906929016,
+      "ndcg5": 0.568299412727356,
+      "users": 24262,
+      "rows": 249694
+    }
+  },
+  "deltas_vs_control": {
+    "primary": -8.463859558105469e-06,
+    "gauc": 1.0669231414794922e-05,
+    "ndcg5": -2.765655517578125e-05
+  },
+  "selection_history": {
+    "base": [
+      {
+        "epoch": 1,
+        "loss": 0.6305480348891106,
+        "primary": 0.5952531099319458,
+        "gauc": 0.6484875082969666,
+        "ndcg5": 0.542018711566925,
+        "users": 23066,
+        "rows": 332039
+      },
+      {
+        "epoch": 2,
+        "loss": 0.5544040151264357,
+        "primary": 0.6091967821121216,
+        "gauc": 0.6658925414085388,
+        "ndcg5": 0.5525010228157043,
+        "users": 23066,
+        "rows": 332039
+      },
+      {
+        "epoch": 3,
+        "loss": 0.498545971037685,
+        "primary": 0.6160073280334473,
+        "gauc": 0.6732996106147766,
+        "ndcg5": 0.5587149858474731,
+        "users": 23066,
+        "rows": 332039
+      },
+      {
+        "epoch": 4,
+        "loss": 0.4761973926122638,
+        "primary": 0.6174589395523071,
+        "gauc": 0.6744322180747986,
+        "ndcg5": 0.5604856610298157,
+        "users": 23066,
+        "rows": 332039
+      },
+      {
+        "epoch": 5,
+        "loss": 0.4595315603242404,
+        "primary": 0.6187534332275391,
+        "gauc": 0.675540030002594,
+        "ndcg5": 0.5619668960571289,
+        "users": 23066,
+        "rows": 332039
+      },
+      {
+        "epoch": 6,
+        "loss": 0.4522524052771969,
+        "primary": 0.6171956062316895,
+        "gauc": 0.6743682026863098,
+        "ndcg5": 0.5600230097770691,
+        "users": 23066,
+        "rows": 332039
+      },
+      {
+        "epoch": 7,
+        "loss": 0.44720519107321033,
+        "primary": 0.6171139478683472,
+        "gauc": 0.6735392808914185,
+        "ndcg5": 0.5606886148452759,
+        "users": 23066,
+        "rows": 332039
+      },
+      {
+        "epoch": 8,
+        "loss": 0.44014747419219086,
+        "primary": 0.6123688817024231,
+        "gauc": 0.6684280633926392,
+        "ndcg5": 0.556309700012207,
+        "users": 23066,
+        "rows": 332039
+      }
+    ],
+    "attention": [
+      {
+        "epoch": 1,
+        "loss": 0.4652361600763268,
+        "raw_attention": {
+          "primary": 0.6186522245407104,
+          "gauc": 0.675429105758667,
+          "ndcg5": 0.5618754029273987,
+          "users": 23066,
+          "rows": 332039
+        },
+        "selected_weight": 0.25,
+        "selected_metrics": {
+          "primary": 0.6187630295753479,
+          "gauc": 0.6755554676055908,
+          "ndcg5": 0.561970591545105,
+          "users": 23066,
+          "rows": 332039
+        }
+      },
+      {
+        "epoch": 2,
+        "loss": 0.46499414141807294,
+        "raw_attention": {
+          "primary": 0.618450939655304,
+          "gauc": 0.6752221584320068,
+          "ndcg5": 0.5616797208786011,
+          "users": 23066,
+          "rows": 332039
+        },
+        "selected_weight": 0.0,
+        "selected_metrics": {
+          "primary": 0.6187534332275391,
+          "gauc": 0.675540030002594,
+          "ndcg5": 0.5619668960571289,
+          "users": 23066,
+          "rows": 332039
+        }
+      },
+      {
+        "epoch": 3,
+        "loss": 0.46490677984224427,
+        "raw_attention": {
+          "primary": 0.6185019612312317,
+          "gauc": 0.6752061247825623,
+          "ndcg5": 0.5617977976799011,
+          "users": 23066,
+          "rows": 332039
+        },
+        "selected_weight": 0.0,
+        "selected_metrics": {
+          "primary": 0.6187534332275391,
+          "gauc": 0.675540030002594,
+          "ndcg5": 0.5619668960571289,
+          "users": 23066,
+          "rows": 332039
+        }
+      }
+    ]
+  },
+  "refit_history": {
+    "base": [
+      {
+        "epoch": 1,
+        "loss": 0.5960423984310844
+      },
+      {
+        "epoch": 2,
+        "loss": 0.5364230957898226
+      },
+      {
+        "epoch": 3,
+        "loss": 0.49633589766242286
+      },
+      {
+        "epoch": 4,
+        "loss": 0.48048496002500707
+      },
+      {
+        "epoch": 5,
+        "loss": 0.4701569977131757
+      }
+    ],
+    "attention": [
+      {
+        "epoch": 1,
+        "loss": 0.47067994116681866
+      }
+    ]
+  },
+  "resource_usage": {
+    "wall_seconds": 51.289,
+    "train_seconds": 51.289,
+    "cpu_seconds": 63.123,
+    "cpu_hours": 0.017534,
+    "cpu_utilization_percent": 123.07,
+    "peak_rss_mb": 1247.094,
+    "gpu_count": 0,
+    "gpu_seconds": 0.0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "hardware": {
+      "logical_cpu_count": 16,
+      "architecture": "arm64",
+      "processor": "arm"
+    }
+  },
+  "artifacts": {
+    "checkpoint": "runtime/parallel-setrank/setrank-screen-checkpoint.pt",
+    "scores": "runtime/parallel-setrank/setrank-screen-scores.npz"
+  },
+  "recommendation": "Do not confirm this SetRank residual; retain the mean-pool control."
+}

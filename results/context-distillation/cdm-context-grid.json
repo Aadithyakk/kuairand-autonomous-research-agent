@@ -1,0 +1,3641 @@
+{
+  "experiment": "CDM/MMR content-context stability grid",
+  "paper": "https://arxiv.org/abs/2406.09021",
+  "status": "rejected_or_exploratory",
+  "hypothesis": "A content-context penalty with a different similarity family or top-pool scope can retain the prior global MMR gain without fold regressions.",
+  "protocol": {
+    "candidate_features": "static author, music, video type, and tag overlap only",
+    "outcomes_used_as_features": false,
+    "confirmation_window": "2022-04-22..2022-04-28",
+    "hidden_test_outcomes_parsed": false,
+    "selection": "four leave-one-actual-user-ID-fold-out selectors",
+    "promotion_gate": "all selectors agree on template and pool, lambda range <= 0.04, and every held-out/global/fixed-consensus metric is nonnegative",
+    "configurations": 360
+  },
+  "control": {
+    "primary": 0.6128580570220947,
+    "gauc": 0.6823537349700928,
+    "ndcg5": 0.5433623194694519,
+    "users": 22377,
+    "rows": 124909
+  },
+  "leave_one_fold_out": [
+    {
+      "holdout_fold": 0,
+      "selected": "control",
+      "held_out": {
+        "fold": 0,
+        "delta": {
+          "primary": 0.0,
+          "gauc": 0.0,
+          "ndcg5": 0.0
+        }
+      }
+    },
+    {
+      "holdout_fold": 1,
+      "selected": {
+        "template": "uniform",
+        "weights": [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ],
+        "pool_size": 5,
+        "lambda": 0.12
+      },
+      "held_out": {
+        "fold": 1,
+        "metrics": {
+          "primary": 0.6126689910888672,
+          "gauc": 0.682545006275177,
+          "ndcg5": 0.5427930355072021,
+          "users": 5589,
+          "rows": 30770
+        },
+        "delta": {
+          "primary": -2.682209014892578e-05,
+          "gauc": -1.817941665649414e-05,
+          "ndcg5": -3.534555435180664e-05
+        }
+      }
+    },
+    {
+      "holdout_fold": 2,
+      "selected": "control",
+      "held_out": {
+        "fold": 2,
+        "delta": {
+          "primary": 0.0,
+          "gauc": 0.0,
+          "ndcg5": 0.0
+        }
+      }
+    },
+    {
+      "holdout_fold": 3,
+      "selected": "control",
+      "held_out": {
+        "fold": 3,
+        "delta": {
+          "primary": 0.0,
+          "gauc": 0.0,
+          "ndcg5": 0.0
+        }
+      }
+    }
+  ],
+  "selectors_all_held_out_metrics_nonnegative": false,
+  "consensus": null,
+  "promotable": false,
+  "robust_configuration_count": 24,
+  "top_robust_configurations": [
+    {
+      "template": "author",
+      "weights": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pool_size": 5,
+      "lambda": 0.04,
+      "metrics": {
+        "primary": 0.6128604412078857,
+        "gauc": 0.6823568940162659,
+        "ndcg5": 0.5433639883995056,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 2.384185791015625e-06,
+        "gauc": 3.159046173095703e-06,
+        "ndcg5": 1.6689300537109375e-06
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123236417770386,
+            "gauc": 0.6848943829536438,
+            "ndcg5": 0.5397529006004333,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 9.59634780883789e-06,
+            "gauc": 1.233816146850586e-05,
+            "ndcg5": 6.854534149169922e-06
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153028011322021,
+            "gauc": 0.685429036617279,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 11
+    },
+    {
+      "template": "original",
+      "weights": [
+        0.35,
+        0.2,
+        0.1,
+        0.35
+      ],
+      "pool_size": 15,
+      "lambda": 0.05,
+      "metrics": {
+        "primary": 0.6128604412078857,
+        "gauc": 0.6823585033416748,
+        "ndcg5": 0.5433623194694519,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 2.384185791015625e-06,
+        "gauc": 4.76837158203125e-06,
+        "ndcg5": 0.0
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.612320065498352,
+            "gauc": 0.6848940253257751,
+            "ndcg5": 0.5397460460662842,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 6.020069122314453e-06,
+            "gauc": 1.1980533599853516e-05,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153061389923096,
+            "gauc": 0.6854357719421387,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 3.337860107421875e-06,
+            "gauc": 6.735324859619141e-06,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 56
+    },
+    {
+      "template": "author",
+      "weights": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pool_size": 8,
+      "lambda": 0.04,
+      "metrics": {
+        "primary": 0.6128599643707275,
+        "gauc": 0.6823559999465942,
+        "ndcg5": 0.5433639883995056,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.9073486328125e-06,
+        "gauc": 2.2649765014648438e-06,
+        "ndcg5": 1.6689300537109375e-06
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123218536376953,
+            "gauc": 0.6848907470703125,
+            "ndcg5": 0.5397529006004333,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 7.808208465576172e-06,
+            "gauc": 8.702278137207031e-06,
+            "ndcg5": 6.854534149169922e-06
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153028011322021,
+            "gauc": 0.685429036617279,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 18
+    },
+    {
+      "template": "author",
+      "weights": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pool_size": 10,
+      "lambda": 0.04,
+      "metrics": {
+        "primary": 0.6128599643707275,
+        "gauc": 0.6823559999465942,
+        "ndcg5": 0.5433639883995056,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.9073486328125e-06,
+        "gauc": 2.2649765014648438e-06,
+        "ndcg5": 1.6689300537109375e-06
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123218536376953,
+            "gauc": 0.6848907470703125,
+            "ndcg5": 0.5397529006004333,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 7.808208465576172e-06,
+            "gauc": 8.702278137207031e-06,
+            "ndcg5": 6.854534149169922e-06
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153028011322021,
+            "gauc": 0.685429036617279,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 22
+    },
+    {
+      "template": "author",
+      "weights": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pool_size": 12,
+      "lambda": 0.03,
+      "metrics": {
+        "primary": 0.6128596067428589,
+        "gauc": 0.6823559403419495,
+        "ndcg5": 0.5433633327484131,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.5497207641601562e-06,
+        "gauc": 2.205371856689453e-06,
+        "ndcg5": 1.0132789611816406e-06
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123179793357849,
+            "gauc": 0.6848856806755066,
+            "ndcg5": 0.5397502779960632,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 3.933906555175781e-06,
+            "gauc": 3.635883331298828e-06,
+            "ndcg5": 4.231929779052734e-06
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153053641319275,
+            "gauc": 0.6854341626167297,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 2.562999725341797e-06,
+            "gauc": 5.125999450683594e-06,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 14
+    },
+    {
+      "template": "author",
+      "weights": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pool_size": 15,
+      "lambda": 0.03,
+      "metrics": {
+        "primary": 0.6128596067428589,
+        "gauc": 0.6823559403419495,
+        "ndcg5": 0.5433633327484131,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.5497207641601562e-06,
+        "gauc": 2.205371856689453e-06,
+        "ndcg5": 1.0132789611816406e-06
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123179793357849,
+            "gauc": 0.6848856806755066,
+            "ndcg5": 0.5397502779960632,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 3.933906555175781e-06,
+            "gauc": 3.635883331298828e-06,
+            "ndcg5": 4.231929779052734e-06
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153053641319275,
+            "gauc": 0.6854341626167297,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 2.562999725341797e-06,
+            "gauc": 5.125999450683594e-06,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 16
+    },
+    {
+      "template": "author_tags",
+      "weights": [
+        0.5,
+        0.0,
+        0.0,
+        0.5
+      ],
+      "pool_size": 5,
+      "lambda": 0.04,
+      "metrics": {
+        "primary": 0.6128594875335693,
+        "gauc": 0.6823546886444092,
+        "ndcg5": 0.5433642864227295,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.430511474609375e-06,
+        "gauc": 9.5367431640625e-07,
+        "ndcg5": 1.9669532775878906e-06
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.612319827079773,
+            "gauc": 0.6848856806755066,
+            "ndcg5": 0.5397539734840393,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 5.781650543212891e-06,
+            "gauc": 3.635883331298828e-06,
+            "ndcg5": 7.927417755126953e-06
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153028011322021,
+            "gauc": 0.685429036617279,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 12
+    },
+    {
+      "template": "uniform",
+      "weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "pool_size": 15,
+      "lambda": 0.06,
+      "metrics": {
+        "primary": 0.612859308719635,
+        "gauc": 0.6823562979698181,
+        "ndcg5": 0.5433623194694519,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.2516975402832031e-06,
+        "gauc": 2.562999725341797e-06,
+        "ndcg5": 0.0
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123180389404297,
+            "gauc": 0.68489009141922,
+            "ndcg5": 0.5397460460662842,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 3.993511199951172e-06,
+            "gauc": 8.046627044677734e-06,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.615303635597229,
+            "gauc": 0.6854307651519775,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 8.344650268554688e-07,
+            "gauc": 1.7285346984863281e-06,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 38
+    },
+    {
+      "template": "author_music_tags",
+      "weights": [
+        0.4,
+        0.2,
+        0.0,
+        0.4
+      ],
+      "pool_size": 15,
+      "lambda": 0.04,
+      "metrics": {
+        "primary": 0.6128591895103455,
+        "gauc": 0.682356059551239,
+        "ndcg5": 0.5433623194694519,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.1324882507324219e-06,
+        "gauc": 2.3245811462402344e-06,
+        "ndcg5": 0.0
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.61231529712677,
+            "gauc": 0.6848844885826111,
+            "ndcg5": 0.5397460460662842,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 1.2516975402832031e-06,
+            "gauc": 2.4437904357910156e-06,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153061389923096,
+            "gauc": 0.6854357719421387,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 3.337860107421875e-06,
+            "gauc": 6.735324859619141e-06,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 38
+    },
+    {
+      "template": "author",
+      "weights": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pool_size": 5,
+      "lambda": 0.03,
+      "metrics": {
+        "primary": 0.6128590106964111,
+        "gauc": 0.6823546886444092,
+        "ndcg5": 0.5433633327484131,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 9.5367431640625e-07,
+        "gauc": 9.5367431640625e-07,
+        "ndcg5": 1.0132789611816406e-06
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123179793357849,
+            "gauc": 0.6848856806755066,
+            "ndcg5": 0.5397502779960632,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 3.933906555175781e-06,
+            "gauc": 3.635883331298828e-06,
+            "ndcg5": 4.231929779052734e-06
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153028011322021,
+            "gauc": 0.685429036617279,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 4
+    },
+    {
+      "template": "author",
+      "weights": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pool_size": 8,
+      "lambda": 0.03,
+      "metrics": {
+        "primary": 0.6128590106964111,
+        "gauc": 0.6823546886444092,
+        "ndcg5": 0.5433633327484131,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 9.5367431640625e-07,
+        "gauc": 9.5367431640625e-07,
+        "ndcg5": 1.0132789611816406e-06
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123179793357849,
+            "gauc": 0.6848856806755066,
+            "ndcg5": 0.5397502779960632,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 3.933906555175781e-06,
+            "gauc": 3.635883331298828e-06,
+            "ndcg5": 4.231929779052734e-06
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153028011322021,
+            "gauc": 0.685429036617279,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 8
+    },
+    {
+      "template": "author",
+      "weights": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "pool_size": 10,
+      "lambda": 0.03,
+      "metrics": {
+        "primary": 0.6128590106964111,
+        "gauc": 0.6823546886444092,
+        "ndcg5": 0.5433633327484131,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 9.5367431640625e-07,
+        "gauc": 9.5367431640625e-07,
+        "ndcg5": 1.0132789611816406e-06
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123179793357849,
+            "gauc": 0.6848856806755066,
+            "ndcg5": 0.5397502779960632,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 3.933906555175781e-06,
+            "gauc": 3.635883331298828e-06,
+            "ndcg5": 4.231929779052734e-06
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153028011322021,
+            "gauc": 0.685429036617279,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 10
+    },
+    {
+      "template": "author_tags",
+      "weights": [
+        0.5,
+        0.0,
+        0.0,
+        0.5
+      ],
+      "pool_size": 12,
+      "lambda": 0.03,
+      "metrics": {
+        "primary": 0.6128588914871216,
+        "gauc": 0.6823554039001465,
+        "ndcg5": 0.5433623194694519,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 8.344650268554688e-07,
+        "gauc": 1.6689300537109375e-06,
+        "ndcg5": 0.0
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123140454292297,
+            "gauc": 0.6848820447921753,
+            "ndcg5": 0.5397460460662842,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153061389923096,
+            "gauc": 0.6854357719421387,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 3.337860107421875e-06,
+            "gauc": 6.735324859619141e-06,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 16
+    },
+    {
+      "template": "author_tags",
+      "weights": [
+        0.5,
+        0.0,
+        0.0,
+        0.5
+      ],
+      "pool_size": 15,
+      "lambda": 0.03,
+      "metrics": {
+        "primary": 0.6128588914871216,
+        "gauc": 0.6823554039001465,
+        "ndcg5": 0.5433623194694519,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 8.344650268554688e-07,
+        "gauc": 1.6689300537109375e-06,
+        "ndcg5": 0.0
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123140454292297,
+            "gauc": 0.6848820447921753,
+            "ndcg5": 0.5397460460662842,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153061389923096,
+            "gauc": 0.6854357719421387,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 3.337860107421875e-06,
+            "gauc": 6.735324859619141e-06,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 20
+    },
+    {
+      "template": "original",
+      "weights": [
+        0.35,
+        0.2,
+        0.1,
+        0.35
+      ],
+      "pool_size": 10,
+      "lambda": 0.05,
+      "metrics": {
+        "primary": 0.6128588914871216,
+        "gauc": 0.6823554039001465,
+        "ndcg5": 0.5433623194694519,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 8.344650268554688e-07,
+        "gauc": 1.6689300537109375e-06,
+        "ndcg5": 0.0
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123164892196655,
+            "gauc": 0.6848869323730469,
+            "ndcg5": 0.5397460460662842,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 2.4437904357910156e-06,
+            "gauc": 4.887580871582031e-06,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.615303635597229,
+            "gauc": 0.6854307651519775,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 8.344650268554688e-07,
+            "gauc": 1.7285346984863281e-06,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 26
+    },
+    {
+      "template": "author_music_tags",
+      "weights": [
+        0.4,
+        0.2,
+        0.0,
+        0.4
+      ],
+      "pool_size": 10,
+      "lambda": 0.04,
+      "metrics": {
+        "primary": 0.6128585338592529,
+        "gauc": 0.6823548078536987,
+        "ndcg5": 0.5433623194694519,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 4.76837158203125e-07,
+        "gauc": 1.0728836059570312e-06,
+        "ndcg5": 0.0
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.61231529712677,
+            "gauc": 0.6848844885826111,
+            "ndcg5": 0.5397460460662842,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 1.2516975402832031e-06,
+            "gauc": 2.4437904357910156e-06,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.615303635597229,
+            "gauc": 0.6854307651519775,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 8.344650268554688e-07,
+            "gauc": 1.7285346984863281e-06,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 20
+    },
+    {
+      "template": "author_tags",
+      "weights": [
+        0.5,
+        0.0,
+        0.0,
+        0.5
+      ],
+      "pool_size": 10,
+      "lambda": 0.03,
+      "metrics": {
+        "primary": 0.6128582954406738,
+        "gauc": 0.682354211807251,
+        "ndcg5": 0.5433623194694519,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 2.384185791015625e-07,
+        "gauc": 4.76837158203125e-07,
+        "ndcg5": 0.0
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123140454292297,
+            "gauc": 0.6848820447921753,
+            "ndcg5": 0.5397460460662842,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.615303635597229,
+            "gauc": 0.6854307651519775,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 8.344650268554688e-07,
+            "gauc": 1.7285346984863281e-06,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 12
+    },
+    {
+      "template": "author_music_tags",
+      "weights": [
+        0.4,
+        0.2,
+        0.0,
+        0.4
+      ],
+      "pool_size": 8,
+      "lambda": 0.04,
+      "metrics": {
+        "primary": 0.6128582954406738,
+        "gauc": 0.6823543310165405,
+        "ndcg5": 0.5433623194694519,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 2.384185791015625e-07,
+        "gauc": 5.960464477539062e-07,
+        "ndcg5": 0.0
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.61231529712677,
+            "gauc": 0.6848844885826111,
+            "ndcg5": 0.5397460460662842,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 1.2516975402832031e-06,
+            "gauc": 2.4437904357910156e-06,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153028011322021,
+            "gauc": 0.685429036617279,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 16
+    },
+    {
+      "template": "original",
+      "weights": [
+        0.35,
+        0.2,
+        0.1,
+        0.35
+      ],
+      "pool_size": 8,
+      "lambda": 0.05,
+      "metrics": {
+        "primary": 0.6128582954406738,
+        "gauc": 0.6823543310165405,
+        "ndcg5": 0.5433623194694519,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 2.384185791015625e-07,
+        "gauc": 5.960464477539062e-07,
+        "ndcg5": 0.0
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.61231529712677,
+            "gauc": 0.6848844885826111,
+            "ndcg5": 0.5397460460662842,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 1.2516975402832031e-06,
+            "gauc": 2.4437904357910156e-06,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153028011322021,
+            "gauc": 0.685429036617279,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 20
+    },
+    {
+      "template": "original",
+      "weights": [
+        0.35,
+        0.2,
+        0.1,
+        0.35
+      ],
+      "pool_size": 10,
+      "lambda": 0.04,
+      "metrics": {
+        "primary": 0.6128582954406738,
+        "gauc": 0.682354211807251,
+        "ndcg5": 0.5433623194694519,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 2.384185791015625e-07,
+        "gauc": 4.76837158203125e-07,
+        "ndcg5": 0.0
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": true,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123140454292297,
+            "gauc": 0.6848820447921753,
+            "ndcg5": 0.5397460460662842,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126958131790161,
+            "gauc": 0.6825631856918335,
+            "ndcg5": 0.542828381061554,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110942363739014,
+            "gauc": 0.676494836807251,
+            "ndcg5": 0.5456936359405518,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 0.0,
+            "gauc": 0.0,
+            "ndcg5": 0.0
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.615303635597229,
+            "gauc": 0.6854307651519775,
+            "ndcg5": 0.5451765656471252,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 8.344650268554688e-07,
+            "gauc": 1.7285346984863281e-06,
+            "ndcg5": 0.0
+          }
+        }
+      ],
+      "changed_rows": 10
+    }
+  ],
+  "top_global_configurations": [
+    {
+      "template": "tags",
+      "weights": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "pool_size": 5,
+      "lambda": 0.09,
+      "metrics": {
+        "primary": 0.6129083037376404,
+        "gauc": 0.6824783682823181,
+        "ndcg5": 0.5433382391929626,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 5.02467155456543e-05,
+        "gauc": 0.0001246333122253418,
+        "ndcg5": -2.4080276489257812e-05
+      },
+      "all_global_metrics_nonnegative": false,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6121779680252075,
+            "gauc": 0.6847279071807861,
+            "ndcg5": 0.5396280288696289,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": -0.0001360774040222168,
+            "gauc": -0.00015413761138916016,
+            "ndcg5": -0.00011801719665527344
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6127769947052002,
+            "gauc": 0.6827696561813354,
+            "ndcg5": 0.5427842736244202,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 8.118152618408203e-05,
+            "gauc": 0.00020647048950195312,
+            "ndcg5": -4.410743713378906e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111222505569458,
+            "gauc": 0.6765241026878357,
+            "ndcg5": 0.5457203984260559,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 2.8014183044433594e-05,
+            "gauc": 2.9265880584716797e-05,
+            "ndcg5": 2.676248550415039e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6155345439910889,
+            "gauc": 0.6858530640602112,
+            "ndcg5": 0.5452159643173218,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 0.00023174285888671875,
+            "gauc": 0.0004240274429321289,
+            "ndcg5": 3.93986701965332e-05
+          }
+        }
+      ],
+      "changed_rows": 2380
+    },
+    {
+      "template": "tags",
+      "weights": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "pool_size": 5,
+      "lambda": 0.08,
+      "metrics": {
+        "primary": 0.6128882169723511,
+        "gauc": 0.6824153661727905,
+        "ndcg5": 0.5433610081672668,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 3.0159950256347656e-05,
+        "gauc": 6.16312026977539e-05,
+        "ndcg5": -1.3113021850585938e-06
+      },
+      "all_global_metrics_nonnegative": false,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.612251341342926,
+            "gauc": 0.6848060488700867,
+            "ndcg5": 0.5396966338157654,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": -6.270408630371094e-05,
+            "gauc": -7.599592208862305e-05,
+            "ndcg5": -4.941225051879883e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6127228736877441,
+            "gauc": 0.6826528906822205,
+            "ndcg5": 0.5427929162979126,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 2.7060508728027344e-05,
+            "gauc": 8.970499038696289e-05,
+            "ndcg5": -3.546476364135742e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111394166946411,
+            "gauc": 0.6765304803848267,
+            "ndcg5": 0.5457482933998108,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 4.5180320739746094e-05,
+            "gauc": 3.5643577575683594e-05,
+            "ndcg5": 5.46574592590332e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.615415096282959,
+            "gauc": 0.6856285333633423,
+            "ndcg5": 0.5452017188072205,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 0.00011229515075683594,
+            "gauc": 0.00019949674606323242,
+            "ndcg5": 2.5153160095214844e-05
+          }
+        }
+      ],
+      "changed_rows": 1992
+    },
+    {
+      "template": "tags",
+      "weights": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "pool_size": 5,
+      "lambda": 0.1,
+      "metrics": {
+        "primary": 0.6128842234611511,
+        "gauc": 0.6824631690979004,
+        "ndcg5": 0.5433052778244019,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 2.6166439056396484e-05,
+        "gauc": 0.00010943412780761719,
+        "ndcg5": -5.704164505004883e-05
+      },
+      "all_global_metrics_nonnegative": false,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6121915578842163,
+            "gauc": 0.6847846508026123,
+            "ndcg5": 0.5395984053611755,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": -0.00012248754501342773,
+            "gauc": -9.739398956298828e-05,
+            "ndcg5": -0.00014764070510864258
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.612715482711792,
+            "gauc": 0.6827138662338257,
+            "ndcg5": 0.5427171587944031,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 1.9669532775878906e-05,
+            "gauc": 0.0001506805419921875,
+            "ndcg5": -0.0001112222671508789
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111652851104736,
+            "gauc": 0.6765870451927185,
+            "ndcg5": 0.5457435250282288,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 7.104873657226562e-05,
+            "gauc": 9.22083854675293e-05,
+            "ndcg5": 4.988908767700195e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6154414415359497,
+            "gauc": 0.6857256889343262,
+            "ndcg5": 0.5451571941375732,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 0.0001386404037475586,
+            "gauc": 0.00029665231704711914,
+            "ndcg5": -1.9371509552001953e-05
+          }
+        }
+      ],
+      "changed_rows": 2973
+    },
+    {
+      "template": "original",
+      "weights": [
+        0.35,
+        0.2,
+        0.1,
+        0.35
+      ],
+      "pool_size": 15,
+      "lambda": 0.08,
+      "metrics": {
+        "primary": 0.6128740906715393,
+        "gauc": 0.6823669075965881,
+        "ndcg5": 0.5433812737464905,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.6033649444580078e-05,
+        "gauc": 1.3172626495361328e-05,
+        "ndcg5": 1.895427703857422e-05
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123313903808594,
+            "gauc": 0.6849279999732971,
+            "ndcg5": 0.5397347807884216,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 1.7344951629638672e-05,
+            "gauc": 4.595518112182617e-05,
+            "ndcg5": -1.1265277862548828e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6127042174339294,
+            "gauc": 0.6825281977653503,
+            "ndcg5": 0.5428802371025085,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 8.404254913330078e-06,
+            "gauc": -3.49879264831543e-05,
+            "ndcg5": 5.1856040954589844e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111166477203369,
+            "gauc": 0.676512598991394,
+            "ndcg5": 0.545720636844635,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 2.2411346435546875e-05,
+            "gauc": 1.7762184143066406e-05,
+            "ndcg5": 2.7000904083251953e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153180599212646,
+            "gauc": 0.6854511499404907,
+            "ndcg5": 0.5451850295066833,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 1.52587890625e-05,
+            "gauc": 2.2113323211669922e-05,
+            "ndcg5": 8.463859558105469e-06
+          }
+        }
+      ],
+      "changed_rows": 510
+    },
+    {
+      "template": "tags",
+      "weights": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "pool_size": 15,
+      "lambda": 0.03,
+      "metrics": {
+        "primary": 0.6128731966018677,
+        "gauc": 0.682366669178009,
+        "ndcg5": 0.5433797836303711,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.5139579772949219e-05,
+        "gauc": 1.2934207916259766e-05,
+        "ndcg5": 1.7464160919189453e-05
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123208999633789,
+            "gauc": 0.6849180459976196,
+            "ndcg5": 0.539723813533783,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 6.854534149169922e-06,
+            "gauc": 3.600120544433594e-05,
+            "ndcg5": -2.2232532501220703e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6127071380615234,
+            "gauc": 0.682538628578186,
+            "ndcg5": 0.5428756475448608,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 1.1324882507324219e-05,
+            "gauc": -2.4557113647460938e-05,
+            "ndcg5": 4.7266483306884766e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111161708831787,
+            "gauc": 0.676504909992218,
+            "ndcg5": 0.5457274317741394,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 2.193450927734375e-05,
+            "gauc": 1.0073184967041016e-05,
+            "ndcg5": 3.3795833587646484e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153228282928467,
+            "gauc": 0.6854579448699951,
+            "ndcg5": 0.5451876521110535,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 2.002716064453125e-05,
+            "gauc": 2.8908252716064453e-05,
+            "ndcg5": 1.1086463928222656e-05
+          }
+        }
+      ],
+      "changed_rows": 442
+    },
+    {
+      "template": "tags",
+      "weights": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "pool_size": 12,
+      "lambda": 0.03,
+      "metrics": {
+        "primary": 0.6128720045089722,
+        "gauc": 0.6823642253875732,
+        "ndcg5": 0.5433797836303711,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.3947486877441406e-05,
+        "gauc": 1.049041748046875e-05,
+        "ndcg5": 1.7464160919189453e-05
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123188734054565,
+            "gauc": 0.6849139928817749,
+            "ndcg5": 0.539723813533783,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 4.827976226806641e-06,
+            "gauc": 3.1948089599609375e-05,
+            "ndcg5": -2.2232532501220703e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6127107739448547,
+            "gauc": 0.6825459003448486,
+            "ndcg5": 0.5428756475448608,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 1.4960765838623047e-05,
+            "gauc": -1.728534698486328e-05,
+            "ndcg5": 4.7266483306884766e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111116409301758,
+            "gauc": 0.6764959096908569,
+            "ndcg5": 0.5457274317741394,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 1.7404556274414062e-05,
+            "gauc": 1.0728836059570312e-06,
+            "ndcg5": 3.3795833587646484e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153208613395691,
+            "gauc": 0.6854540705680847,
+            "ndcg5": 0.5451876521110535,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 1.806020736694336e-05,
+            "gauc": 2.5033950805664062e-05,
+            "ndcg5": 1.1086463928222656e-05
+          }
+        }
+      ],
+      "changed_rows": 327
+    },
+    {
+      "template": "tags",
+      "weights": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "pool_size": 10,
+      "lambda": 0.03,
+      "metrics": {
+        "primary": 0.6128711700439453,
+        "gauc": 0.6823625564575195,
+        "ndcg5": 0.5433797836303711,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.3113021850585938e-05,
+        "gauc": 8.821487426757812e-06,
+        "ndcg5": 1.7464160919189453e-05
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123104691505432,
+            "gauc": 0.6848971247673035,
+            "ndcg5": 0.539723813533783,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": -3.5762786865234375e-06,
+            "gauc": 1.5079975128173828e-05,
+            "ndcg5": -2.2232532501220703e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.612712562084198,
+            "gauc": 0.6825494766235352,
+            "ndcg5": 0.5428756475448608,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 1.6748905181884766e-05,
+            "gauc": -1.3709068298339844e-05,
+            "ndcg5": 4.7266483306884766e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111177206039429,
+            "gauc": 0.6765079498291016,
+            "ndcg5": 0.5457274317741394,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 2.3484230041503906e-05,
+            "gauc": 1.3113021850585938e-05,
+            "ndcg5": 3.3795833587646484e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153182983398438,
+            "gauc": 0.6854490041732788,
+            "ndcg5": 0.5451876521110535,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 1.5497207641601562e-05,
+            "gauc": 1.996755599975586e-05,
+            "ndcg5": 1.1086463928222656e-05
+          }
+        }
+      ],
+      "changed_rows": 257
+    },
+    {
+      "template": "original",
+      "weights": [
+        0.35,
+        0.2,
+        0.1,
+        0.35
+      ],
+      "pool_size": 12,
+      "lambda": 0.08,
+      "metrics": {
+        "primary": 0.6128710508346558,
+        "gauc": 0.682360827922821,
+        "ndcg5": 0.5433812737464905,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.2993812561035156e-05,
+        "gauc": 7.092952728271484e-06,
+        "ndcg5": 1.895427703857422e-05
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123251914978027,
+            "gauc": 0.6849156618118286,
+            "ndcg5": 0.5397347807884216,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 1.1146068572998047e-05,
+            "gauc": 3.361701965332031e-05,
+            "ndcg5": -1.1265277862548828e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6127055883407593,
+            "gauc": 0.68253093957901,
+            "ndcg5": 0.5428802371025085,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 9.775161743164062e-06,
+            "gauc": -3.224611282348633e-05,
+            "ndcg5": 5.1856040954589844e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.611109733581543,
+            "gauc": 0.6764987707138062,
+            "ndcg5": 0.545720636844635,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 1.5497207641601562e-05,
+            "gauc": 3.933906555175781e-06,
+            "ndcg5": 2.7000904083251953e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153178811073303,
+            "gauc": 0.6854507327079773,
+            "ndcg5": 0.5451850295066833,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 1.5079975128173828e-05,
+            "gauc": 2.1696090698242188e-05,
+            "ndcg5": 8.463859558105469e-06
+          }
+        }
+      ],
+      "changed_rows": 354
+    },
+    {
+      "template": "original",
+      "weights": [
+        0.35,
+        0.2,
+        0.1,
+        0.35
+      ],
+      "pool_size": 10,
+      "lambda": 0.08,
+      "metrics": {
+        "primary": 0.6128706336021423,
+        "gauc": 0.6823599934577942,
+        "ndcg5": 0.5433812737464905,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.2576580047607422e-05,
+        "gauc": 6.258487701416016e-06,
+        "ndcg5": 1.895427703857422e-05
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123169660568237,
+            "gauc": 0.6848991513252258,
+            "ndcg5": 0.5397347807884216,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 2.9206275939941406e-06,
+            "gauc": 1.710653305053711e-05,
+            "ndcg5": -1.1265277862548828e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6127139329910278,
+            "gauc": 0.6825475692749023,
+            "ndcg5": 0.5428802371025085,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 1.811981201171875e-05,
+            "gauc": -1.5616416931152344e-05,
+            "ndcg5": 5.1856040954589844e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111106872558594,
+            "gauc": 0.6765007972717285,
+            "ndcg5": 0.545720636844635,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 1.6450881958007812e-05,
+            "gauc": 5.9604644775390625e-06,
+            "ndcg5": 2.7000904083251953e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153153777122498,
+            "gauc": 0.6854457259178162,
+            "ndcg5": 0.5451850295066833,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 1.2576580047607422e-05,
+            "gauc": 1.6689300537109375e-05,
+            "ndcg5": 8.463859558105469e-06
+          }
+        }
+      ],
+      "changed_rows": 255
+    },
+    {
+      "template": "author_music_tags",
+      "weights": [
+        0.4,
+        0.2,
+        0.0,
+        0.4
+      ],
+      "pool_size": 15,
+      "lambda": 0.07,
+      "metrics": {
+        "primary": 0.6128697395324707,
+        "gauc": 0.6823586225509644,
+        "ndcg5": 0.543380856513977,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.1682510375976562e-05,
+        "gauc": 4.887580871582031e-06,
+        "ndcg5": 1.8537044525146484e-05
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123021841049194,
+            "gauc": 0.6848737597465515,
+            "ndcg5": 0.5397306084632874,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": -1.1861324310302734e-05,
+            "gauc": -8.285045623779297e-06,
+            "ndcg5": -1.5437602996826172e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6127187013626099,
+            "gauc": 0.6825571060180664,
+            "ndcg5": 0.5428802371025085,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 2.288818359375e-05,
+            "gauc": -6.079673767089844e-06,
+            "ndcg5": 5.1856040954589844e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.611112117767334,
+            "gauc": 0.6765010356903076,
+            "ndcg5": 0.5457232594490051,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 1.7881393432617188e-05,
+            "gauc": 6.198883056640625e-06,
+            "ndcg5": 2.962350845336914e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153209805488586,
+            "gauc": 0.6854569315910339,
+            "ndcg5": 0.5451850295066833,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 1.817941665649414e-05,
+            "gauc": 2.7894973754882812e-05,
+            "ndcg5": 8.463859558105469e-06
+          }
+        }
+      ],
+      "changed_rows": 459
+    },
+    {
+      "template": "author_music_tags",
+      "weights": [
+        0.4,
+        0.2,
+        0.0,
+        0.4
+      ],
+      "pool_size": 10,
+      "lambda": 0.07,
+      "metrics": {
+        "primary": 0.6128695011138916,
+        "gauc": 0.6823582053184509,
+        "ndcg5": 0.543380856513977,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.1444091796875e-05,
+        "gauc": 4.470348358154297e-06,
+        "ndcg5": 1.8537044525146484e-05
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123058795928955,
+            "gauc": 0.6848812103271484,
+            "ndcg5": 0.5397306084632874,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": -8.165836334228516e-06,
+            "gauc": -8.344650268554688e-07,
+            "ndcg5": -1.5437602996826172e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6127204895019531,
+            "gauc": 0.6825607419013977,
+            "ndcg5": 0.5428802371025085,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 2.467632293701172e-05,
+            "gauc": -2.4437904357910156e-06,
+            "ndcg5": 5.1856040954589844e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111082434654236,
+            "gauc": 0.676493227481842,
+            "ndcg5": 0.5457232594490051,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 1.4007091522216797e-05,
+            "gauc": -1.6093254089355469e-06,
+            "ndcg5": 2.962350845336914e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153182983398438,
+            "gauc": 0.6854515671730042,
+            "ndcg5": 0.5451850295066833,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 1.5497207641601562e-05,
+            "gauc": 2.2530555725097656e-05,
+            "ndcg5": 8.463859558105469e-06
+          }
+        }
+      ],
+      "changed_rows": 242
+    },
+    {
+      "template": "author_music_tags",
+      "weights": [
+        0.4,
+        0.2,
+        0.0,
+        0.4
+      ],
+      "pool_size": 12,
+      "lambda": 0.07,
+      "metrics": {
+        "primary": 0.6128692626953125,
+        "gauc": 0.6823576092720032,
+        "ndcg5": 0.543380856513977,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.1205673217773438e-05,
+        "gauc": 3.874301910400391e-06,
+        "ndcg5": 1.8537044525146484e-05
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.612307071685791,
+            "gauc": 0.6848835349082947,
+            "ndcg5": 0.5397306084632874,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": -6.973743438720703e-06,
+            "gauc": 1.4901161193847656e-06,
+            "ndcg5": -1.5437602996826172e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6127187013626099,
+            "gauc": 0.6825571060180664,
+            "ndcg5": 0.5428802371025085,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 2.288818359375e-05,
+            "gauc": -6.079673767089844e-06,
+            "ndcg5": 5.1856040954589844e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111053228378296,
+            "gauc": 0.6764873266220093,
+            "ndcg5": 0.5457232594490051,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 1.1086463928222656e-05,
+            "gauc": -7.510185241699219e-06,
+            "ndcg5": 2.962350845336914e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153208017349243,
+            "gauc": 0.6854565143585205,
+            "ndcg5": 0.5451850295066833,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 1.800060272216797e-05,
+            "gauc": 2.7477741241455078e-05,
+            "ndcg5": 8.463859558105469e-06
+          }
+        }
+      ],
+      "changed_rows": 327
+    },
+    {
+      "template": "tags",
+      "weights": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "pool_size": 8,
+      "lambda": 0.03,
+      "metrics": {
+        "primary": 0.612868070602417,
+        "gauc": 0.6823563575744629,
+        "ndcg5": 0.5433797836303711,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.0013580322265625e-05,
+        "gauc": 2.6226043701171875e-06,
+        "ndcg5": 1.7464160919189453e-05
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123077869415283,
+            "gauc": 0.6848917007446289,
+            "ndcg5": 0.539723813533783,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": -6.258487701416016e-06,
+            "gauc": 9.655952453613281e-06,
+            "ndcg5": -2.2232532501220703e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.612713098526001,
+            "gauc": 0.6825505495071411,
+            "ndcg5": 0.5428756475448608,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 1.728534698486328e-05,
+            "gauc": -1.2636184692382812e-05,
+            "ndcg5": 4.7266483306884766e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111146211624146,
+            "gauc": 0.6765017509460449,
+            "ndcg5": 0.5457274317741394,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 2.0384788513183594e-05,
+            "gauc": 6.9141387939453125e-06,
+            "ndcg5": 3.3795833587646484e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153112649917603,
+            "gauc": 0.6854348182678223,
+            "ndcg5": 0.5451876521110535,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 8.463859558105469e-06,
+            "gauc": 5.781650543212891e-06,
+            "ndcg5": 1.1086463928222656e-05
+          }
+        }
+      ],
+      "changed_rows": 176
+    },
+    {
+      "template": "uniform",
+      "weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "pool_size": 15,
+      "lambda": 0.12,
+      "metrics": {
+        "primary": 0.612868070602417,
+        "gauc": 0.6823699474334717,
+        "ndcg5": 0.5433661341667175,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 1.0013580322265625e-05,
+        "gauc": 1.621246337890625e-05,
+        "ndcg5": 3.814697265625e-06
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.612345814704895,
+            "gauc": 0.6849595308303833,
+            "ndcg5": 0.5397321581840515,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 3.17692756652832e-05,
+            "gauc": 7.748603820800781e-05,
+            "ndcg5": -1.3887882232666016e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126478910446167,
+            "gauc": 0.6824758648872375,
+            "ndcg5": 0.5428198575973511,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": -4.792213439941406e-05,
+            "gauc": -8.732080459594727e-05,
+            "ndcg5": -8.52346420288086e-06
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.611130952835083,
+            "gauc": 0.6765413880348206,
+            "ndcg5": 0.5457205772399902,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 3.6716461181640625e-05,
+            "gauc": 4.655122756958008e-05,
+            "ndcg5": 2.6941299438476562e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153203248977661,
+            "gauc": 0.6854536533355713,
+            "ndcg5": 0.5451870560646057,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 1.7523765563964844e-05,
+            "gauc": 2.4616718292236328e-05,
+            "ndcg5": 1.049041748046875e-05
+          }
+        }
+      ],
+      "changed_rows": 830
+    },
+    {
+      "template": "author_music_tags",
+      "weights": [
+        0.4,
+        0.2,
+        0.0,
+        0.4
+      ],
+      "pool_size": 8,
+      "lambda": 0.07,
+      "metrics": {
+        "primary": 0.6128680109977722,
+        "gauc": 0.6823551654815674,
+        "ndcg5": 0.543380856513977,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 9.953975677490234e-06,
+        "gauc": 1.430511474609375e-06,
+        "ndcg5": 1.8537044525146484e-05
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123051643371582,
+            "gauc": 0.6848797798156738,
+            "ndcg5": 0.5397306084632874,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": -8.881092071533203e-06,
+            "gauc": -2.2649765014648438e-06,
+            "ndcg5": -1.5437602996826172e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6127210259437561,
+            "gauc": 0.6825618147850037,
+            "ndcg5": 0.5428802371025085,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 2.5212764739990234e-05,
+            "gauc": -1.3709068298339844e-06,
+            "ndcg5": 5.1856040954589844e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111108064651489,
+            "gauc": 0.6764983534812927,
+            "ndcg5": 0.5457232594490051,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 1.6570091247558594e-05,
+            "gauc": 3.516674041748047e-06,
+            "ndcg5": 2.962350845336914e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153099536895752,
+            "gauc": 0.6854348182678223,
+            "ndcg5": 0.5451850295066833,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 7.152557373046875e-06,
+            "gauc": 5.781650543212891e-06,
+            "ndcg5": 8.463859558105469e-06
+          }
+        }
+      ],
+      "changed_rows": 168
+    },
+    {
+      "template": "original",
+      "weights": [
+        0.35,
+        0.2,
+        0.1,
+        0.35
+      ],
+      "pool_size": 8,
+      "lambda": 0.08,
+      "metrics": {
+        "primary": 0.6128678321838379,
+        "gauc": 0.6823543310165405,
+        "ndcg5": 0.5433812737464905,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 9.775161743164062e-06,
+        "gauc": 5.960464477539062e-07,
+        "ndcg5": 1.895427703857422e-05
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123162508010864,
+            "gauc": 0.684897780418396,
+            "ndcg5": 0.5397347807884216,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 2.205371856689453e-06,
+            "gauc": 1.5735626220703125e-05,
+            "ndcg5": -1.1265277862548828e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.612714409828186,
+            "gauc": 0.6825486421585083,
+            "ndcg5": 0.5428802371025085,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 1.8596649169921875e-05,
+            "gauc": -1.4543533325195312e-05,
+            "ndcg5": 5.1856040954589844e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111079454421997,
+            "gauc": 0.6764953136444092,
+            "ndcg5": 0.545720636844635,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 1.3709068298339844e-05,
+            "gauc": 4.76837158203125e-07,
+            "ndcg5": 2.7000904083251953e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153070330619812,
+            "gauc": 0.685429036617279,
+            "ndcg5": 0.5451850295066833,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 4.231929779052734e-06,
+            "gauc": 0.0,
+            "ndcg5": 8.463859558105469e-06
+          }
+        }
+      ],
+      "changed_rows": 176
+    },
+    {
+      "template": "author_tags",
+      "weights": [
+        0.5,
+        0.0,
+        0.0,
+        0.5
+      ],
+      "pool_size": 15,
+      "lambda": 0.06,
+      "metrics": {
+        "primary": 0.6128666400909424,
+        "gauc": 0.6823554635047913,
+        "ndcg5": 0.5433778762817383,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 8.58306884765625e-06,
+        "gauc": 1.7285346984863281e-06,
+        "ndcg5": 1.5556812286376953e-05
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123201847076416,
+            "gauc": 0.6849123239517212,
+            "ndcg5": 0.5397279858589172,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 6.139278411865234e-06,
+            "gauc": 3.0279159545898438e-05,
+            "ndcg5": -1.806020736694336e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6127008199691772,
+            "gauc": 0.6825335025787354,
+            "ndcg5": 0.5428680777549744,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 5.0067901611328125e-06,
+            "gauc": -2.968311309814453e-05,
+            "ndcg5": 3.9696693420410156e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111077070236206,
+            "gauc": 0.6764921545982361,
+            "ndcg5": 0.5457232594490051,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 1.3470649719238281e-05,
+            "gauc": -2.682209014892578e-06,
+            "ndcg5": 2.962350845336914e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153122186660767,
+            "gauc": 0.6854367256164551,
+            "ndcg5": 0.5451876521110535,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 9.417533874511719e-06,
+            "gauc": 7.68899917602539e-06,
+            "ndcg5": 1.1086463928222656e-05
+          }
+        }
+      ],
+      "changed_rows": 556
+    },
+    {
+      "template": "tags",
+      "weights": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "pool_size": 5,
+      "lambda": 0.07,
+      "metrics": {
+        "primary": 0.6128658056259155,
+        "gauc": 0.6823638081550598,
+        "ndcg5": 0.543367862701416,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 7.748603820800781e-06,
+        "gauc": 1.0073184967041016e-05,
+        "ndcg5": 5.543231964111328e-06
+      },
+      "all_global_metrics_nonnegative": true,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6122822761535645,
+            "gauc": 0.6848047375679016,
+            "ndcg5": 0.5397598743438721,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": -3.17692756652832e-05,
+            "gauc": -7.730722427368164e-05,
+            "ndcg5": 1.3828277587890625e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126582622528076,
+            "gauc": 0.6825565099716187,
+            "ndcg5": 0.5427600145339966,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": -3.7550926208496094e-05,
+            "gauc": -6.67572021484375e-06,
+            "ndcg5": -6.836652755737305e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110846996307373,
+            "gauc": 0.6764650940895081,
+            "ndcg5": 0.5457042455673218,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": -9.5367431640625e-06,
+            "gauc": -2.9742717742919922e-05,
+            "ndcg5": 1.0609626770019531e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6154137849807739,
+            "gauc": 0.6855838298797607,
+            "ndcg5": 0.5452436804771423,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 0.00011098384857177734,
+            "gauc": 0.00015479326248168945,
+            "ndcg5": 6.711483001708984e-05
+          }
+        }
+      ],
+      "changed_rows": 1412
+    },
+    {
+      "template": "original",
+      "weights": [
+        0.35,
+        0.2,
+        0.1,
+        0.35
+      ],
+      "pool_size": 5,
+      "lambda": 0.12,
+      "metrics": {
+        "primary": 0.612865686416626,
+        "gauc": 0.6823705434799194,
+        "ndcg5": 0.5433608293533325,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 7.62939453125e-06,
+        "gauc": 1.6808509826660156e-05,
+        "ndcg5": -1.4901161193847656e-06
+      },
+      "all_global_metrics_nonnegative": false,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123323440551758,
+            "gauc": 0.6849106550216675,
+            "ndcg5": 0.5397539734840393,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 1.8298625946044922e-05,
+            "gauc": 2.86102294921875e-05,
+            "ndcg5": 7.927417755126953e-06
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6126571893692017,
+            "gauc": 0.6825412511825562,
+            "ndcg5": 0.5427730679512024,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": -3.8623809814453125e-05,
+            "gauc": -2.193450927734375e-05,
+            "ndcg5": -5.53131103515625e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6110764741897583,
+            "gauc": 0.6764593124389648,
+            "ndcg5": 0.5456936955451965,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": -1.7762184143066406e-05,
+            "gauc": -3.552436828613281e-05,
+            "ndcg5": 5.960464477539063e-08
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153717041015625,
+            "gauc": 0.6855244040489197,
+            "ndcg5": 0.5452189445495605,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 6.890296936035156e-05,
+            "gauc": 9.5367431640625e-05,
+            "ndcg5": 4.2378902435302734e-05
+          }
+        }
+      ],
+      "changed_rows": 375
+    },
+    {
+      "template": "author_tags",
+      "weights": [
+        0.5,
+        0.0,
+        0.0,
+        0.5
+      ],
+      "pool_size": 12,
+      "lambda": 0.06,
+      "metrics": {
+        "primary": 0.6128653287887573,
+        "gauc": 0.6823527216911316,
+        "ndcg5": 0.5433778762817383,
+        "users": 22377,
+        "rows": 124909
+      },
+      "delta": {
+        "primary": 7.271766662597656e-06,
+        "gauc": -1.0132789611816406e-06,
+        "ndcg5": 1.5556812286376953e-05
+      },
+      "all_global_metrics_nonnegative": false,
+      "all_four_folds_all_metrics_nonnegative": false,
+      "folds": [
+        {
+          "fold": 0,
+          "metrics": {
+            "primary": 0.6123181581497192,
+            "gauc": 0.6849082708358765,
+            "ndcg5": 0.5397279858589172,
+            "users": 5602,
+            "rows": 31537
+          },
+          "delta": {
+            "primary": 4.112720489501953e-06,
+            "gauc": 2.6226043701171875e-05,
+            "ndcg5": -1.806020736694336e-05
+          }
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "primary": 0.6127043962478638,
+            "gauc": 0.682540774345398,
+            "ndcg5": 0.5428680777549744,
+            "users": 5589,
+            "rows": 30770
+          },
+          "delta": {
+            "primary": 8.58306884765625e-06,
+            "gauc": -2.2411346435546875e-05,
+            "ndcg5": 3.9696693420410156e-05
+          }
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "primary": 0.6111025810241699,
+            "gauc": 0.6764819025993347,
+            "ndcg5": 0.5457232594490051,
+            "users": 5633,
+            "rows": 31466
+          },
+          "delta": {
+            "primary": 8.344650268554688e-06,
+            "gauc": -1.2934207916259766e-05,
+            "ndcg5": 2.962350845336914e-05
+          }
+        },
+        {
+          "fold": 3,
+          "metrics": {
+            "primary": 0.6153102517127991,
+            "gauc": 0.6854328513145447,
+            "ndcg5": 0.5451876521110535,
+            "users": 5553,
+            "rows": 31136
+          },
+          "delta": {
+            "primary": 7.450580596923828e-06,
+            "gauc": 3.814697265625e-06,
+            "ndcg5": 1.1086463928222656e-05
+          }
+        }
+      ],
+      "changed_rows": 417
+    }
+  ],
+  "resources": {
+    "wall_seconds": 160.035,
+    "train_seconds": 160.035,
+    "cpu_seconds": 159.094,
+    "cpu_hours": 0.044193,
+    "cpu_utilization_percent": 99.41,
+    "peak_rss_mb": 379.797,
+    "gpu_count": 0,
+    "gpu_seconds": 0.0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "hardware": {
+      "logical_cpu_count": 16,
+      "architecture": "arm64",
+      "processor": "arm"
+    }
+  },
+  "elapsed_wall_seconds": 160.054,
+  "artifacts": {
+    "script": "scripts/audit_cdm_context_grid.py",
+    "scores": "runtime/context-distillation/cdm-context-consensus.npz"
+  },
+  "recommendation": "Retain the frozen champion; use the audit to design a learned contextual-distillation ablation."
+}

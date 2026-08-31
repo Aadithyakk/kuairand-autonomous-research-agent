@@ -1,0 +1,360 @@
+{
+  "experiment": "bounded near-tie hard-negative residual",
+  "status": "rejected_at_train_only_screen",
+  "protocol": {
+    "frozen_source_model_fit": "2022-04-08..2022-04-13",
+    "residual_fit": "2022-04-14 hours 00..17",
+    "magnitude_selection": "2022-04-14 hours 18..23",
+    "locked_screen": "2022-04-15..2022-04-21",
+    "confirmation_labels_read": false,
+    "hidden_test_accessed": false,
+    "alignment": "All streams came from one cutoff-20220413 cache and exact length equality with rows dated after April 13 was required."
+  },
+  "data": {
+    "fit_rows": 46351,
+    "selection_rows": 24901,
+    "screen_rows": 249694,
+    "screen_users": 24262,
+    "source_cache": "runtime/stacked-reranker/out-of-time-components-cutoff-20220413.npz",
+    "source_streams": [
+      "point0",
+      "point2",
+      "pairwise",
+      "deep",
+      "temporal",
+      "base"
+    ]
+  },
+  "model": {
+    "description": "Linear disagreement/context head passed through tanh; pointwise BCE anchors the frozen base while weighted same-user near-tie pairs sharpen close ordering.",
+    "feature_count": 24,
+    "tab_levels": [
+      "0",
+      "1",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+    ],
+    "feature_scaling": {
+      "mean": [
+        3.832402406421114e-20,
+        0.0,
+        -3.832402406421114e-20,
+        0.0,
+        0.0,
+        0.04622618675948191,
+        10.394554626266716,
+        0.008860960683469577,
+        -0.41443675015327147,
+        0.08556449699035619,
+        0.7375029664947897,
+        0.0001510215529330543,
+        0.0003451921209898384,
+        0.001078725378093245,
+        0.0001078725378093245,
+        6.47235226855947e-05,
+        0.03249120838816854,
+        0.002179025263748355,
+        0.05628789022890553,
+        0.004638519125800954,
+        0.07561864900433647,
+        0.0005177881814847576,
+        0.0033008996569653297,
+        0.0001510215529330543
+      ],
+      "scale": [
+        0.08494778281025094,
+        0.08675566330287639,
+        0.10117219238691003,
+        0.08822409599892643,
+        0.12279743657328686,
+        0.06283105427758252,
+        2.714989663926873,
+        0.6358056177124404,
+        0.651087459550146,
+        0.27971988460805486,
+        0.4399912963982069,
+        0.012288154679348889,
+        0.018576139625590803,
+        0.032826235386530435,
+        0.010385610301032439,
+        0.008044832723631105,
+        0.17730067615676245,
+        0.04662914445546156,
+        0.23047681801535747,
+        0.06794853395122322,
+        0.26438696814914203,
+        0.022749067604714533,
+        0.05735855401263159,
+        0.012288154679348889
+      ]
+    },
+    "coefficient_l2": 1.2345529794692993,
+    "training": {
+      "bias": 0.5996906161308289,
+      "calibration_slope": 1.761160969734192,
+      "calibration_intercept": -1.8116955757141113,
+      "training_bound": 0.1,
+      "bce_anchor_weight": 1.0,
+      "pair_loss_weight": 0.2,
+      "coefficient_l2_weight": 0.02,
+      "steps": 300,
+      "history": [
+        {
+          "step": 1,
+          "loss": 0.769339919090271,
+          "bce": 0.6320995688438416,
+          "pair_loss": 0.686201810836792,
+          "coefficient_l2": 0.12246984243392944
+        },
+        {
+          "step": 50,
+          "loss": 0.7347251176834106,
+          "bce": 0.5969616770744324,
+          "pair_loss": 0.6827152371406555,
+          "coefficient_l2": 1.2074373960494995
+        },
+        {
+          "step": 100,
+          "loss": 0.7302157282829285,
+          "bce": 0.5925293564796448,
+          "pair_loss": 0.682750403881073,
+          "coefficient_l2": 1.1702252626419067
+        },
+        {
+          "step": 150,
+          "loss": 0.7291433811187744,
+          "bce": 0.5913609862327576,
+          "pair_loss": 0.682707667350769,
+          "coefficient_l2": 1.2207589149475098
+        },
+        {
+          "step": 200,
+          "loss": 0.7290415167808533,
+          "bce": 0.5912402868270874,
+          "pair_loss": 0.6826790571212769,
+          "coefficient_l2": 1.2323651313781738
+        },
+        {
+          "step": 250,
+          "loss": 0.7290375828742981,
+          "bce": 0.5912336707115173,
+          "pair_loss": 0.6826715469360352,
+          "coefficient_l2": 1.2343183755874634
+        },
+        {
+          "step": 300,
+          "loss": 0.7290375828742981,
+          "bce": 0.5912333130836487,
+          "pair_loss": 0.6826706528663635,
+          "coefficient_l2": 1.2345529794692993
+        }
+      ]
+    },
+    "pair_mining": {
+      "pairs": 7912,
+      "top_ten_pairs": 7316,
+      "top_ten_fraction": 0.9246713852376137,
+      "max_fractional_rank_gap": 0.2,
+      "negatives_per_positive": 2
+    }
+  },
+  "magnitude_selection": {
+    "zero_residual_control": {
+      "primary": 0.5660620331764221,
+      "gauc": 0.6530946493148804,
+      "ndcg5": 0.47902944684028625,
+      "users": 10208,
+      "rows": 24901
+    },
+    "trials": [
+      {
+        "magnitude": 0.0,
+        "metrics": {
+          "primary": 0.5660620331764221,
+          "gauc": 0.6530946493148804,
+          "ndcg5": 0.47902944684028625,
+          "users": 10208,
+          "rows": 24901
+        },
+        "delta_vs_zero": {
+          "primary": 0.0,
+          "gauc": 0.0,
+          "ndcg5": 0.0
+        },
+        "eligible": true
+      },
+      {
+        "magnitude": 0.005,
+        "metrics": {
+          "primary": 0.5660620331764221,
+          "gauc": 0.6530946493148804,
+          "ndcg5": 0.47902944684028625,
+          "users": 10208,
+          "rows": 24901
+        },
+        "delta_vs_zero": {
+          "primary": 0.0,
+          "gauc": 0.0,
+          "ndcg5": 0.0
+        },
+        "eligible": true
+      },
+      {
+        "magnitude": 0.01,
+        "metrics": {
+          "primary": 0.5660620331764221,
+          "gauc": 0.6530946493148804,
+          "ndcg5": 0.47902944684028625,
+          "users": 10208,
+          "rows": 24901
+        },
+        "delta_vs_zero": {
+          "primary": 0.0,
+          "gauc": 0.0,
+          "ndcg5": 0.0
+        },
+        "eligible": true
+      },
+      {
+        "magnitude": 0.02,
+        "metrics": {
+          "primary": 0.5660620331764221,
+          "gauc": 0.6530946493148804,
+          "ndcg5": 0.47902944684028625,
+          "users": 10208,
+          "rows": 24901
+        },
+        "delta_vs_zero": {
+          "primary": 0.0,
+          "gauc": 0.0,
+          "ndcg5": 0.0
+        },
+        "eligible": true
+      },
+      {
+        "magnitude": 0.03,
+        "metrics": {
+          "primary": 0.5660620331764221,
+          "gauc": 0.6530946493148804,
+          "ndcg5": 0.47902944684028625,
+          "users": 10208,
+          "rows": 24901
+        },
+        "delta_vs_zero": {
+          "primary": 0.0,
+          "gauc": 0.0,
+          "ndcg5": 0.0
+        },
+        "eligible": true
+      },
+      {
+        "magnitude": 0.05,
+        "metrics": {
+          "primary": 0.566053032875061,
+          "gauc": 0.653080940246582,
+          "ndcg5": 0.4790251851081848,
+          "users": 10208,
+          "rows": 24901
+        },
+        "delta_vs_zero": {
+          "primary": -9.000301361083984e-06,
+          "gauc": -1.3709068298339844e-05,
+          "ndcg5": -4.26173210144043e-06
+        },
+        "eligible": false
+      },
+      {
+        "magnitude": 0.075,
+        "metrics": {
+          "primary": 0.5660521984100342,
+          "gauc": 0.6530877351760864,
+          "ndcg5": 0.4790167212486267,
+          "users": 10208,
+          "rows": 24901
+        },
+        "delta_vs_zero": {
+          "primary": -9.834766387939453e-06,
+          "gauc": -6.9141387939453125e-06,
+          "ndcg5": -1.2725591659545898e-05
+        },
+        "eligible": false
+      },
+      {
+        "magnitude": 0.1,
+        "metrics": {
+          "primary": 0.5660386085510254,
+          "gauc": 0.6530975103378296,
+          "ndcg5": 0.4789796471595764,
+          "users": 10208,
+          "rows": 24901
+        },
+        "delta_vs_zero": {
+          "primary": -2.3424625396728516e-05,
+          "gauc": 2.86102294921875e-06,
+          "ndcg5": -4.979968070983887e-05
+        },
+        "eligible": false
+      }
+    ],
+    "selected_magnitude": 0.0,
+    "selection_rule": "Highest primary among magnitudes with nonnegative GAUC and nDCG deltas; ties prefer the smaller magnitude."
+  },
+  "locked_screen": {
+    "exact_zero_residual_control": {
+      "primary": 0.614540696144104,
+      "gauc": 0.6637231707572937,
+      "ndcg5": 0.5653582811355591,
+      "users": 24262,
+      "rows": 249694
+    },
+    "candidate": {
+      "primary": 0.614540696144104,
+      "gauc": 0.6637231707572937,
+      "ndcg5": 0.5653582811355591,
+      "users": 24262,
+      "rows": 249694
+    },
+    "delta": {
+      "primary": 0.0,
+      "gauc": 0.0,
+      "ndcg5": 0.0
+    },
+    "gate": "primary, GAUC, and nDCG@5 must each improve strictly",
+    "passed": false
+  },
+  "recommendation": "Do not confirm; retain the frozen base because the locked all-metric gate failed.",
+  "artifacts": {
+    "script": "scripts/train_near_tie_residual.py",
+    "scores": "runtime/parallel-near-tie/screen-scores.npz",
+    "report": "results/parallel-methods/near-tie-screen.json"
+  },
+  "resource_usage": {
+    "wall_seconds": 7.023,
+    "train_seconds": 7.023,
+    "cpu_seconds": 7.143,
+    "cpu_hours": 0.001984,
+    "cpu_utilization_percent": 101.7,
+    "peak_rss_mb": 907.75,
+    "gpu_count": 0,
+    "gpu_seconds": 0.0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "hardware": {
+      "logical_cpu_count": 16,
+      "architecture": "arm64",
+      "processor": "arm"
+    }
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "all_four_folds_all_metrics_nonnegative": false,
+  "all_global_metrics_nonnegative": false,
+  "baseline_metrics": {
+    "GAUC": 0.6823537349700928,
+    "nDCG@5": 0.5433623194694519,
+    "primary": 0.6128580570220947
+  },
+  "champion_artifact": "results/final-model/validation-scores.npz",
+  "experiment": "fixed conservative RCR residual against frozen champion",
+  "fixed_residual_gains": {
+    "GAUC": -3.6954879760742188e-06,
+    "nDCG@5": -9.5367431640625e-07,
+    "primary": -2.384185791015625e-06
+  },
+  "fixed_residual_metrics": {
+    "GAUC": 0.6823500394821167,
+    "nDCG@5": 0.5433613657951355,
+    "primary": 0.6128556728363037
+  },
+  "fixed_weight": 0.05,
+  "folds": [
+    {
+      "all_metrics_nonnegative": false,
+      "baseline_metrics": {
+        "GAUC": 0.6848820447921753,
+        "nDCG@5": 0.5397460460662842,
+        "primary": 0.6123140454292297
+      },
+      "fold": 0,
+      "gains": {
+        "GAUC": -4.76837158203125e-06,
+        "nDCG@5": 4.231929779052734e-06,
+        "primary": -2.980232238769531e-07
+      },
+      "residual_metrics": {
+        "GAUC": 0.6848772764205933,
+        "nDCG@5": 0.5397502779960632,
+        "primary": 0.6123137474060059
+      },
+      "rows": 31537,
+      "users": 5602
+    },
+    {
+      "all_metrics_nonnegative": false,
+      "baseline_metrics": {
+        "GAUC": 0.6825631856918335,
+        "nDCG@5": 0.542828381061554,
+        "primary": 0.6126958131790161
+      },
+      "fold": 1,
+      "gains": {
+        "GAUC": -7.3909759521484375e-06,
+        "nDCG@5": 0.0,
+        "primary": -3.6954879760742188e-06
+      },
+      "residual_metrics": {
+        "GAUC": 0.6825557947158813,
+        "nDCG@5": 0.542828381061554,
+        "primary": 0.61269211769104
+      },
+      "rows": 30770,
+      "users": 5589
+    },
+    {
+      "all_metrics_nonnegative": false,
+      "baseline_metrics": {
+        "GAUC": 0.676494836807251,
+        "nDCG@5": 0.5456936359405518,
+        "primary": 0.6110942363739014
+      },
+      "fold": 2,
+      "gains": {
+        "GAUC": -4.112720489501953e-06,
+        "nDCG@5": -7.867813110351562e-06,
+        "primary": -5.9604644775390625e-06
+      },
+      "residual_metrics": {
+        "GAUC": 0.6764907240867615,
+        "nDCG@5": 0.5456857681274414,
+        "primary": 0.6110882759094238
+      },
+      "rows": 31466,
+      "users": 5633
+    },
+    {
+      "all_metrics_nonnegative": true,
+      "baseline_metrics": {
+        "GAUC": 0.685429036617279,
+        "nDCG@5": 0.5451765656471252,
+        "primary": 0.6153028011322021
+      },
+      "fold": 3,
+      "gains": {
+        "GAUC": 1.430511474609375e-06,
+        "nDCG@5": 0.0,
+        "primary": 7.152557373046875e-07
+      },
+      "residual_metrics": {
+        "GAUC": 0.6854304671287537,
+        "nDCG@5": 0.5451765656471252,
+        "primary": 0.6153035163879395
+      },
+      "rows": 31136,
+      "users": 5553
+    }
+  ],
+  "hidden_test_outcomes_parsed": false,
+  "integrity_incidents": [],
+  "merits_promotion": false,
+  "resource_usage": {
+    "cpu_hours": 0.00026,
+    "cpu_seconds": 0.937,
+    "cpu_utilization_percent": 99.97,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 872.516,
+    "wall_seconds": 0.937
+  }
+}

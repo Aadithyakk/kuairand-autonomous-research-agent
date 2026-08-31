@@ -1,0 +1,92 @@
+{
+  "experiment": "fixed author-only CDM/MMR temporal replication",
+  "status": "failed_replication",
+  "configuration": {
+    "similarity": "same non-UNK author only",
+    "weights": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "pool_size": 5,
+    "lambda": 0.04
+  },
+  "protocol": {
+    "source_model_fit_through": "2022-04-13",
+    "first_replication": "2022-04-14",
+    "second_replication": "2022-04-15..2022-04-21",
+    "configuration_locked_from": "exploratory April 22-28 context grid",
+    "outcomes_used_as_features": false,
+    "hidden_test_accessed": false,
+    "promotion_requirement": "positive primary and nonnegative GAUC/nDCG@5 on both earlier windows"
+  },
+  "april14": {
+    "control": {
+      "primary": 0.5959912538528442,
+      "gauc": 0.6698681712150574,
+      "ndcg5": 0.5221143960952759,
+      "users": 16910,
+      "rows": 71252
+    },
+    "candidate": {
+      "primary": 0.5959912538528442,
+      "gauc": 0.6698681712150574,
+      "ndcg5": 0.5221143960952759,
+      "users": 16910,
+      "rows": 71252
+    },
+    "delta": {
+      "primary": 0.0,
+      "gauc": 0.0,
+      "ndcg5": 0.0
+    },
+    "all_metrics_nonnegative": true,
+    "primary_positive": false,
+    "changed_rows": 2
+  },
+  "april15_21": {
+    "control": {
+      "primary": 0.6141026020050049,
+      "gauc": 0.6624848246574402,
+      "ndcg5": 0.5657204389572144,
+      "users": 24262,
+      "rows": 249694
+    },
+    "candidate": {
+      "primary": 0.6141159534454346,
+      "gauc": 0.6624922752380371,
+      "ndcg5": 0.5657395720481873,
+      "users": 24262,
+      "rows": 249694
+    },
+    "delta": {
+      "primary": 1.33514404296875e-05,
+      "gauc": 7.450580596923828e-06,
+      "ndcg5": 1.913309097290039e-05
+    },
+    "all_metrics_nonnegative": true,
+    "primary_positive": true,
+    "changed_rows": 88
+  },
+  "replicated": false,
+  "resources": {
+    "wall_seconds": 4.01,
+    "train_seconds": 4.01,
+    "cpu_seconds": 3.994,
+    "cpu_hours": 0.001109,
+    "cpu_utilization_percent": 99.58,
+    "peak_rss_mb": 418.406,
+    "gpu_count": 0,
+    "gpu_seconds": 0.0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "hardware": {
+      "logical_cpu_count": 16,
+      "architecture": "arm64",
+      "processor": "arm"
+    }
+  },
+  "recommendation": "Reject the exploratory author-only micro-gain and retain the frozen champion."
+}

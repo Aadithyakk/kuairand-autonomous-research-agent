@@ -1,0 +1,20 @@
+{
+  "title": "Pairwise rank-aligned FM blend",
+  "experiment_type": "fm_pairwise_blend",
+  "hypothesis": "A BPR FM supplies complementary within-user order information to the weighted pointwise ensemble.",
+  "parameters": {
+    "k": 16,
+    "lr": 0.001,
+    "epochs": 40,
+    "batch_size": 8192,
+    "patience": 4,
+    "seed": 0,
+    "ensemble_seeds": [0, 2],
+    "positive_weight": 2.75,
+    "pairwise_lr": 0.002,
+    "pairwise_epochs": 12,
+    "pairwise_patience": 4,
+    "pairwise_seed": 1,
+    "blend_weight": 0.44
+  }
+}

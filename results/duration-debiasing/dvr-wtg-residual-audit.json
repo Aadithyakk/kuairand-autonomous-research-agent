@@ -1,0 +1,121 @@
+{
+  "all_four_folds_all_metrics_nonnegative": false,
+  "all_global_metrics_nonnegative": false,
+  "baseline_metrics": {
+    "GAUC": 0.6823537349700928,
+    "nDCG@5": 0.5433623194694519,
+    "primary": 0.6128580570220947
+  },
+  "experiment": "fixed 5% DVR/WTG residual against frozen champion",
+  "fixed_residual_gains": {
+    "GAUC": 1.7881393432617188e-07,
+    "nDCG@5": -9.5367431640625e-07,
+    "primary": -4.172325134277344e-07
+  },
+  "fixed_residual_metrics": {
+    "GAUC": 0.6823539137840271,
+    "nDCG@5": 0.5433613657951355,
+    "primary": 0.6128576397895813
+  },
+  "fixed_weight": 0.05,
+  "folds": [
+    {
+      "all_metrics_nonnegative": true,
+      "baseline_metrics": {
+        "GAUC": 0.6848820447921753,
+        "nDCG@5": 0.5397460460662842,
+        "primary": 0.6123140454292297
+      },
+      "fold": 0,
+      "gains": {
+        "GAUC": 3.2186508178710938e-06,
+        "nDCG@5": 4.231929779052734e-06,
+        "primary": 3.7550926208496094e-06
+      },
+      "residual_metrics": {
+        "GAUC": 0.6848852634429932,
+        "nDCG@5": 0.5397502779960632,
+        "primary": 0.6123178005218506
+      },
+      "rows": 31537,
+      "users": 5602
+    },
+    {
+      "all_metrics_nonnegative": true,
+      "baseline_metrics": {
+        "GAUC": 0.6825631856918335,
+        "nDCG@5": 0.542828381061554,
+        "primary": 0.6126958131790161
+      },
+      "fold": 1,
+      "gains": {
+        "GAUC": 0.0,
+        "nDCG@5": 0.0,
+        "primary": 0.0
+      },
+      "residual_metrics": {
+        "GAUC": 0.6825631856918335,
+        "nDCG@5": 0.542828381061554,
+        "primary": 0.6126958131790161
+      },
+      "rows": 30770,
+      "users": 5589
+    },
+    {
+      "all_metrics_nonnegative": false,
+      "baseline_metrics": {
+        "GAUC": 0.676494836807251,
+        "nDCG@5": 0.5456936359405518,
+        "primary": 0.6110942363739014
+      },
+      "fold": 2,
+      "gains": {
+        "GAUC": 1.1920928955078125e-06,
+        "nDCG@5": -7.867813110351562e-06,
+        "primary": -3.337860107421875e-06
+      },
+      "residual_metrics": {
+        "GAUC": 0.6764960289001465,
+        "nDCG@5": 0.5456857681274414,
+        "primary": 0.611090898513794
+      },
+      "rows": 31466,
+      "users": 5633
+    },
+    {
+      "all_metrics_nonnegative": false,
+      "baseline_metrics": {
+        "GAUC": 0.685429036617279,
+        "nDCG@5": 0.5451765656471252,
+        "primary": 0.6153028011322021
+      },
+      "fold": 3,
+      "gains": {
+        "GAUC": -3.814697265625e-06,
+        "nDCG@5": 0.0,
+        "primary": -1.9073486328125e-06
+      },
+      "residual_metrics": {
+        "GAUC": 0.6854252219200134,
+        "nDCG@5": 0.5451765656471252,
+        "primary": 0.6153008937835693
+      },
+      "rows": 31136,
+      "users": 5553
+    }
+  ],
+  "hidden_test_outcomes_parsed": false,
+  "integrity_incidents": [],
+  "merits_promotion": false,
+  "resource_usage": {
+    "architecture": "arm64",
+    "cpu_hours": 0.000151,
+    "cpu_seconds": 0.545,
+    "cpu_utilization_percent": 99.76,
+    "device": "cpu",
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 875.609,
+    "wall_seconds": 0.547
+  }
+}

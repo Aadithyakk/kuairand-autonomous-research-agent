@@ -1,0 +1,33 @@
+name: prequential-repro-guards
+
+on:
+  push:
+    paths:
+      - "configs/prequential_teacher.lock.json"
+      - "requirements-prequential.lock.txt"
+      - "scripts/prequential_causality.py"
+      - "scripts/reproduce_prequential_teacher.py"
+      - "tests/test_prequential_*.py"
+      - ".github/workflows/prequential-repro.yml"
+  pull_request:
+    paths:
+      - "configs/prequential_teacher.lock.json"
+      - "requirements-prequential.lock.txt"
+      - "scripts/prequential_causality.py"
+      - "scripts/reproduce_prequential_teacher.py"
+      - "tests/test_prequential_*.py"
+
+jobs:
+  guards:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13.6"
+          cache: pip
+          cache-dependency-path: requirements-prequential.lock.txt
+      - run: python -m pip install -r requirements-prequential.lock.txt
+      - run: python -m unittest tests.test_prequential_causality tests.test_prequential_repro_config
+      - run: python scripts/reproduce_prequential_teacher.py doctor
+      - run: python -m py_compile scripts/reproduce_prequential_teacher.py scripts/prequential_causality.py

@@ -1,0 +1,36 @@
+{
+  "experiment": "Behavior Bias-aware Projection lite",
+  "created_before_execution": true,
+  "relevance_fields": [
+    "user_id",
+    "video_id",
+    "author_id",
+    "tab"
+  ],
+  "behavior_bias_fields": [
+    "log1p_session_position",
+    "duration_decile",
+    "log1p_elapsed_session_seconds"
+  ],
+  "training_logit": "relevance_logit + behavior_bias_logit",
+  "inference_logit": "relevance_logit_only",
+  "bounded_orthogonality_penalty": "mean(square(cosine_similarity(relevance_representation, behavior_bias_representation)))",
+  "lambda_grid": [
+    0.0,
+    0.01,
+    0.05,
+    0.1,
+    0.2
+  ],
+  "penalty_selection": "maximum relevance-only primary on Apr12-14; exact ties prefer smaller nonnegative lambda",
+  "locked_screen_acceptance": "On Apr15-21, selected lambda must improve relevance-only primary by at least 0.0001 and strictly improve GAUC and nDCG@5 over the exact lambda=0 refit control.",
+  "fixed_seed": 260839,
+  "fixed_epochs": 4,
+  "fixed_batch_size": 8192,
+  "fixed_embedding_dim": 12,
+  "fixed_hidden": 64,
+  "fixed_representation_dim": 32,
+  "fixed_champion_blend_weight": 0.05,
+  "confirmation": "Only after a passing screen, refit lambda=0 and the selected lambda on Apr8-21 and score Apr22-28 relevance-only once; audit a fixed 5% within-user-rank residual against the frozen champion and four actual-user-ID modulo folds.",
+  "hidden_test_policy": "Never parse Apr29+ outcome fields."
+}

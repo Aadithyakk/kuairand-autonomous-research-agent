@@ -4,6 +4,8 @@ import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from .champion import champion_available
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -14,6 +16,12 @@ def _int(name: str, default: int) -> int:
 
 def _float(name: str, default: float) -> float:
     return float(os.getenv(name, str(default)))
+
+
+def _bool(name: str, default: bool) -> bool:
+    return os.getenv(name, "true" if default else "false").strip().lower() in {
+        "1", "true", "yes", "on",
+    }
 
 
 @dataclass(frozen=True)
@@ -31,6 +39,7 @@ class Settings:
     state_dir: Path = Path(os.getenv("KUAILAB_STATE_DIR", str(PROJECT_ROOT / "runtime"))).resolve()
     dataset_path: str = os.getenv("KUAIRAND_DATA_PATH", "")
     experiment_command: str = os.getenv("KUAI_EXPERIMENT_COMMAND", "")
+    academic_search_enabled: bool = _bool("KUAILAB_ACADEMIC_SEARCH", True)
 
     @property
     def api_key_available(self) -> bool:
@@ -42,4 +51,6 @@ class Settings:
         data["api_key_available"] = self.api_key_available
         data["dataset_available"] = bool(self.dataset_path and Path(self.dataset_path).exists())
         data["adapter_available"] = bool(self.experiment_command)
+        data["champion_available"] = champion_available(PROJECT_ROOT)
+        data["live_predictor_available"] = (PROJECT_ROOT / "public" / "live-predictor.json").exists()
         return data

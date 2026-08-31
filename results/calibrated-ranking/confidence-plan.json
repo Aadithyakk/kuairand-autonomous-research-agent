@@ -1,0 +1,24 @@
+{
+  "experiment": "Confidence-aware heteroscedastic pointwise ranking",
+  "created_before_execution": true,
+  "mean_backbone": "DeepFM over user, video, author, tab, and train-quantile duration bucket",
+  "heteroscedastic_objective": "mean(exp(-log_variance) * binary_cross_entropy_with_logits(mean, label) + 0.5 * log_variance)",
+  "confidence_score": "mean_logit - penalty * within_user_standardized_predicted_sigma",
+  "penalty_grid": [
+    0.0,
+    0.01,
+    0.025,
+    0.05,
+    0.1
+  ],
+  "penalty_selection": "maximum primary on Apr12-14; exact ties prefer smaller nonnegative penalty",
+  "locked_screen_acceptance": "On Apr15-21, selected confidence score must improve primary by at least 0.0001 and strictly improve GAUC and nDCG@5 over the exact refit mean-only control",
+  "fixed_seed": 260837,
+  "fixed_epochs": 4,
+  "fixed_batch_size": 8192,
+  "fixed_embedding_dim": 12,
+  "fixed_hidden": 64,
+  "fixed_champion_blend_weight": 0.05,
+  "confirmation": "Only after a passing locked screen, refit the exact control and heteroscedastic model on Apr8-21, score Apr22-28 once with the selected penalty, and audit a fixed 5% rank residual against the frozen champion and four actual-user-ID modulo folds.",
+  "hidden_test_policy": "Never parse Apr29+ outcome fields."
+}

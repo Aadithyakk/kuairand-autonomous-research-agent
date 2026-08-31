@@ -1,0 +1,182 @@
+{
+  "acceptance_rule": "candidate must strictly improve primary, GAUC, and nDCG@5 over both the exact alpha=0 control and the untouched frozen base",
+  "alignment": {
+    "aligned_rows": 249694,
+    "finite_scores": true,
+    "row_key": "date,user_id,video_id",
+    "sha256": "4102bd7a5647c29556a095965de2a4dc9a2f0b6e1967a1e56491836b61552de6"
+  },
+  "artifacts": {
+    "scores": "runtime/parallel-neural-ndcg/train-only-evaluation-scores.npz",
+    "script": "scripts/train_neural_ndcg_residual.py",
+    "training_details": "runtime/parallel-neural-ndcg/training-details.json"
+  },
+  "candidate_improves_frozen_base": false,
+  "experiment": "bounded NeuralNDCG-style top-5 residual",
+  "feature_metadata": {
+    "evaluation": {
+      "feature_count": 15,
+      "features": [
+        "base_logit",
+        "within_user_base_rank",
+        "user_exposure_per_day_log1p",
+        "video_exposure_per_day_log1p",
+        "author_exposure_per_day_log1p",
+        "user_prior_logit",
+        "video_prior_logit",
+        "author_prior_logit",
+        "duration_log_z",
+        "tab_0",
+        "tab_1",
+        "tab_2",
+        "tab_4",
+        "tab_6",
+        "tab_other"
+      ],
+      "global_positive_rate_smoothed": 0.3322893507041274,
+      "history_days": 6,
+      "history_rows": 891418
+    },
+    "fit": {
+      "feature_count": 15,
+      "features": [
+        "base_logit",
+        "within_user_base_rank",
+        "user_exposure_per_day_log1p",
+        "video_exposure_per_day_log1p",
+        "author_exposure_per_day_log1p",
+        "user_prior_logit",
+        "video_prior_logit",
+        "author_prior_logit",
+        "duration_log_z",
+        "tab_0",
+        "tab_1",
+        "tab_2",
+        "tab_4",
+        "tab_6",
+        "tab_other"
+      ],
+      "global_positive_rate_smoothed": 0.33650448054141885,
+      "history_days": 3,
+      "history_rows": 559379
+    }
+  },
+  "hardware": {
+    "architecture": "arm64",
+    "logical_cpu_count": 16,
+    "torch_version": "2.10.0"
+  },
+  "locked_configuration": {
+    "base_epochs": 4,
+    "base_hidden": 64,
+    "batch_size": 8192,
+    "embedding_dim": 12,
+    "gate_temperature": 0.75,
+    "group_batch_size": 96,
+    "maximum_group_rows": 64,
+    "ndcg_alpha": 0.02,
+    "residual_bound": 0.2,
+    "residual_epochs": 4,
+    "residual_hidden": 32,
+    "seed": 260831,
+    "temperature": 0.25,
+    "threads": 4
+  },
+  "matched_candidate_improves_all_metrics": true,
+  "merits_confirmation": false,
+  "metrics": {
+    "alpha_zero_control": {
+      "GAUC": 0.6632426977157593,
+      "nDCG@5": 0.5653690099716187,
+      "primary": 0.614305853843689,
+      "rows": 249694,
+      "users": 24262
+    },
+    "candidate_minus_control": {
+      "GAUC": 0.000455319881439209,
+      "nDCG@5": 0.00015860795974731445,
+      "primary": 0.0003069639205932617
+    },
+    "candidate_minus_frozen_base": {
+      "GAUC": -0.0009351968765258789,
+      "nDCG@5": -0.000841975212097168,
+      "primary": -0.0008885860443115234
+    },
+    "frozen_base": {
+      "GAUC": 0.6646332144737244,
+      "nDCG@5": 0.5663695931434631,
+      "primary": 0.6155014038085938,
+      "rows": 249694,
+      "users": 24262
+    },
+    "neural_ndcg_candidate": {
+      "GAUC": 0.6636980175971985,
+      "nDCG@5": 0.565527617931366,
+      "primary": 0.6146128177642822,
+      "rows": 249694,
+      "users": 24262
+    }
+  },
+  "protocol": {
+    "base_fit": "2022-04-08..2022-04-11",
+    "base_refit": "2022-04-08..2022-04-14",
+    "base_score_alignment": "strictly out-of-time for both residual-fit and evaluation windows",
+    "confirmation_labels_accessed": false,
+    "group_memory_bound": "fit groups capped at 64; frozen top 48 plus up to 16 missed positives; evaluation uncapped",
+    "hidden_test_accessed": false,
+    "hyperparameters_locked_before_evaluation": true,
+    "locked_evaluation": "2022-04-15..2022-04-21",
+    "residual_fit": "2022-04-12..2022-04-14",
+    "smooth_rank": "1 + sum_j sigmoid((score_j-score_i)/temperature), diagonal removed; sigmoid top-5 gate"
+  },
+  "resource_usage_total": {
+    "cpu_hours": 0.007977,
+    "cpu_seconds": 28.719,
+    "cpu_utilization_percent": 125.22,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 843.219,
+    "wall_seconds": 22.935
+  },
+  "rows": {
+    "base_fit": 559379,
+    "evaluation": 249694,
+    "residual_fit": 332039
+  },
+  "status": "screen_rejected",
+  "training_summary": {
+    "candidate_correction": {
+      "maximum": 0.19999971985816956,
+      "mean": 0.003745410591363907,
+      "minimum": -0.19999782741069794,
+      "standard_deviation": 0.16144084930419922
+    },
+    "candidate_final_epoch": {
+      "bce": 0.5339033927660265,
+      "epoch": 4,
+      "loss": 0.5439852774143219,
+      "smooth_ndcg5_loss": 0.5040942280866298
+    },
+    "control_correction": {
+      "maximum": 0.19999973475933075,
+      "mean": 0.005277068354189396,
+      "minimum": -0.19999849796295166,
+      "standard_deviation": 0.1636824905872345
+    },
+    "control_final_epoch": {
+      "bce": 0.5339141825670028,
+      "epoch": 4,
+      "loss": 0.5339141825670028,
+      "smooth_ndcg5_loss": 0.5075837614872644
+    },
+    "fit_groups": {
+      "capped_users": 277,
+      "maximum_group_rows": 64,
+      "original_rows": 332039,
+      "retained_training_rows": 326540,
+      "users": 23066
+    }
+  }
+}

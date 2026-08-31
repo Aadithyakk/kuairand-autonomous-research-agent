@@ -1,0 +1,86 @@
+{
+  "hypothesis": "Bayesian-smoothed exact user-video history adds signal beyond identifier coverage.",
+  "protocol": {
+    "screen_train": "2022-04-08..2022-04-14",
+    "screen_validation": "2022-04-15..2022-04-21",
+    "confirmation_train": "2022-04-08..2022-04-21",
+    "confirmation_validation": "2022-04-22..2022-04-28",
+    "hidden_test_accessed": false
+  },
+  "screen_baseline": {
+    "primary": 0.614540696144104,
+    "gauc": 0.6637231707572937,
+    "ndcg5": 0.5653582811355591
+  },
+  "screen_selected": {
+    "alpha": 2.0,
+    "weight": -0.05,
+    "metrics": {
+      "primary": 0.6145549416542053,
+      "gauc": 0.6637394428253174,
+      "ndcg5": 0.5653704404830933
+    },
+    "gain": 1.424551010131836e-05
+  },
+  "confirmation": {
+    "champion_manifest_primary": 0.6128580570220947,
+    "baseline": {
+      "primary": 0.6128580570220947,
+      "gauc": 0.6823537349700928,
+      "ndcg5": 0.5433623194694519
+    },
+    "candidate": {
+      "primary": 0.6128584146499634,
+      "gauc": 0.682366669178009,
+      "ndcg5": 0.5433501601219177
+    },
+    "gain": 3.5762786865234375e-07,
+    "changed_rows": 15619,
+    "folds": [
+      {
+        "fold": 0,
+        "primary_gain": -7.605552673339844e-05,
+        "gauc_gain": -5.602836608886719e-06,
+        "ndcg5_gain": -0.00014650821685791016
+      },
+      {
+        "fold": 1,
+        "primary_gain": 0.00012600421905517578,
+        "gauc_gain": 7.796287536621094e-05,
+        "ndcg5_gain": 0.00017404556274414062
+      },
+      {
+        "fold": 2,
+        "primary_gain": -2.8133392333984375e-05,
+        "gauc_gain": -5.4836273193359375e-06,
+        "ndcg5_gain": -5.078315734863281e-05
+      },
+      {
+        "fold": 3,
+        "primary_gain": -1.919269561767578e-05,
+        "gauc_gain": -1.3172626495361328e-05,
+        "ndcg5_gain": -2.5153160095214844e-05
+      }
+    ],
+    "all_folds_nonnegative": false,
+    "both_metrics_nonnegative": false
+  },
+  "resource_usage": {
+    "wall_seconds": 51.257,
+    "train_seconds": 51.257,
+    "cpu_seconds": 51.22,
+    "cpu_hours": 0.014228,
+    "cpu_utilization_percent": 99.93,
+    "peak_rss_mb": 836.734,
+    "gpu_count": 0,
+    "gpu_seconds": 0.0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "hardware": {
+      "logical_cpu_count": 16,
+      "architecture": "arm64",
+      "processor": "arm"
+    }
+  }
+}

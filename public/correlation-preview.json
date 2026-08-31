@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "title": "Training-window viewing-behaviour correlation preview",
+  "window": "2022-04-08..2022-04-21",
+  "rows": 1114902,
+  "method": "Pearson correlation after chronologically sorting each user's impressions. Past-behaviour values are expanding aggregates shifted by one impression, so the current outcome is not included in its own history.",
+  "usage": "Explanatory demo diagnostic only; it was not used to select the recorded champion.",
+  "features": [
+    {"id":"past_views","short":"Past views","description":"Number of earlier impressions for this user."},
+    {"id":"past_long_view_rate","short":"Past long-view","description":"Share of this user's earlier impressions labelled long_view."},
+    {"id":"past_avg_completion","short":"Past completion","description":"Average earlier play-time divided by duration, capped at 3×."},
+    {"id":"past_avg_play_seconds","short":"Past play time","description":"Average seconds watched across this user's earlier impressions."},
+    {"id":"current_duration_seconds","short":"Video duration","description":"Duration of the current candidate video in seconds."},
+    {"id":"long_view","short":"Current long view","description":"The current training-window long_view outcome, used only for this retrospective diagnostic."}
+  ],
+  "matrix": [
+    [1.0,-0.2289,-0.1913,-0.2221,-0.0477,-0.1146],
+    [-0.2289,1.0,0.7417,0.7621,0.0289,0.3115],
+    [-0.1913,0.7417,1.0,0.5616,-0.0275,0.2416],
+    [-0.2221,0.7621,0.5616,1.0,0.0684,0.249],
+    [-0.0477,0.0289,-0.0275,0.0684,1.0,0.0034],
+    [-0.1146,0.3115,0.2416,0.249,0.0034,1.0]
+  ]
+}

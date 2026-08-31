@@ -1,0 +1,489 @@
+{
+  "artifacts": {
+    "scores": "runtime/parallel-calibrated-ranking/cqe/screen-scores.npz",
+    "script": "scripts/train_cqe_watchtime.py"
+  },
+  "candidate": {
+    "checkpoint": "runtime/parallel-calibrated-ranking/cqe/screen-cqe.pt",
+    "metrics": {
+      "GAUC": 0.6636713743209839,
+      "nDCG@5": 0.5658754110336304,
+      "primary": 0.6147733926773071,
+      "rows": 249694,
+      "users": 24262
+    },
+    "mode": "cqe",
+    "resource_usage": {
+      "cpu_hours": 0.00211,
+      "cpu_seconds": 7.596,
+      "cpu_utilization_percent": 186.09,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 929.203,
+      "wall_seconds": 4.082
+    },
+    "training_history": [
+      {
+        "BCE": 0.6152204953202414,
+        "auxiliary_loss": 0.5890254722822696,
+        "epoch": 1,
+        "loss": 0.6270010033878711
+      },
+      {
+        "BCE": 0.5082766484776768,
+        "auxiliary_loss": 0.41146376564962056,
+        "epoch": 2,
+        "loss": 0.5165059257537947
+      },
+      {
+        "BCE": 0.49652875426712384,
+        "auxiliary_loss": 0.3138295379253702,
+        "epoch": 3,
+        "loss": 0.5028053478363457
+      },
+      {
+        "BCE": 0.49267158431744357,
+        "auxiliary_loss": 0.30298485531719455,
+        "epoch": 4,
+        "loss": 0.4987312812323964
+      }
+    ]
+  },
+  "config_selection_runs": [
+    {
+      "config": {
+        "aux_weight": 0.02,
+        "blend": 0.1,
+        "levels": [
+          0.1,
+          0.25,
+          0.5,
+          0.75,
+          0.9
+        ]
+      },
+      "config_index": 0,
+      "deltas_vs_control": {
+        "GAUC": 0.001231074333190918,
+        "nDCG@5": 0.0007710456848144531,
+        "primary": 0.001001119613647461
+      },
+      "quantile_crossing_rate": 0.0,
+      "resource_usage": {
+        "cpu_hours": 0.00127,
+        "cpu_seconds": 4.571,
+        "cpu_utilization_percent": 189.72,
+        "device": "cpu",
+        "gpu_count": 0,
+        "gpu_hours": 0.0,
+        "peak_gpu_memory_mb": 0.0,
+        "peak_rss_mb": 814.203,
+        "wall_seconds": 2.409
+      },
+      "selection_metrics": {
+        "GAUC": 0.6690561175346375,
+        "nDCG@5": 0.5569448471069336,
+        "primary": 0.6130005121231079,
+        "rows": 332039,
+        "users": 23066
+      },
+      "training_history": [
+        {
+          "BCE": 0.6425414085388184,
+          "auxiliary_loss": 0.6608412084372147,
+          "epoch": 1,
+          "loss": 0.6557582340378693
+        },
+        {
+          "BCE": 0.5341243700704713,
+          "auxiliary_loss": 0.6265095619187839,
+          "epoch": 2,
+          "loss": 0.5466545612915702
+        },
+        {
+          "BCE": 0.49849242274312006,
+          "auxiliary_loss": 0.3970595982627592,
+          "epoch": 3,
+          "loss": 0.5064336191052976
+        },
+        {
+          "BCE": 0.4906579519527546,
+          "auxiliary_loss": 0.3419196290382441,
+          "epoch": 4,
+          "loss": 0.4974963453368864
+        }
+      ]
+    },
+    {
+      "config": {
+        "aux_weight": 0.05,
+        "blend": 0.1,
+        "levels": [
+          0.1,
+          0.25,
+          0.5,
+          0.75,
+          0.9
+        ]
+      },
+      "config_index": 1,
+      "deltas_vs_control": {
+        "GAUC": 0.001198410987854004,
+        "nDCG@5": 1.3232231140136719e-05,
+        "primary": 0.0006058216094970703
+      },
+      "quantile_crossing_rate": 0.0,
+      "resource_usage": {
+        "cpu_hours": 0.001251,
+        "cpu_seconds": 4.505,
+        "cpu_utilization_percent": 190.88,
+        "device": "cpu",
+        "gpu_count": 0,
+        "gpu_hours": 0.0,
+        "peak_gpu_memory_mb": 0.0,
+        "peak_rss_mb": 819.422,
+        "wall_seconds": 2.36
+      },
+      "selection_metrics": {
+        "GAUC": 0.6690234541893005,
+        "nDCG@5": 0.5561870336532593,
+        "primary": 0.6126052141189575,
+        "rows": 332039,
+        "users": 23066
+      },
+      "training_history": [
+        {
+          "BCE": 0.642699090466983,
+          "auxiliary_loss": 0.6591258135394774,
+          "epoch": 1,
+          "loss": 0.6756553848584493
+        },
+        {
+          "BCE": 0.5340280247771222,
+          "auxiliary_loss": 0.6099841948868572,
+          "epoch": 2,
+          "loss": 0.564527236033177
+        },
+        {
+          "BCE": 0.498786560435226,
+          "auxiliary_loss": 0.360701410666756,
+          "epoch": 3,
+          "loss": 0.5168216306230297
+        },
+        {
+          "BCE": 0.49107413317846216,
+          "auxiliary_loss": 0.32951178930807806,
+          "epoch": 4,
+          "loss": 0.5075497242851533
+        }
+      ]
+    },
+    {
+      "config": {
+        "aux_weight": 0.02,
+        "blend": 0.1,
+        "levels": [
+          0.05,
+          0.15,
+          0.3,
+          0.5,
+          0.7,
+          0.85,
+          0.95
+        ]
+      },
+      "config_index": 2,
+      "deltas_vs_control": {
+        "GAUC": 0.0011469125747680664,
+        "nDCG@5": 0.0009154081344604492,
+        "primary": 0.0010311603546142578
+      },
+      "quantile_crossing_rate": 0.0,
+      "resource_usage": {
+        "cpu_hours": 0.001277,
+        "cpu_seconds": 4.596,
+        "cpu_utilization_percent": 190.18,
+        "device": "cpu",
+        "gpu_count": 0,
+        "gpu_hours": 0.0,
+        "peak_gpu_memory_mb": 0.0,
+        "peak_rss_mb": 829.875,
+        "wall_seconds": 2.416
+      },
+      "selection_metrics": {
+        "GAUC": 0.6689719557762146,
+        "nDCG@5": 0.5570892095565796,
+        "primary": 0.6130305528640747,
+        "rows": 332039,
+        "users": 23066
+      },
+      "training_history": [
+        {
+          "BCE": 0.6425448422846587,
+          "auxiliary_loss": 0.613753206488015,
+          "epoch": 1,
+          "loss": 0.6548199066217395
+        },
+        {
+          "BCE": 0.5340907314549321,
+          "auxiliary_loss": 0.5754445804202039,
+          "epoch": 2,
+          "loss": 0.5455996221390323
+        },
+        {
+          "BCE": 0.4984511607798977,
+          "auxiliary_loss": 0.3554695378179136,
+          "epoch": 3,
+          "loss": 0.5055605522964312
+        },
+        {
+          "BCE": 0.49060039502986963,
+          "auxiliary_loss": 0.3137795467307602,
+          "epoch": 4,
+          "loss": 0.4968759840813236
+        }
+      ]
+    },
+    {
+      "config": {
+        "aux_weight": 0.02,
+        "blend": 0.25,
+        "levels": [
+          0.1,
+          0.25,
+          0.5,
+          0.75,
+          0.9
+        ]
+      },
+      "config_index": 3,
+      "deltas_vs_control": {
+        "GAUC": -0.005482971668243408,
+        "nDCG@5": -0.006395220756530762,
+        "primary": -0.005939066410064697
+      },
+      "quantile_crossing_rate": 0.0,
+      "resource_usage": {
+        "cpu_hours": 0.001254,
+        "cpu_seconds": 4.514,
+        "cpu_utilization_percent": 189.78,
+        "device": "cpu",
+        "gpu_count": 0,
+        "gpu_hours": 0.0,
+        "peak_gpu_memory_mb": 0.0,
+        "peak_rss_mb": 873.547,
+        "wall_seconds": 2.378
+      },
+      "selection_metrics": {
+        "GAUC": 0.6623420715332031,
+        "nDCG@5": 0.5497785806655884,
+        "primary": 0.6060603260993958,
+        "rows": 332039,
+        "users": 23066
+      },
+      "training_history": [
+        {
+          "BCE": 0.6425414085388184,
+          "auxiliary_loss": 0.6608412084372147,
+          "epoch": 1,
+          "loss": 0.6557582340378693
+        },
+        {
+          "BCE": 0.5341243700704713,
+          "auxiliary_loss": 0.6265095619187839,
+          "epoch": 2,
+          "loss": 0.5466545612915702
+        },
+        {
+          "BCE": 0.49849242274312006,
+          "auxiliary_loss": 0.3970595982627592,
+          "epoch": 3,
+          "loss": 0.5064336191052976
+        },
+        {
+          "BCE": 0.4906579519527546,
+          "auxiliary_loss": 0.3419196290382441,
+          "epoch": 4,
+          "loss": 0.4974963453368864
+        }
+      ]
+    }
+  ],
+  "control": {
+    "checkpoint": "runtime/parallel-calibrated-ranking/cqe/screen-control.pt",
+    "metrics": {
+      "GAUC": 0.6641783714294434,
+      "nDCG@5": 0.5663134455680847,
+      "primary": 0.6152459383010864,
+      "rows": 249694,
+      "users": 24262
+    },
+    "mode": "control",
+    "resource_usage": {
+      "cpu_hours": 0.001793,
+      "cpu_seconds": 6.455,
+      "cpu_utilization_percent": 186.22,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 917.766,
+      "wall_seconds": 3.466
+    },
+    "training_history": [
+      {
+        "BCE": 0.61558173009015,
+        "auxiliary_loss": 1.059570127670918,
+        "epoch": 1,
+        "loss": 0.6367731334966257
+      },
+      {
+        "BCE": 0.5085428253226324,
+        "auxiliary_loss": 0.8009451786312488,
+        "epoch": 2,
+        "loss": 0.5245617294530256
+      },
+      {
+        "BCE": 0.4967639022464052,
+        "auxiliary_loss": 0.5589638521911902,
+        "epoch": 3,
+        "loss": 0.5079431779887698
+      },
+      {
+        "BCE": 0.49279893811689607,
+        "auxiliary_loss": 0.5446877452211643,
+        "epoch": 4,
+        "loss": 0.5036926928463332
+      }
+    ]
+  },
+  "control_selection_metrics": {
+    "GAUC": 0.6678250432014465,
+    "nDCG@5": 0.5561738014221191,
+    "primary": 0.6119993925094604,
+    "rows": 332039,
+    "users": 23066
+  },
+  "deltas_vs_control": {
+    "GAUC": -0.0005069971084594727,
+    "nDCG@5": -0.0004380345344543457,
+    "primary": -0.0004725456237792969
+  },
+  "experiment": "Conditional Quantile Estimation watch-time ranking",
+  "locked_epoch_count": 4,
+  "matched_configuration": {
+    "batch_size": 8192,
+    "candidate_auxiliary": "pinball loss over monotonic quantile heads",
+    "control_auxiliary": "0.02*SmoothL1(log_watch)",
+    "dropout": 0.05,
+    "embedding_dim": 12,
+    "hidden": 64,
+    "learning_rate": 0.001,
+    "same_initialization_and_row_order": true,
+    "seed": 260830,
+    "threshold": "min(duration_ms,18000)",
+    "watch_transform": "log1p(clip(play_time_ms,0,600000)/1000)",
+    "weight_decay": 1e-06
+  },
+  "merits_confirmation": false,
+  "paper": "https://arxiv.org/abs/2407.12223",
+  "predeclared_config_grid": [
+    {
+      "aux_weight": 0.02,
+      "blend": 0.1,
+      "levels": [
+        0.1,
+        0.25,
+        0.5,
+        0.75,
+        0.9
+      ]
+    },
+    {
+      "aux_weight": 0.05,
+      "blend": 0.1,
+      "levels": [
+        0.1,
+        0.25,
+        0.5,
+        0.75,
+        0.9
+      ]
+    },
+    {
+      "aux_weight": 0.02,
+      "blend": 0.1,
+      "levels": [
+        0.05,
+        0.15,
+        0.3,
+        0.5,
+        0.7,
+        0.85,
+        0.95
+      ]
+    },
+    {
+      "aux_weight": 0.02,
+      "blend": 0.25,
+      "levels": [
+        0.1,
+        0.25,
+        0.5,
+        0.75,
+        0.9
+      ]
+    }
+  ],
+  "protocol": {
+    "apr22_plus_file_opened": false,
+    "config_selection": "Apr12-14",
+    "hidden_test_outcomes_parsed": false,
+    "integrity_incidents": [],
+    "refit": "Apr8-14",
+    "screen": "Apr15-21",
+    "selection_fit": "Apr8-11"
+  },
+  "recommendation": "reject CQE; do not access Apr22+",
+  "resources": {
+    "control_epoch_selection": {
+      "cpu_hours": 0.00367,
+      "cpu_seconds": 13.212,
+      "cpu_utilization_percent": 146.74,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 814.203,
+      "wall_seconds": 9.004
+    },
+    "total": {
+      "cpu_hours": 0.016511,
+      "cpu_seconds": 59.438,
+      "cpu_utilization_percent": 149.59,
+      "device": "cpu",
+      "gpu_count": 0,
+      "gpu_hours": 0.0,
+      "peak_gpu_memory_mb": 0.0,
+      "peak_rss_mb": 929.406,
+      "wall_seconds": 39.733
+    }
+  },
+  "selected_config": {
+    "aux_weight": 0.02,
+    "blend": 0.1,
+    "levels": [
+      0.05,
+      0.15,
+      0.3,
+      0.5,
+      0.7,
+      0.85,
+      0.95
+    ]
+  },
+  "selected_config_index": 2,
+  "status": "screen_rejected"
+}

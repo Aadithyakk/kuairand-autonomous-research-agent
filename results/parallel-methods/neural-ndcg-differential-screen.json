@@ -1,0 +1,108 @@
+{
+  "all_three_metrics_improve": true,
+  "artifact": "runtime/parallel-neural-ndcg/differential-screen-scores.npz",
+  "baseline_metrics": {
+    "GAUC": 0.6646332144737244,
+    "nDCG@5": 0.5663695931434631,
+    "primary": 0.6155014038085938,
+    "rows": 249694,
+    "users": 24262
+  },
+  "experiment": "NeuralNDCG ranking-objective differential follow-up",
+  "formula": "frozen_base + weight * (candidate - alpha_zero_control)",
+  "merits_locked_confirmation": true,
+  "plan": "results/parallel-methods/neural-ndcg-differential-plan.json",
+  "protocol": {
+    "confirmation_accessed": false,
+    "hidden_test_accessed": false,
+    "integrity_note": "Before this follow-up was assigned, an exploratory diagnostic inspected differential weights 0.25, 0.5, and 1.0 on Apr15-21. Those observations are not independent blinded evidence. This file fixes the formal grid and decision rule before the formal pipeline; Apr22-28 remains an untouched confirmation window.",
+    "minimum_primary_gain": 0.0001,
+    "selection_window": "2022-04-15..2022-04-21",
+    "weight_grid": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "zero_preferring": true
+  },
+  "resource_usage": {
+    "cpu_hours": 0.000568,
+    "cpu_seconds": 2.044,
+    "cpu_utilization_percent": 99.17,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 261.312,
+    "wall_seconds": 2.061
+  },
+  "scans": [
+    {
+      "metrics": {
+        "GAUC": 0.6646332144737244,
+        "nDCG@5": 0.5663695931434631,
+        "primary": 0.6155014038085938,
+        "rows": 249694,
+        "users": 24262
+      },
+      "weight": 0.0
+    },
+    {
+      "metrics": {
+        "GAUC": 0.6646910905838013,
+        "nDCG@5": 0.5665141344070435,
+        "primary": 0.6156026124954224,
+        "rows": 249694,
+        "users": 24262
+      },
+      "weight": 0.25
+    },
+    {
+      "metrics": {
+        "GAUC": 0.6646939516067505,
+        "nDCG@5": 0.5665404200553894,
+        "primary": 0.6156171560287476,
+        "rows": 249694,
+        "users": 24262
+      },
+      "weight": 0.5
+    },
+    {
+      "metrics": {
+        "GAUC": 0.6646983623504639,
+        "nDCG@5": 0.5664470195770264,
+        "primary": 0.6155726909637451,
+        "rows": 249694,
+        "users": 24262
+      },
+      "weight": 0.75
+    },
+    {
+      "metrics": {
+        "GAUC": 0.6646773815155029,
+        "nDCG@5": 0.5663841366767883,
+        "primary": 0.6155307292938232,
+        "rows": 249694,
+        "users": 24262
+      },
+      "weight": 1.0
+    }
+  ],
+  "selected_gains": {
+    "GAUC": 6.073713302612305e-05,
+    "nDCG@5": 0.00017082691192626953,
+    "primary": 0.0001157522201538086
+  },
+  "selected_metrics": {
+    "GAUC": 0.6646939516067505,
+    "nDCG@5": 0.5665404200553894,
+    "primary": 0.6156171560287476,
+    "rows": 249694,
+    "users": 24262
+  },
+  "selected_weight": 0.5,
+  "source_artifact": "runtime/parallel-neural-ndcg/train-only-evaluation-scores.npz",
+  "status": "screen_passed"
+}

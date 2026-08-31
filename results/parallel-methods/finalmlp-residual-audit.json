@@ -1,0 +1,148 @@
+{
+  "all_fixed_metrics_nonnegative": false,
+  "all_four_folds_all_metrics_nonnegative": false,
+  "baseline_metrics": {
+    "GAUC": 0.6823537349700928,
+    "nDCG@5": 0.5433623194694519,
+    "primary": 0.6128580570220947
+  },
+  "candidate_artifact": "runtime/parallel-finalmlp/confirmation-scores.npz",
+  "candidate_standalone_metrics": {
+    "GAUC": 0.6702930331230164,
+    "nDCG@5": 0.5374830961227417,
+    "primary": 0.6038880348205566
+  },
+  "champion_artifact": "results/final-model/validation-scores.npz",
+  "confirmation_labels_accessed": true,
+  "experiment": "FinalMLP rank residual against frozen champion",
+  "fixed_residual_gains": {
+    "GAUC": -1.704692840576172e-05,
+    "nDCG@5": 1.5139579772949219e-05,
+    "primary": -9.5367431640625e-07
+  },
+  "fixed_residual_metrics": {
+    "GAUC": 0.682336688041687,
+    "nDCG@5": 0.5433774590492249,
+    "primary": 0.6128571033477783
+  },
+  "fixed_weight": -0.11625,
+  "folds": [
+    {
+      "all_metrics_nonnegative": false,
+      "baseline_metrics": {
+        "GAUC": 0.6848820447921753,
+        "nDCG@5": 0.5397460460662842,
+        "primary": 0.6123140454292297
+      },
+      "fold": 0,
+      "gains": {
+        "GAUC": -7.665157318115234e-05,
+        "nDCG@5": 6.240606307983398e-05,
+        "primary": -7.092952728271484e-06
+      },
+      "residual_metrics": {
+        "GAUC": 0.6848053932189941,
+        "nDCG@5": 0.539808452129364,
+        "primary": 0.6123069524765015
+      },
+      "rows": 31537,
+      "selected_weight": -0.195,
+      "selection_primary_gain": 3.695487976074219e-05,
+      "users": 5602
+    },
+    {
+      "all_metrics_nonnegative": false,
+      "baseline_metrics": {
+        "GAUC": 0.6825631856918335,
+        "nDCG@5": 0.542828381061554,
+        "primary": 0.6126958131790161
+      },
+      "fold": 1,
+      "gains": {
+        "GAUC": 1.0251998901367188e-05,
+        "nDCG@5": -0.0002117753028869629,
+        "primary": -0.00010079145431518555
+      },
+      "residual_metrics": {
+        "GAUC": 0.6825734376907349,
+        "nDCG@5": 0.542616605758667,
+        "primary": 0.6125950217247009
+      },
+      "rows": 30770,
+      "selected_weight": -0.2,
+      "selection_primary_gain": 7.37905502319336e-05,
+      "users": 5589
+    },
+    {
+      "all_metrics_nonnegative": false,
+      "baseline_metrics": {
+        "GAUC": 0.676494836807251,
+        "nDCG@5": 0.5456936359405518,
+        "primary": 0.6110942363739014
+      },
+      "fold": 2,
+      "gains": {
+        "GAUC": -7.289648056030273e-05,
+        "nDCG@5": -8.195638656616211e-05,
+        "primary": -7.742643356323242e-05
+      },
+      "residual_metrics": {
+        "GAUC": 0.6764219403266907,
+        "nDCG@5": 0.5456116795539856,
+        "primary": 0.6110168099403381
+      },
+      "rows": 31466,
+      "selected_weight": 0.13,
+      "selection_primary_gain": 1.5437602996826172e-05,
+      "users": 5633
+    },
+    {
+      "all_metrics_nonnegative": false,
+      "baseline_metrics": {
+        "GAUC": 0.685429036617279,
+        "nDCG@5": 0.5451765656471252,
+        "primary": 0.6153028011322021
+      },
+      "fold": 3,
+      "gains": {
+        "GAUC": -1.800060272216797e-05,
+        "nDCG@5": -5.5789947509765625e-05,
+        "primary": -3.68952751159668e-05
+      },
+      "residual_metrics": {
+        "GAUC": 0.6854110360145569,
+        "nDCG@5": 0.5451207756996155,
+        "primary": 0.6152659058570862
+      },
+      "rows": 31136,
+      "selected_weight": -0.2,
+      "selection_primary_gain": 5.2809715270996094e-05,
+      "users": 5553
+    }
+  ],
+  "grid": {
+    "maximum": 0.25,
+    "minimum": -0.25,
+    "step": 0.005
+  },
+  "hidden_test_accessed": false,
+  "merits_promotion": false,
+  "protocol": "four actual-user-ID modulo folds; choose weight on three folds from a zero-preferring [-0.25,0.25] grid and report the held-out fourth",
+  "resource_usage": {
+    "cpu_hours": 0.01735,
+    "cpu_seconds": 62.459,
+    "cpu_utilization_percent": 99.81,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 907.672,
+    "wall_seconds": 62.577
+  },
+  "selected_weights": [
+    -0.195,
+    -0.2,
+    0.13,
+    -0.2
+  ]
+}

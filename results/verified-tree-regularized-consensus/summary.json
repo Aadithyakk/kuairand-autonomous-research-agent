@@ -1,0 +1,26 @@
+{
+  "status": "verified_improvement",
+  "target": "long_view",
+  "metric": "0.5 * GAUC + 0.5 * nDCG@5",
+  "split": {
+    "train": "20220408-20220421",
+    "validation": "20220422-20220428",
+    "hidden_test_accessed": false
+  },
+  "champion": {
+    "primary": 0.6110671758651733,
+    "gauc": 0.680371105670929,
+    "ndcg5": 0.541763186454773,
+    "users": 22377,
+    "rows": 124909
+  },
+  "baseline_primary": 0.6014695167541504,
+  "previous_verified_primary": 0.6109744310379028,
+  "gain_over_previous_verified": 0.00009274482727050781,
+  "fixed_recipe": "ordered consensus -> 0.365 watch-ratio DeepFM -> 0.27 same-session-margin DeepFM -> 0.235 full-metadata CatBoost, with within-user ordinal normalization after every stage",
+  "selection_evidence": "The CatBoost weight selected on disjoint user folds was 0.23 and 0.24; their fixed mean 0.235 was used for the final verification.",
+  "reproducibility_note": "A provisional joint-auxiliary recipe scored 0.611092 but was invalidated after retraining exposed CPU-thread nondeterminism. This evidence deliberately records the lower recipe that does not depend on that regenerated auxiliary artifact.",
+  "target_primary": 0.62,
+  "target_reached": false,
+  "remaining_gap": 0.008932824134826656
+}

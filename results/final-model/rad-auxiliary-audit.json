@@ -1,0 +1,77 @@
+{
+  "paper": {
+    "title": "Relative Advantage Debiasing for Watch-Time Prediction in Short-Video Recommendation",
+    "source": "https://arxiv.org/abs/2508.11086"
+  },
+  "protocol": {
+    "rad_video": "smoothed empirical mid-CDF of play_time_ms within training video_id",
+    "rad_user": "smoothed empirical mid-CDF within training (user_id, four-bin duration bucket)",
+    "fusion": "support-weighted probit fusion",
+    "fast_train": "2022-04-08..2022-04-14 with nested 2022-04-08..11 -> 2022-04-12..14 epoch selection",
+    "fast_validation": "2022-04-15..2022-04-21",
+    "slow_train": "2022-04-08..2022-04-21 with nested 2022-04-08..14 -> 2022-04-15..21 epoch selection",
+    "slow_confirmation": "2022-04-22..2022-04-28",
+    "hidden_test_accessed": false
+  },
+  "fast_baseline_primary": 0.6128751039505005,
+  "rad_auxiliary": {
+    "seed": 911,
+    "auxiliary_weight": 0.2,
+    "rad_score_weight": 0.0,
+    "fast": {
+      "primary": 0.6155557036399841,
+      "gauc": 0.6642133593559265,
+      "ndcg5": 0.5668980479240417,
+      "gain_over_fast_baseline": 0.0026805996894836426
+    },
+    "slow_standalone": {
+      "primary": 0.6036475896835327,
+      "gauc": 0.6701237559318542,
+      "ndcg5": 0.5371713638305664
+    },
+    "slow_fixed_five_percent_residual": {
+      "primary": 0.6128565669059753,
+      "gauc": 0.6823517680168152,
+      "ndcg5": 0.5433613657951355,
+      "gain_over_champion": -0.0000014901161193847656
+    }
+  },
+  "alpha_zero_control": {
+    "seed": 911,
+    "fast_primary": 0.6156399250030518,
+    "slow_standalone_primary": 0.6040182709693909,
+    "slow_fixed_five_percent_residual_primary": 0.6128570437431335,
+    "gain_over_rad_auxiliary_standalone": 0.0003706812858581543
+  },
+  "paper_faithful_rad_head": {
+    "fast_primary": 0.5839691162109375,
+    "fast_gauc": 0.622735321521759,
+    "fast_ndcg5": 0.5452028512954712,
+    "confirmation_accessed": false,
+    "best_small_head_mix_weight": 0.15,
+    "best_small_head_mix_primary": 0.6051645278930664,
+    "best_small_head_mix_gain_over_fast_baseline": -0.007710576057434082
+  },
+  "four_fold_residual_audit": {
+    "selected_weights": [0.075, -0.2, 0.075, -0.17],
+    "holdout_gains": [
+      -0.0000023245811462402344,
+      -0.0001239180564880371,
+      -0.000004231929779052734,
+      -0.00011777877807617188
+    ],
+    "fixed_weight": -0.05500000000000001,
+    "fixed_gain": -0.000002384185791015625,
+    "all_holdout_folds_nonnegative": false
+  },
+  "combined_resources": {
+    "runs": 5,
+    "wall_seconds": 72.076,
+    "train_seconds": 62.664,
+    "cpu_hours": 0.026406,
+    "gpu_hours": 0.0,
+    "peak_rss_mb": 1132.125
+  },
+  "decision": "rejected",
+  "conclusion": "RAD was implemented faithfully enough to test both auxiliary and direct preference-head use, but the alpha-zero control was stronger and no residual direction generalized."
+}

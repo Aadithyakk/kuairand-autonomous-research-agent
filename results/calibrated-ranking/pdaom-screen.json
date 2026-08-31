@@ -1,0 +1,301 @@
+{
+  "artifacts": {
+    "scores": "runtime/parallel-calibrated-ranking/pdaom/screen-scores.npz",
+    "script": "scripts/train_pdaom_gauc.py"
+  },
+  "configuration": {
+    "alpha_grid": [
+      0.0,
+      0.001,
+      0.003,
+      0.01
+    ],
+    "embedding_dim": 12,
+    "epochs": 4,
+    "hidden": 64,
+    "learning_rate": 0.002,
+    "row_cap": 8192,
+    "seed": 260830,
+    "selected_alpha": 0.001,
+    "threads": 4,
+    "weight_decay": 1e-06
+  },
+  "experiment": "PDAOM maximum-violation personalized GAUC loss",
+  "hardware": {
+    "architecture": "arm64",
+    "logical_cpu_count": 16
+  },
+  "locked_screen": {
+    "alpha_zero_control": {
+      "GAUC": 0.6626932621002197,
+      "nDCG@5": 0.5649621486663818,
+      "primary": 0.6138277053833008,
+      "rows": 249694,
+      "users": 24262
+    },
+    "candidate": {
+      "GAUC": 0.6623055934906006,
+      "nDCG@5": 0.5651063323020935,
+      "primary": 0.6137059926986694,
+      "rows": 249694,
+      "users": 24262
+    },
+    "candidate_history": [
+      {
+        "bce": 0.5979914302175695,
+        "eligible_user_batches": 22583,
+        "epoch": 1,
+        "pdaom": 1.2146877960725264
+      },
+      {
+        "bce": 0.5305724878202785,
+        "eligible_user_batches": 22583,
+        "epoch": 2,
+        "pdaom": 1.3438438523899425
+      },
+      {
+        "bce": 0.5118971626866947,
+        "eligible_user_batches": 22583,
+        "epoch": 3,
+        "pdaom": 1.3346525809981606
+      },
+      {
+        "bce": 0.4940176530317827,
+        "eligible_user_batches": 22583,
+        "epoch": 4,
+        "pdaom": 1.3304991418665106
+      }
+    ],
+    "candidate_minus_control": {
+      "GAUC": -0.0003876686096191406,
+      "nDCG@5": 0.00014418363571166992,
+      "primary": -0.00012171268463134766
+    },
+    "control_history": [
+      {
+        "bce": 0.5979744624007832,
+        "eligible_user_batches": 22583,
+        "epoch": 1,
+        "pdaom": 1.2158635572953658
+      },
+      {
+        "bce": 0.5297474487261339,
+        "eligible_user_batches": 22583,
+        "epoch": 2,
+        "pdaom": 1.3455073074861006
+      },
+      {
+        "bce": 0.5120174234563654,
+        "eligible_user_batches": 22583,
+        "epoch": 3,
+        "pdaom": 1.3378366047685797
+      },
+      {
+        "bce": 0.4942436770959334,
+        "eligible_user_batches": 22583,
+        "epoch": 4,
+        "pdaom": 1.3337792949243026
+      }
+    ],
+    "passed": false
+  },
+  "protocol": {
+    "alpha_selection": "2022-04-12..2022-04-14",
+    "batching": "complete users packed into bounded row batches",
+    "confirmation_labels_accessed": false,
+    "hidden_test_accessed": false,
+    "locked_refit": "2022-04-08..2022-04-14",
+    "locked_screen": "2022-04-15..2022-04-21",
+    "model_selection_fit": "2022-04-08..2022-04-11",
+    "screen_gate": "selected alpha > 0, primary >= +0.0001, GAUC > 0, nDCG@5 > 0",
+    "selection_rule": "highest selection primary among all-metric-nonnegative candidates; ties prefer smaller alpha"
+  },
+  "recommendation": "Reject without reading April 22+ labels.",
+  "resource_usage": {
+    "cpu_hours": 0.017808,
+    "cpu_seconds": 64.109,
+    "cpu_utilization_percent": 113.84,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 813.047,
+    "wall_seconds": 56.313
+  },
+  "rows": {
+    "core": 559379,
+    "screen": 249694,
+    "selection": 332039
+  },
+  "selection_runs": [
+    {
+      "alpha": 0.0,
+      "delta_vs_alpha_zero": {
+        "GAUC": 0.0,
+        "nDCG@5": 0.0,
+        "primary": 0.0
+      },
+      "eligible": true,
+      "history": [
+        {
+          "bce": 0.6187043103618898,
+          "eligible_user_batches": 20094,
+          "epoch": 1,
+          "pdaom": 1.1274917315745698
+        },
+        {
+          "bce": 0.5438691248064456,
+          "eligible_user_batches": 20094,
+          "epoch": 2,
+          "pdaom": 1.2938065684360007
+        },
+        {
+          "bce": 0.5015732473221378,
+          "eligible_user_batches": 20094,
+          "epoch": 3,
+          "pdaom": 1.2724529487499292
+        },
+        {
+          "bce": 0.48655320855154505,
+          "eligible_user_batches": 20094,
+          "epoch": 4,
+          "pdaom": 1.2719195718350618
+        }
+      ],
+      "metrics": {
+        "GAUC": 0.6634153723716736,
+        "nDCG@5": 0.5518134832382202,
+        "primary": 0.6076143980026245,
+        "rows": 332039,
+        "users": 23066
+      }
+    },
+    {
+      "alpha": 0.001,
+      "delta_vs_alpha_zero": {
+        "GAUC": 0.004103422164916992,
+        "nDCG@5": 0.003931224346160889,
+        "primary": 0.004017353057861328
+      },
+      "eligible": true,
+      "history": [
+        {
+          "bce": 0.6187144880709441,
+          "eligible_user_batches": 20094,
+          "epoch": 1,
+          "pdaom": 1.1267847513806992
+        },
+        {
+          "bce": 0.5440486332644587,
+          "eligible_user_batches": 20094,
+          "epoch": 2,
+          "pdaom": 1.2917981268703074
+        },
+        {
+          "bce": 0.5015777751155521,
+          "eligible_user_batches": 20094,
+          "epoch": 3,
+          "pdaom": 1.2697582365810007
+        },
+        {
+          "bce": 0.4875714796176855,
+          "eligible_user_batches": 20094,
+          "epoch": 4,
+          "pdaom": 1.2692723205124123
+        }
+      ],
+      "metrics": {
+        "GAUC": 0.6675187945365906,
+        "nDCG@5": 0.5557447075843811,
+        "primary": 0.6116317510604858,
+        "rows": 332039,
+        "users": 23066
+      }
+    },
+    {
+      "alpha": 0.003,
+      "delta_vs_alpha_zero": {
+        "GAUC": 0.0010522007942199707,
+        "nDCG@5": 0.0015129446983337402,
+        "primary": 0.0012825727462768555
+      },
+      "eligible": true,
+      "history": [
+        {
+          "bce": 0.6187262915182805,
+          "eligible_user_batches": 20094,
+          "epoch": 1,
+          "pdaom": 1.1252489539160244
+        },
+        {
+          "bce": 0.543771763642629,
+          "eligible_user_batches": 20094,
+          "epoch": 2,
+          "pdaom": 1.287602853083956
+        },
+        {
+          "bce": 0.5013904118019602,
+          "eligible_user_batches": 20094,
+          "epoch": 3,
+          "pdaom": 1.2658069582952969
+        },
+        {
+          "bce": 0.48636874124623725,
+          "eligible_user_batches": 20094,
+          "epoch": 4,
+          "pdaom": 1.2629608676053476
+        }
+      ],
+      "metrics": {
+        "GAUC": 0.6644675731658936,
+        "nDCG@5": 0.553326427936554,
+        "primary": 0.6088969707489014,
+        "rows": 332039,
+        "users": 23066
+      }
+    },
+    {
+      "alpha": 0.01,
+      "delta_vs_alpha_zero": {
+        "GAUC": 0.003320634365081787,
+        "nDCG@5": 0.0031828880310058594,
+        "primary": 0.003251791000366211
+      },
+      "eligible": true,
+      "history": [
+        {
+          "bce": 0.6187439103057419,
+          "eligible_user_batches": 20094,
+          "epoch": 1,
+          "pdaom": 1.1202329846395962
+        },
+        {
+          "bce": 0.5444323904272439,
+          "eligible_user_batches": 20094,
+          "epoch": 2,
+          "pdaom": 1.276249999585359
+        },
+        {
+          "bce": 0.5014865329300148,
+          "eligible_user_batches": 20094,
+          "epoch": 3,
+          "pdaom": 1.2516849179198777
+        },
+        {
+          "bce": 0.48691768274791,
+          "eligible_user_batches": 20094,
+          "epoch": 4,
+          "pdaom": 1.249766721241716
+        }
+      ],
+      "metrics": {
+        "GAUC": 0.6667360067367554,
+        "nDCG@5": 0.5549963712692261,
+        "primary": 0.6108661890029907,
+        "rows": 332039,
+        "users": 23066
+      }
+    }
+  ],
+  "status": "rejected_at_train_only_screen"
+}

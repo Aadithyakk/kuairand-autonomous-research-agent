@@ -1,0 +1,22 @@
+{
+  "date_range": [
+    20220422,
+    20220428
+  ],
+  "finite_scores": true,
+  "hidden_test_accessed": false,
+  "row_id": {
+    "end": 124908,
+    "start": 0,
+    "strictly_increasing": true
+  },
+  "rows": 124909,
+  "schema": [
+    "row_id",
+    "user_id",
+    "video_id",
+    "score"
+  ],
+  "split": "validation",
+  "submission_sha256": "ee340cab3a62a5e6ac6e12dd45e00b5b2d2810ef2ed5678684c3644448caacc7"
+}

@@ -1,0 +1,221 @@
+{
+  "experiment": "CDM/MMR-inspired contextual diversity reranker",
+  "status": "passed_train_only_screen",
+  "protocol": {
+    "source_model_fit": "2022-04-08..2022-04-13",
+    "lambda_fit_and_selection": "2022-04-14",
+    "locked_screen": "2022-04-15..2022-04-21",
+    "confirmation_labels_read": false,
+    "hidden_test_accessed": false,
+    "outcome_free_similarity": "0.35 author + 0.20 music + 0.10 video type + 0.35 tag Jaccard",
+    "reranking_scope": "greedy MMR within each user's top 10; lower ranks unchanged",
+    "selection_rule": "require fit primary gain >= 0.00001; otherwise prefer lambda=0",
+    "alignment": "Exact cache length equality against CSV rows dated after the cache's 20220413 model cutoff, plus plausible standalone metrics, was required."
+  },
+  "data": {
+    "selection_rows": 71252,
+    "selection_users": 16910,
+    "screen_rows": 249694,
+    "screen_users": 24262,
+    "source_cache": "runtime/stacked-reranker/out-of-time-components-cutoff-20220413.npz",
+    "source_stream": "deep (frozen out-of-time DeepFM)"
+  },
+  "alignment_validation": {
+    "exact_row_count_match": true,
+    "standalone_metrics_plausible": true,
+    "selection_control": {
+      "primary": 0.5959908460413448,
+      "gauc": 0.6698674419352922,
+      "ndcg5": 0.5221142501473972,
+      "users": 16910,
+      "rows": 71252
+    },
+    "screen_control": {
+      "primary": 0.6141021317151716,
+      "gauc": 0.6624841030387961,
+      "ndcg5": 0.565720160391547,
+      "users": 24262,
+      "rows": 249694
+    }
+  },
+  "selection_grid": [
+    {
+      "lambda": 0.0,
+      "metrics": {
+        "primary": 0.5959908460413448,
+        "gauc": 0.6698674419352922,
+        "ndcg5": 0.5221142501473972,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta_vs_lambda_zero": {
+        "primary": 0.0,
+        "gauc": 0.0,
+        "ndcg5": 0.0
+      }
+    },
+    {
+      "lambda": 0.0025,
+      "metrics": {
+        "primary": 0.5959908460413448,
+        "gauc": 0.6698674419352922,
+        "ndcg5": 0.5221142501473972,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta_vs_lambda_zero": {
+        "primary": 0.0,
+        "gauc": 0.0,
+        "ndcg5": 0.0
+      }
+    },
+    {
+      "lambda": 0.005,
+      "metrics": {
+        "primary": 0.5959908460413448,
+        "gauc": 0.6698674419352922,
+        "ndcg5": 0.5221142501473972,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta_vs_lambda_zero": {
+        "primary": 0.0,
+        "gauc": 0.0,
+        "ndcg5": 0.0
+      }
+    },
+    {
+      "lambda": 0.01,
+      "metrics": {
+        "primary": 0.5959908460413448,
+        "gauc": 0.6698674419352922,
+        "ndcg5": 0.5221142501473972,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta_vs_lambda_zero": {
+        "primary": 0.0,
+        "gauc": 0.0,
+        "ndcg5": 0.0
+      }
+    },
+    {
+      "lambda": 0.02,
+      "metrics": {
+        "primary": 0.5959908460413448,
+        "gauc": 0.6698674419352922,
+        "ndcg5": 0.5221142501473972,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta_vs_lambda_zero": {
+        "primary": 0.0,
+        "gauc": 0.0,
+        "ndcg5": 0.0
+      }
+    },
+    {
+      "lambda": 0.04,
+      "metrics": {
+        "primary": 0.595991944761336,
+        "gauc": 0.6698696393752748,
+        "ndcg5": 0.5221142501473972,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta_vs_lambda_zero": {
+        "primary": 1.0987199912104728e-06,
+        "gauc": 2.197439982531968e-06,
+        "ndcg5": 0.0
+      }
+    },
+    {
+      "lambda": 0.08,
+      "metrics": {
+        "primary": 0.5960059614761979,
+        "gauc": 0.6698847886535474,
+        "ndcg5": 0.5221271342988485,
+        "users": 16910,
+        "rows": 71252
+      },
+      "delta_vs_lambda_zero": {
+        "primary": 1.5115434853107956e-05,
+        "gauc": 1.7346718255151217e-05,
+        "ndcg5": 1.288415145128674e-05
+      }
+    }
+  ],
+  "selected_lambda": 0.08,
+  "selected_slice": {
+    "control": {
+      "primary": 0.5959908460413448,
+      "gauc": 0.6698674419352922,
+      "ndcg5": 0.5221142501473972,
+      "users": 16910,
+      "rows": 71252
+    },
+    "candidate": {
+      "primary": 0.5960059614761979,
+      "gauc": 0.6698847886535474,
+      "ndcg5": 0.5221271342988485,
+      "users": 16910,
+      "rows": 71252
+    },
+    "delta": {
+      "primary": 1.5115434853107956e-05,
+      "gauc": 1.7346718255151217e-05,
+      "ndcg5": 1.288415145128674e-05
+    },
+    "changed_rows": 131
+  },
+  "held_out_screen": {
+    "control": {
+      "primary": 0.6141021317151716,
+      "gauc": 0.6624841030387961,
+      "ndcg5": 0.565720160391547,
+      "users": 24262,
+      "rows": 249694
+    },
+    "candidate": {
+      "primary": 0.6141165291267079,
+      "gauc": 0.6625107704002008,
+      "ndcg5": 0.5657222878532149,
+      "users": 24262,
+      "rows": 249694
+    },
+    "delta": {
+      "primary": 1.4397411536304361e-05,
+      "gauc": 2.666736140466419e-05,
+      "ndcg5": 2.127461667833508e-06
+    },
+    "changed_rows": 2508
+  },
+  "screen_gate": {
+    "required": "nonzero lambda, primary >= +0.00001, GAUC and nDCG@5 nonnegative",
+    "passed": true
+  },
+  "recommendation": "Eligible for a separately authorized later-label confirmation.",
+  "artifacts": {
+    "script": "scripts/train_contextual_diversity.py",
+    "scores": "runtime/parallel-contextual-diversity/screen-scores.npz",
+    "report": "results/parallel-methods/contextual-diversity-screen.json"
+  },
+  "resource_usage": {
+    "wall_seconds": 9.101,
+    "train_seconds": 9.101,
+    "cpu_seconds": 9.029,
+    "cpu_hours": 0.002508,
+    "cpu_utilization_percent": 99.21,
+    "peak_rss_mb": 373.219,
+    "gpu_count": 0,
+    "gpu_seconds": 0.0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "device": "cpu",
+    "hardware": {
+      "logical_cpu_count": 16,
+      "architecture": "arm64",
+      "processor": "arm"
+    }
+  }
+}

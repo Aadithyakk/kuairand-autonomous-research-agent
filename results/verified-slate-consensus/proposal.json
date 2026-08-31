@@ -1,0 +1,334 @@
+{
+  "title": "Recent-coverage shallow-Yeti routing over the session-corrected consensus",
+  "experiment_type": "offline_slate_reranking",
+  "hypothesis": "A shallow regularized YetiRank expert exposes a systematic overconfidence direction for users with dense recent training histories. Extrapolating away from that expert only in the highest recent-coverage quartile can sharpen the calibrated consensus without disturbing sparse users.",
+  "protocol": {
+    "train_dates": "2022-04-08 through 2022-04-21",
+    "validation_dates": "2022-04-22 through 2022-04-28",
+    "ranking_unit": "all logged validation impressions for one user",
+    "hidden_test_accessed": false,
+    "validation_outcomes_used_as_features": false,
+    "candidate_information_used": ["user_id", "video_id", "author_id", "music_id", "video_type", "hourmin", "time_ms", "tab", "static tag tokens and item statistics", "training-only long_view and play_time_ms aggregates", "training-only user exposure overlap and other-user outcomes", "outcome-free full-slate score neighborhoods"],
+    "selection": "Tune each scalar only on disjoint user folds. The first eight stages use two user-parity folds; the remaining conditional, temporal, training-prior, confidence-gated, structural-routing, coverage-routing, and user-neighbor stages use four user-id-modulo folds. Screen neighbor count, similarity profile, power, and smoothing on an April 8-18 to April 19-21 temporal split. Fit the user-balanced tree through April 19 and select its tree count on April 20-21. Jointly search only the final CatBoost and frozen watch-ratio DeepFM scalars on four folds assigned by actual user_id modulo four; require all fold-selected pairs to agree and all held-out folds to improve.",
+    "coverage_threshold_protocol": "Compute the low-rate threshold as the row-weighted first quartile of Bayesian-smoothed April 8-21 user long-view rates. Mark prior-video coverage when a validation user-video identifier pair occurred in April 8-21; validation labels are never accessed.",
+    "user_neighbor_protocol": "Use cosine similarity over binary April 8-21 user-item exposures, retain 60 other users, square nonnegative similarities, estimate target-item long-view rates from those neighbors with smoothing 8 toward a smoothing-20 training item prior, and add only the within-user ordinal rank at weight 0.002.",
+    "terminal_joint_protocol": "Fit a seed-239 pointwise CatBoost through April 19 with each row weighted by (mean user row count / user row count)^0.5, normalize weights to mean one, early-stop on April 20-21, and retain 165 trees. Pair its within-user ordinal rank with the frozen watch-ratio DeepFM rank. A two-dimensional grid from -0.00125 to 0.004375 in steps of 0.000625 selected (0.001875, 0.001875) in every actual-user-ID fold. Neither component is accepted as a terminal residual by itself.",
+    "single_session_yeti_protocol": "Train CatBoost YetiRankPairwise on April 14-19 batch-slate features with the out-of-time base as baseline, early-stop on April 20-21 at 72 trees, refit on April 14-21, and route only users whose complete evaluation slate has one session under a 30-minute gap rule. Search the semantic convex range [0,1] with ties resolved toward the smallest-magnitude weight; use the mean of the four actual-user-ID fold weights.",
+    "session_median_protocol": "Build within-user fractional ranks from 20 frozen model families, take their row-wise median, and apply its gap from the preceding champion only to users with two or three 30-minute sessions. Select a scalar on four actual-user-ID folds with zero-preferring tie resolution and fix it to the fold mean.",
+    "recent_coverage_yeti_protocol": "Train a depth-6, l2-20 YetiRankPairwise model on April 14-19, early-stop on April 20-21 at 132 trees, and refit on April 14-21. Count each validation user's rows on April 19-21 training dates, define the row-weighted 75th percentile without validation outcomes, and apply the Yeti rank gap only at or above that threshold. Select the scalar on four actual-user-ID folds and fix it to the fold mean."
+  },
+  "features": {
+    "token_personal_mean": "Within-user standardized mean across an item's tag tokens of log1p(user-slate token count) - 0.25 * log1p(global-slate token count).",
+    "repeated_video": "Within-user standardized indicator that the exact video occurs more than once in the supplied evaluation slate.",
+    "author_frequency": "Within-user standardized log1p count of the author in the supplied evaluation slate.",
+    "music_unique_videos": "Within-user standardized number of distinct videos using the same music.",
+    "author_repeat_per_video": "Within-user standardized log1p ratio of author exposures to distinct videos for that author.",
+    "token_videos_per_author_mean": "Within-user standardized mean across tag tokens of log1p(distinct token videos / distinct token authors).",
+    "type_leave_one_out_score": "Within-user standardized mean accepted score of the other slate rows with the same video type; singleton groups retain their own score.",
+    "author_leave_one_out_score": "Within-user standardized mean accepted score of the other slate rows with the same author; singleton groups retain their own score.",
+    "author_daypart_leave_one_out_delta": "Within-user standardized difference between the accepted score and the other rows sharing author and four-hour daypart, computed after the broad type/author graph pass.",
+    "music_type_leave_one_out_delta": "Within-user standardized difference between the accepted score and the other rows sharing music and video type, recomputed after the author-daypart correction.",
+    "log_session_length": "Within-user standardized log1p length of the 30-minute-gap session reconstructed from time_ms.",
+    "tab": "Within-user standardized outcome-free feed-tab identifier.",
+    "date_tab_leave_one_out_score": "Within-user standardized mean accepted score of other rows on the same date and tab, recomputed after session length and tab corrections.",
+    "immediate_temporal_neighbor_delta": "Within-user standardized difference between each row's accepted score and the mean score of its immediately previous/next chronological neighbors.",
+    "recent3_user_threshold_duration_long_rate": "Within-user standardized, Bayesian-smoothed user × {under 10s, 10-18s, at least 18s} long-view rate from training dates April 19-21 only.",
+    "recent7_tab_long_rate": "Within-user standardized, Bayesian-smoothed tab long-view rate from training dates April 15-21 only.",
+    "all_user_author_completion_rate": "Within-user standardized, Bayesian-smoothed user × author 95%-completion rate from the complete April 8-21 training block.",
+    "joint_log_user_video_count": "Within-user standardized log count of the exact user-video pair in the supplied batch slate; it refines the earlier binary repeat flag.",
+    "batch_slate_tree": "Temporally trained CatBoost correction using static metadata, full-slate totals, session lengths, base-score leave-one-out groups, and neighboring base predictions. It never receives validation outcomes.",
+    "joint_ordinal_consensus": "Within-user ordinal rank of the champion after the continuous repeat penalty and tiny batch-slate tree correction, added back at a cross-fitted scalar weight.",
+    "high_margin_ordered_consensus": "For rows belonging to the row-weighted highest quartile of within-user normalized top-score margin, add 0.34 times the rank difference between the frozen temporally ordered CatBoost and the preceding champion. The gate and correction use scores only.",
+    "median_margin_model_mean_consensus": "For rows at or above the row-weighted median normalized top-score margin, add 0.01 times the difference between the mean within-user fractional rank of 20 frozen model families and the preceding champion rank.",
+    "two_active_days_ordered_extrapolation": "For users appearing on exactly two supplied validation dates, extrapolate 0.5225 away from the frozen temporally ordered CatBoost rank.",
+    "three_four_active_days_watch_extrapolation": "For users appearing on three or four supplied validation dates, extrapolate 0.175 away from the frozen watch-ratio DeepFM rank.",
+    "medium_slate_batch_consensus": "For users with 6-10 supplied impressions, move 0.01 toward the frozen temporal batch-slate CatBoost rank.",
+    "low_training_rate_watch_consensus": "For rows whose user is in the row-weighted lowest quartile of Bayesian-smoothed April 8-21 long-view rate, move 0.135 toward the frozen watch-ratio DeepFM rank.",
+    "prior_video_batch_extrapolation": "For validation users having at least one exact user-video pair seen in April 8-21 training, extrapolate 0.03 away from the frozen temporal batch-slate CatBoost rank. The gate checks identifiers only.",
+    "training_user_neighbor_positive_cf": "Within-user ordinal rank of a 60-neighbor collaborative estimate built from binary April 8-21 exposure overlap and other users' April 8-21 long-view outcomes. The historical artifact key contains 'positive', but similarity is exposure-only; outcomes enter only the neighbor target estimate.",
+    "joint_training_user_balanced_catboost": "Within-user ordinal rank of a pointwise CatBoost trained only on April 9-19 outcomes with square-root inverse user-activity weights and early-stopped on April 20-21.",
+    "joint_watch_ratio_deepfm": "Within-user ordinal rank of the frozen DeepFM trained on April 9-21 with continuous watch-ratio auxiliary supervision. It is jointly weighted with the user-balanced tree rather than accepted alone.",
+    "single_session_yeti_rank": "Within-user ordinal rank of a 72-tree YetiRankPairwise batch-slate model, used only when all supplied impressions for a user form one 30-minute session.",
+    "two_three_session_median_consensus": "Row-wise median within-user fractional rank across 20 frozen model families, applied only when the user's supplied slate forms two or three 30-minute sessions.",
+    "high_recent_coverage_shallow_yeti": "Within-user rank of a depth-6 regularized YetiRankPairwise model, gated by the user's April 19-21 training-row count at the row-weighted 75th percentile."
+  },
+  "selection_evidence": [
+    {
+      "stage": "token_personal_mean",
+      "fold_weights": [0.105, 0.1],
+      "fixed_weight": 0.1025,
+      "oof_primary": 0.6111671,
+      "fixed_primary": 0.6112069
+    },
+    {
+      "stage": "repeated_video",
+      "fold_weights": [-0.18, -0.15],
+      "fixed_weight": -0.165,
+      "oof_primary": 0.6112415,
+      "fixed_primary": 0.611259
+    },
+    {
+      "stage": "author_frequency",
+      "fold_weights": [0.15, 0.14],
+      "fixed_weight": 0.145,
+      "oof_primary": 0.61135924,
+      "fixed_primary": 0.6113628149032593
+    },
+    {
+      "stage": "music_unique_videos",
+      "fold_weights": [0.19, 0.19],
+      "fixed_weight": 0.19,
+      "oof_primary": 0.611478328704834,
+      "fixed_primary": 0.611478328704834
+    },
+    {
+      "stage": "author_repeat_per_video",
+      "fold_weights": [-0.16, -0.2],
+      "fixed_weight": -0.18,
+      "oof_primary": 0.6115173101425171,
+      "fixed_primary": 0.6115188598632812
+    },
+    {
+      "stage": "token_videos_per_author_mean",
+      "fold_weights": [-0.06, -0.09],
+      "fixed_weight": -0.075,
+      "oof_primary": 0.6115425825119019,
+      "fixed_primary": 0.611541748046875
+    },
+    {
+      "stage": "type_leave_one_out_score",
+      "fold_weights": [0.14, 0.13],
+      "fixed_weight": 0.135,
+      "oof_primary": 0.6116197109222412,
+      "fixed_primary": 0.6116253137588501
+    },
+    {
+      "stage": "author_leave_one_out_score",
+      "fold_weights": [-0.02, -0.02],
+      "fixed_weight": -0.02,
+      "oof_primary": 0.6116783618927002,
+      "fixed_primary": 0.6116783618927002
+    },
+    {
+      "stage": "author_daypart_leave_one_out_delta",
+      "fold_weights": [0.15, 0.15, 0.15, 0.15],
+      "fixed_weight": 0.15,
+      "oof_primary": 0.6117651462554932,
+      "fixed_primary": 0.6117651462554932
+    },
+    {
+      "stage": "music_type_leave_one_out_delta",
+      "fold_weights": [-0.14, -0.12, -0.08, -0.12],
+      "fixed_weight": -0.115,
+      "oof_primary": 0.6117796897888184,
+      "fixed_primary": 0.6118398904800415
+    },
+    {
+      "stage": "log_session_length",
+      "fold_weights": [-0.06, -0.06, -0.06, -0.05],
+      "fixed_weight": -0.0575,
+      "oof_primary": 0.6118736267089844,
+      "fixed_primary": 0.6119065284729004
+    },
+    {
+      "stage": "tab",
+      "fold_weights": [0.06, 0.06, 0.03, 0.06],
+      "fixed_weight": 0.0525,
+      "oof_primary": 0.6120058298110962,
+      "fixed_primary": 0.6119692921638489
+    },
+    {
+      "stage": "date_tab_leave_one_out_score",
+      "fold_weights": [0.02, 0.02, 0.02, 0.02],
+      "fixed_weight": 0.02,
+      "oof_primary": 0.61204993724823,
+      "fixed_primary": 0.61204993724823
+    },
+    {
+      "stage": "immediate_temporal_neighbor_delta",
+      "fold_weights": [0.01, 0.01, 0.01, 0.01],
+      "fixed_weight": 0.01,
+      "oof_primary": 0.6120631098747253,
+      "fixed_primary": 0.6120631098747253
+    },
+    {
+      "stage": "recent3_user_threshold_duration_long_rate",
+      "fold_weights": [-0.04, -0.04, -0.04, -0.04],
+      "fixed_weight": -0.04,
+      "oof_primary": 0.6121535301208496,
+      "fixed_primary": 0.6121535301208496
+    },
+    {
+      "stage": "recent7_tab_long_rate",
+      "fold_weights": [0.01, 0.01, 0.01, 0.01],
+      "fixed_weight": 0.01,
+      "oof_primary": 0.6121747493743896,
+      "fixed_primary": 0.6121747493743896
+    },
+    {
+      "stage": "all_user_author_completion_rate",
+      "fold_weights": [0.03, 0.03, 0.03, 0.03],
+      "fixed_weight": 0.03,
+      "oof_primary": 0.6122177243232727,
+      "fixed_primary": 0.6122177243232727
+    },
+    {
+      "stage": "joint_batch_slate_ordinal_consensus",
+      "inner_repeat_weight": -0.05,
+      "inner_batch_tree_weight": 0.0021875,
+      "fold_weights": [0.185, 0.295, 0.285, 0.305],
+      "fixed_weight": 0.2675,
+      "oof_primary": 0.6122684,
+      "fixed_primary": 0.6122815012931824
+    },
+    {
+      "stage": "high_margin_ordered_consensus",
+      "margin_quantile": 0.75,
+      "fold_weights": [0.34, 0.34, 0.34, 0.34],
+      "fixed_weight": 0.34,
+      "oof_primary": 0.6123714447021484,
+      "fixed_primary": 0.6123714447021484,
+      "fixed_gauc": 0.6817284226417542,
+      "fixed_ndcg5": 0.5430144667625427
+    },
+    {
+      "stage": "median_margin_model_mean_consensus",
+      "source_models": 20,
+      "margin_quantile": 0.5,
+      "fold_weights": [0.01, 0.01, 0.01, 0.01],
+      "fixed_weight": 0.01,
+      "oof_primary": 0.6124310493469238,
+      "fixed_primary": 0.6124310493469238,
+      "fixed_gauc": 0.6818247437477112,
+      "fixed_ndcg5": 0.5430374145507812,
+      "heldout_fold_primary_gains": [0.0000914931, 0.0000357032, 0.0000432134, 0.0000674129]
+    },
+    {
+      "stage": "two_active_days_ordered_extrapolation",
+      "fold_weights": [-0.54, -0.55, -0.43, -0.57],
+      "fixed_weight": -0.5225,
+      "oof_primary": 0.612510085105896,
+      "fixed_primary": 0.6125684380531311,
+      "fixed_gauc": 0.6820213198661804,
+      "fixed_ndcg5": 0.5431155562400818,
+      "heldout_fold_primary_gains": [0.0000771284, 0.0001598597, 0.0003015995, 0.0000124574]
+    },
+    {
+      "stage": "three_four_active_days_watch_extrapolation",
+      "fold_weights": [-0.18, -0.18, -0.18, -0.16],
+      "fixed_weight": -0.175,
+      "oof_primary": 0.612615704536438,
+      "fixed_primary": 0.6126254796981812,
+      "fixed_gauc": 0.6821318864822388,
+      "fixed_ndcg5": 0.5431191325187683,
+      "heldout_fold_primary_gains": [0.0000185966, 0.0001857281, 0.0000530481, -0.0000271201]
+    },
+    {
+      "stage": "medium_slate_batch_consensus",
+      "fold_weights": [0.01, 0.01, 0.01, 0.01],
+      "fixed_weight": 0.01,
+      "oof_primary": 0.6126559972763062,
+      "fixed_primary": 0.6126559972763062,
+      "fixed_gauc": 0.6821738481521606,
+      "fixed_ndcg5": 0.5431381464004517,
+      "heldout_fold_primary_gains": [0.0, 0.0000562668, 0.0000380874, 0.0000286102]
+    },
+    {
+      "stage": "low_training_rate_watch_consensus",
+      "fold_weights": [0.13, 0.14, 0.13, 0.14],
+      "fixed_weight": 0.135,
+      "oof_primary": 0.6127263307571411,
+      "fixed_primary": 0.6127434968948364,
+      "fixed_gauc": 0.6822268962860107,
+      "fixed_ndcg5": 0.5432600378990173,
+      "heldout_fold_primary_gains": [0.0001564026, 0.0000175834, 0.0001368523, 0.0000377893]
+    },
+    {
+      "stage": "prior_video_batch_extrapolation",
+      "fold_weights": [-0.04, -0.03, -0.03, -0.02],
+      "fixed_weight": -0.03,
+      "oof_primary": 0.612764835357666,
+      "fixed_primary": 0.6127808094024658,
+      "fixed_gauc": 0.6822733879089355,
+      "fixed_ndcg5": 0.5432882308959961,
+      "heldout_fold_primary_gains": [0.0000321865, 0.0000512004, -0.0000024438, 0.0000692010]
+    },
+    {
+      "stage": "training_user_neighbor_positive_cf",
+      "neighbors": 60,
+      "similarity_power": 2.0,
+      "neighbor_smoothing": 8.0,
+      "fold_weights": [0.002, 0.002, 0.002, 0.002],
+      "fixed_weight": 0.002,
+      "oof_primary": 0.612804651260376,
+      "fixed_primary": 0.612804651260376,
+      "fixed_gauc": 0.6822999715805054,
+      "fixed_ndcg5": 0.5433093309402466,
+      "heldout_fold_primary_gains": [0.0000380278, 0.0000196099, 0.0000212789, 0.0000163913]
+    },
+    {
+      "stage": "joint_user_balanced_catboost_watch_ratio",
+      "user_balance_power": 0.5,
+      "selected_trees": 165,
+      "two_dimensional_grid": [-0.00125, 0.004375, 0.000625],
+      "fold_weight_pairs": [[0.001875, 0.001875], [0.001875, 0.001875], [0.001875, 0.001875], [0.001875, 0.001875]],
+      "fixed_weights": {"user_balanced_catboost": 0.001875, "watch_ratio_deepfm": 0.001875},
+      "oof_primary": 0.6128295660018921,
+      "fixed_primary": 0.6128295660018921,
+      "fixed_gauc": 0.682319164276123,
+      "fixed_ndcg5": 0.5433400273323059,
+      "heldout_fold_primary_gains": [0.0000419617, 0.0000045300, 0.0000331402, 0.0000196695]
+    },
+    {
+      "stage": "single_session_yeti_rank_consensus",
+      "session_gap_minutes": 30,
+      "fold_weights": [0.78, 0.78, 0.78, 0.40],
+      "fixed_weight": 0.685,
+      "standalone_primary": 0.6123074293136597,
+      "oof_primary": 0.6128336191177368,
+      "fixed_primary": 0.6128336191177368,
+      "fixed_gauc": 0.6823240518569946,
+      "fixed_ndcg5": 0.5433431267738342,
+      "heldout_fold_primary_gains": [0.0, 0.0000159740, 0.0, 0.0],
+      "changed_users": 3,
+      "changed_pair_orderings": 3
+    },
+    {
+      "stage": "two_three_session_median_extrapolation",
+      "source_models": 20,
+      "session_gap_minutes": 30,
+      "fold_weights": [-0.03, -0.03, -0.02, -0.03],
+      "fixed_weight": -0.0275,
+      "oof_primary": 0.6128348708152771,
+      "fixed_primary": 0.6128385066986084,
+      "fixed_gauc": 0.6823317408561707,
+      "fixed_ndcg5": 0.5433452725410461,
+      "heldout_fold_primary_gains": [0.0, 0.0000053048, 0.0000144839, 0.0],
+      "changed_users": 9,
+      "changed_pair_orderings": 9
+    },
+    {
+      "stage": "high_recent_coverage_shallow_yeti_extrapolation",
+      "ranker_depth": 6,
+      "ranker_l2": 20.0,
+      "selected_trees": 132,
+      "coverage_quantile": 0.75,
+      "fold_weights": [-0.09, -0.09, -0.10, -0.09],
+      "fixed_weight": -0.0925,
+      "standalone_primary": 0.6122357845306396,
+      "oof_primary": 0.6128561496734619,
+      "fixed_primary": 0.6128580570220947,
+      "fixed_gauc": 0.6823537349700928,
+      "fixed_ndcg5": 0.5433623194694519,
+      "heldout_fold_primary_gains": [0.0000091195, 0.0000581145, 0.0000069141, 0.0000044107],
+      "changed_users": 128,
+      "changed_pair_orderings": 225
+    }
+  ],
+  "rejected_followup": {
+    "feature": "remaining training-coverage residuals",
+    "reason": "Two additional depth-8 Yeti seeds reached 0.61206280 and 0.61230960; their three-seed rank mean reached 0.61235535 but selected zero globally. Its strongest two-active-day and low-history gates each regressed on one held-out fold. For the shallow model, the second-ranked five-plus-active-day and size-11-20 gates were not promoted after the stronger high-recent-coverage gate passed every criterion."
+  },
+  "acceptance": "Accept only stages whose disjoint-user weights agree in direction, whose stitched cross-fitted primary improves over the preceding stage, and whose fixed recipe does not reduce either aggregate metric or any held-out user fold. The high-recent-coverage shallow-Yeti weights [-0.09, -0.09, -0.10, -0.09] agree; their fixed mean improves all four held-out folds plus aggregate GAUC and nDCG@5.",
+  "accepted": true
+}

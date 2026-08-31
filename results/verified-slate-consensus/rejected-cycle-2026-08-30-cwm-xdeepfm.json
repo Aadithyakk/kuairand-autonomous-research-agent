@@ -1,0 +1,80 @@
+{
+  "status": "no_verified_gain",
+  "branch": "feature/experiment-resource-tracking",
+  "starting_commit": "6e9ddb4",
+  "protocol": "Official April 8-21 train and April 22-28 validation split; no random-log or hidden-test outcomes; published CWM likelihood and xDeepFM interaction structure adapted from the bundled KuaiRand reference; four user-ID-modulo folds for residual selection.",
+  "retained_champion": {
+    "primary": 0.612804651260376,
+    "gauc": 0.6822999715805054,
+    "ndcg5": 0.5433093309402466,
+    "baseline_primary": 0.6014695167541504,
+    "gain_over_baseline": 0.011335134506225586,
+    "target_primary": 0.7,
+    "remaining_gap": 0.08719534873962398
+  },
+  "experiments": [
+    {
+      "name": "Counterfactual Watch Model likelihood",
+      "result": "rejected",
+      "architecture": "Full-metadata DeepFM trained with the reference CWM right-censored likelihood using cost inverse 40 and sigma 2; exact objective and a 0.1 CWM / 0.9 weighted-BCE anchor were tested.",
+      "evidence": "Pure CWM reached 0.56198001 standalone and selected zero residual weight in all folds. The BCE-anchored model reached 0.60583085 standalone and 0.61280859 fixed, but held-out folds 1 and 2 regressed. Converting latent relevance to known-duration threshold-exceedance scores raised pure CWM only to 0.56788582; its residual weight remained zero. The best anchored threshold score reached 0.58638322 standalone and regressed to 0.61279964 fixed.",
+      "resource_usage": {
+        "pure_training": {
+          "wall_seconds": 31.557,
+          "cpu_seconds": 98.424,
+          "cpu_hours": 0.02734,
+          "peak_rss_mb": 15705.5
+        },
+        "anchored_training": {
+          "wall_seconds": 32.451,
+          "cpu_seconds": 101.955,
+          "cpu_hours": 0.028321,
+          "peak_rss_mb": 15739.125
+        },
+        "raw_residual_audits": {
+          "wall_seconds": 39.17,
+          "cpu_seconds": 39.108,
+          "cpu_hours": 0.010863,
+          "peak_rss_mb": 1217.859
+        },
+        "threshold_residual_audits": {
+          "wall_seconds": 38.223,
+          "cpu_seconds": 38.193,
+          "cpu_hours": 0.010609,
+          "peak_rss_mb": 1216.438
+        },
+        "gpu_hours": 0.0
+      }
+    },
+    {
+      "name": "xDeepFM compressed interaction network",
+      "result": "rejected",
+      "architecture": "DeepFM plus two width-32 compressed interaction layers over ten rich categorical fields, full metadata, and watch-ratio auxiliary weight 0.4.",
+      "evidence": "Epoch 2 reached 0.60725051 standalone (0.67527020 GAUC, 0.53923082 nDCG@5). Later epochs overfit sharply, falling to 0.57981420 by epoch 5. All four residual folds selected exactly zero weight, leaving the champion unchanged.",
+      "resource_usage": {
+        "training": {
+          "wall_seconds": 528.888,
+          "cpu_seconds": 2080.2,
+          "cpu_hours": 0.577833,
+          "peak_rss_mb": 16119.297
+        },
+        "residual_audit": {
+          "wall_seconds": 19.04,
+          "cpu_seconds": 18.953,
+          "cpu_hours": 0.005265,
+          "peak_rss_mb": 1207.531
+        },
+        "gpu_hours": 0.0
+      }
+    }
+  ],
+  "successful_tracked_run_totals": {
+    "wall_seconds": 689.329,
+    "cpu_seconds": 2376.833,
+    "cpu_hours": 0.660231,
+    "peak_rss_mb": 16119.297,
+    "gpu_hours": 0.0,
+    "note": "The lightweight duration-threshold score builder and standalone evaluator did not emit tracker records and are excluded. One mistyped xDeepFM audit path initialized verification but failed before finalizing its tracker; the corrected successful audit is included."
+  },
+  "conclusion": "Neither the reference counterfactual watch likelihood nor explicit compressed feature interactions added stable ranking information beyond the existing calibrated ensemble. The 0.6128046513 champion remains authoritative."
+}

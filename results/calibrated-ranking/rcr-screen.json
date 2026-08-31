@@ -1,0 +1,430 @@
+{
+  "alpha_grid_predeclared": [
+    0.0,
+    0.0005,
+    0.001,
+    0.002
+  ],
+  "artifacts": {
+    "scores": "runtime/parallel-calibrated-ranking/rcr/screen-scores.npz",
+    "script": "scripts/train_rcr_ranking.py"
+  },
+  "control_epoch_selection_history": [
+    {
+      "BCE": 0.6271159778470579,
+      "GAUC": 0.6562092900276184,
+      "ListCE(sigmoid)": 2.707306944805643,
+      "epoch": 1,
+      "loss": 0.6271159778470579,
+      "nDCG@5": 0.5448995232582092,
+      "primary": 0.6005544066429138
+    },
+    {
+      "BCE": 0.5564331256824991,
+      "GAUC": 0.6615859866142273,
+      "ListCE(sigmoid)": 2.6246726892996524,
+      "epoch": 2,
+      "loss": 0.5564331256824991,
+      "nDCG@5": 0.5491421818733215,
+      "primary": 0.6053640842437744
+    },
+    {
+      "BCE": 0.5140203440534896,
+      "GAUC": 0.6676838994026184,
+      "ListCE(sigmoid)": 2.60538089102593,
+      "epoch": 3,
+      "loss": 0.5140203440534896,
+      "nDCG@5": 0.5552254319190979,
+      "primary": 0.6114546656608582
+    },
+    {
+      "BCE": 0.4977639714876811,
+      "GAUC": 0.6699445247650146,
+      "ListCE(sigmoid)": 2.6018771157748457,
+      "epoch": 4,
+      "loss": 0.4977639714876811,
+      "nDCG@5": 0.5567675828933716,
+      "primary": 0.6133560538291931
+    },
+    {
+      "BCE": 0.4875503407008406,
+      "GAUC": 0.6706723570823669,
+      "ListCE(sigmoid)": 2.5920076266579004,
+      "epoch": 5,
+      "loss": 0.4875503407008406,
+      "nDCG@5": 0.5576688647270203,
+      "primary": 0.6141706109046936
+    },
+    {
+      "BCE": 0.48239700949710346,
+      "GAUC": 0.6705960035324097,
+      "ListCE(sigmoid)": 2.5892579175423887,
+      "epoch": 6,
+      "loss": 0.48239700949710346,
+      "nDCG@5": 0.557999849319458,
+      "primary": 0.6142979264259338
+    },
+    {
+      "BCE": 0.47842802690423053,
+      "GAUC": 0.6680881381034851,
+      "ListCE(sigmoid)": 2.5791994765184927,
+      "epoch": 7,
+      "loss": 0.47842802690423053,
+      "nDCG@5": 0.5562885403633118,
+      "primary": 0.6121883392333984
+    },
+    {
+      "BCE": 0.47254989717317664,
+      "GAUC": 0.6654596924781799,
+      "ListCE(sigmoid)": 2.564490501431451,
+      "epoch": 8,
+      "loss": 0.47254989717317664,
+      "nDCG@5": 0.5546125769615173,
+      "primary": 0.6100361347198486
+    },
+    {
+      "BCE": 0.46472718231919885,
+      "GAUC": 0.6591787934303284,
+      "ListCE(sigmoid)": 2.5319168878638227,
+      "epoch": 9,
+      "loss": 0.46472718231919885,
+      "nDCG@5": 0.5495481491088867,
+      "primary": 0.6043634414672852
+    },
+    {
+      "BCE": 0.4599399160647738,
+      "GAUC": 0.6504126191139221,
+      "ListCE(sigmoid)": 2.510853484056998,
+      "epoch": 10,
+      "loss": 0.4599399160647738,
+      "nDCG@5": 0.5421506762504578,
+      "primary": 0.5962816476821899
+    }
+  ],
+  "control_epoch_selection_resource_usage": {
+    "cpu_hours": 0.005091,
+    "cpu_seconds": 18.329,
+    "cpu_utilization_percent": 148.33,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 782.219,
+    "wall_seconds": 12.356
+  },
+  "experiment": "Bai et al. Regression-Compatible Ranking",
+  "hardware": {
+    "architecture": "arm64",
+    "logical_cpu_count": 16
+  },
+  "locked_epoch_count": 6,
+  "matched_configuration": {
+    "backbone": "MaskNet-style pointwise neural model",
+    "batch_size": 8192,
+    "dropout": 0.05,
+    "embedding_dim": 12,
+    "epochs_max": 15,
+    "fields": [
+      "user_id",
+      "video_id",
+      "author_id",
+      "tab",
+      "dur_bucket"
+    ],
+    "hidden": 64,
+    "learning_rate": 0.001,
+    "objective": "(1-alpha)*BCE + alpha*ListCE(sigmoid)",
+    "patience": 4,
+    "same_initialization_and_group_order": true,
+    "seed": 260830,
+    "weight_decay": 1e-06
+  },
+  "merits_confirmation": true,
+  "paper": "https://arxiv.org/abs/2211.01494",
+  "protocol": {
+    "apr22_plus_file_opened": false,
+    "complete_user_groups": true,
+    "epoch_selection": "Apr8-11 -> Apr12-14 using alpha=0 control",
+    "evaluation": "Apr15-21",
+    "hidden_test_outcomes_parsed": false,
+    "integrity_incidents": [],
+    "refit": "Apr8-14"
+  },
+  "recommendation": "run locked confirmation",
+  "resource_usage_total": {
+    "cpu_hours": 0.020359,
+    "cpu_seconds": 73.293,
+    "cpu_utilization_percent": 153.31,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 862.953,
+    "wall_seconds": 47.808
+  },
+  "rows": {
+    "epoch_dev": 332039,
+    "epoch_train": 559379,
+    "screen_evaluation": 249694
+  },
+  "runs": [
+    {
+      "alpha": 0.0,
+      "checkpoint": "runtime/parallel-calibrated-ranking/rcr/screen-alpha-0p0.pt",
+      "metrics": {
+        "GAUC": 0.6620279550552368,
+        "nDCG@5": 0.5645400881767273,
+        "primary": 0.6132839918136597,
+        "rows": 249694,
+        "users": 24262
+      },
+      "resource_usage": {
+        "cpu_hours": 0.003018,
+        "cpu_seconds": 10.863,
+        "cpu_utilization_percent": 178.81,
+        "device": "cpu",
+        "gpu_count": 0,
+        "gpu_hours": 0.0,
+        "peak_gpu_memory_mb": 0.0,
+        "peak_rss_mb": 834.391,
+        "wall_seconds": 6.075
+      },
+      "training_history": [
+        {
+          "BCE": 0.6227187346328389,
+          "ListCE(sigmoid)": 3.085975497419184,
+          "epoch": 1,
+          "loss": 0.6227187346328389
+        },
+        {
+          "BCE": 0.544070658900521,
+          "ListCE(sigmoid)": 3.0067146431316027,
+          "epoch": 2,
+          "loss": 0.544070658900521
+        },
+        {
+          "BCE": 0.50915432843295,
+          "ListCE(sigmoid)": 2.9959615208885886,
+          "epoch": 3,
+          "loss": 0.50915432843295
+        },
+        {
+          "BCE": 0.4965643281286413,
+          "ListCE(sigmoid)": 2.988773554021662,
+          "epoch": 4,
+          "loss": 0.4965643281286413
+        },
+        {
+          "BCE": 0.48808242218060927,
+          "ListCE(sigmoid)": 2.9763466704975476,
+          "epoch": 5,
+          "loss": 0.48808242218060927
+        },
+        {
+          "BCE": 0.4804726554588838,
+          "ListCE(sigmoid)": 2.9544759143482553,
+          "epoch": 6,
+          "loss": 0.4804726554588838
+        }
+      ]
+    },
+    {
+      "alpha": 0.0005,
+      "checkpoint": "runtime/parallel-calibrated-ranking/rcr/screen-alpha-0p0005.pt",
+      "deltas_vs_control": {
+        "GAUC": 0.00015664100646972656,
+        "nDCG@5": 0.00021517276763916016,
+        "primary": 0.00018596649169921875
+      },
+      "metrics": {
+        "GAUC": 0.6621845960617065,
+        "nDCG@5": 0.5647552609443665,
+        "primary": 0.6134699583053589,
+        "rows": 249694,
+        "users": 24262
+      },
+      "resource_usage": {
+        "cpu_hours": 0.003019,
+        "cpu_seconds": 10.87,
+        "cpu_utilization_percent": 179.22,
+        "device": "cpu",
+        "gpu_count": 0,
+        "gpu_hours": 0.0,
+        "peak_gpu_memory_mb": 0.0,
+        "peak_rss_mb": 857.922,
+        "wall_seconds": 6.065
+      },
+      "training_history": [
+        {
+          "BCE": 0.6227075744758953,
+          "ListCE(sigmoid)": 3.085936916958202,
+          "epoch": 1,
+          "loss": 0.6239391738718206
+        },
+        {
+          "BCE": 0.5439236505465074,
+          "ListCE(sigmoid)": 3.0065853530710394,
+          "epoch": 2,
+          "loss": 0.5451549714261835
+        },
+        {
+          "BCE": 0.509155807170001,
+          "ListCE(sigmoid)": 2.9959871833974665,
+          "epoch": 3,
+          "loss": 0.5103992088274523
+        },
+        {
+          "BCE": 0.4964709590781819,
+          "ListCE(sigmoid)": 2.9885038050738246,
+          "epoch": 4,
+          "loss": 0.4977169638330286
+        },
+        {
+          "BCE": 0.4877205634658987,
+          "ListCE(sigmoid)": 2.9745965025641703,
+          "epoch": 5,
+          "loss": 0.48896398950706826
+        },
+        {
+          "BCE": 0.4802294649861076,
+          "ListCE(sigmoid)": 2.9520193338394165,
+          "epoch": 6,
+          "loss": 0.48146534833041105
+        }
+      ]
+    },
+    {
+      "alpha": 0.001,
+      "checkpoint": "runtime/parallel-calibrated-ranking/rcr/screen-alpha-0p001.pt",
+      "deltas_vs_control": {
+        "GAUC": -2.4497509002685547e-05,
+        "nDCG@5": -0.00042134523391723633,
+        "primary": -0.00022292137145996094
+      },
+      "metrics": {
+        "GAUC": 0.6620034575462341,
+        "nDCG@5": 0.5641187429428101,
+        "primary": 0.6130610704421997,
+        "rows": 249694,
+        "users": 24262
+      },
+      "resource_usage": {
+        "cpu_hours": 0.003014,
+        "cpu_seconds": 10.851,
+        "cpu_utilization_percent": 179.23,
+        "device": "cpu",
+        "gpu_count": 0,
+        "gpu_hours": 0.0,
+        "peak_gpu_memory_mb": 0.0,
+        "peak_rss_mb": 860.0,
+        "wall_seconds": 6.055
+      },
+      "training_history": [
+        {
+          "BCE": 0.6227019954811442,
+          "ListCE(sigmoid)": 3.085916133360429,
+          "epoch": 1,
+          "loss": 0.6251652154055509
+        },
+        {
+          "BCE": 0.5441070502454585,
+          "ListCE(sigmoid)": 3.0066648678346115,
+          "epoch": 2,
+          "loss": 0.5465696215629577
+        },
+        {
+          "BCE": 0.5091355670582164,
+          "ListCE(sigmoid)": 2.9958790627392857,
+          "epoch": 3,
+          "loss": 0.5116223153742877
+        },
+        {
+          "BCE": 0.49648629237305036,
+          "ListCE(sigmoid)": 2.988400101661682,
+          "epoch": 4,
+          "loss": 0.4989782127467069
+        },
+        {
+          "BCE": 0.48779520988464353,
+          "ListCE(sigmoid)": 2.97522656917572,
+          "epoch": 5,
+          "loss": 0.49028265232389623
+        },
+        {
+          "BCE": 0.4800421197306026,
+          "ListCE(sigmoid)": 2.9517110456119884,
+          "epoch": 6,
+          "loss": 0.4825137948448008
+        }
+      ]
+    },
+    {
+      "alpha": 0.002,
+      "checkpoint": "runtime/parallel-calibrated-ranking/rcr/screen-alpha-0p002.pt",
+      "deltas_vs_control": {
+        "GAUC": -0.0002071857452392578,
+        "nDCG@5": -8.255243301391602e-05,
+        "primary": -0.00014483928680419922
+      },
+      "metrics": {
+        "GAUC": 0.6618207693099976,
+        "nDCG@5": 0.5644575357437134,
+        "primary": 0.6131391525268555,
+        "rows": 249694,
+        "users": 24262
+      },
+      "resource_usage": {
+        "cpu_hours": 0.003047,
+        "cpu_seconds": 10.968,
+        "cpu_utilization_percent": 179.69,
+        "device": "cpu",
+        "gpu_count": 0,
+        "gpu_hours": 0.0,
+        "peak_gpu_memory_mb": 0.0,
+        "peak_rss_mb": 862.953,
+        "wall_seconds": 6.104
+      },
+      "training_history": [
+        {
+          "BCE": 0.6226904944940047,
+          "ListCE(sigmoid)": 3.085869487849149,
+          "epoch": 1,
+          "loss": 0.6276168725707314
+        },
+        {
+          "BCE": 0.5440179150212895,
+          "ListCE(sigmoid)": 3.006552802432667,
+          "epoch": 2,
+          "loss": 0.548943001573736
+        },
+        {
+          "BCE": 0.5091291172937913,
+          "ListCE(sigmoid)": 2.9958207087083295,
+          "epoch": 3,
+          "loss": 0.5141025117852471
+        },
+        {
+          "BCE": 0.4965206278996034,
+          "ListCE(sigmoid)": 2.9884219386360864,
+          "epoch": 4,
+          "loss": 0.5015044415538962
+        },
+        {
+          "BCE": 0.4880871453068473,
+          "ListCE(sigmoid)": 2.976252566684376,
+          "epoch": 5,
+          "loss": 0.49306349049914966
+        },
+        {
+          "BCE": 0.4807103601368991,
+          "ListCE(sigmoid)": 2.9547309745441783,
+          "epoch": 6,
+          "loss": 0.4856584145264192
+        }
+      ]
+    }
+  ],
+  "selected_alpha": 0.0005,
+  "status": "screen_passed",
+  "zero_preferring_selection": "alpha=0 unless a nonzero alpha gains >=0.0001 primary and strictly improves GAUC and nDCG@5"
+}

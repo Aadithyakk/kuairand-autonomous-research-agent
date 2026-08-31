@@ -7,13 +7,20 @@ from urllib.parse import urlparse
 
 from .config import Settings
 from .engine import CampaignEngine
-from .state import StateStore
+from .live_predictor import LivePredictor
+from .state import StateStore, utc_now
 
 
 settings = Settings()
 store = StateStore(settings.state_dir, settings.public_dict())
 def refresh_runtime_config(state: dict) -> None:
     state["config"] = settings.public_dict()
+    if state.get("campaign", {}).get("status") in {"running", "paused", "stopping"}:
+        state["campaign"].update(
+            status="interrupted",
+            ended_at=utc_now(),
+            stop_reason="backend restarted; campaign can be continued from the retained champion",
+        )
     if state.get("iterations") and state.get("campaign", {}).get("mode") == "demo":
         state["iterations"][0]["title"] = "Demo FM baseline"
         state["iterations"][0]["provider"] = "demo"
@@ -22,6 +29,7 @@ def refresh_runtime_config(state: dict) -> None:
 
 store.update(refresh_runtime_config)
 engine = CampaignEngine(settings, store)
+live_predictor = LivePredictor(settings.state_dir.parent / "public" / "live-predictor.json")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -62,6 +70,11 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/events":
             snapshot = store.snapshot()
             self._json({"events": snapshot["events"]})
+        elif path == "/api/predict/options":
+            if not live_predictor.available:
+                self._json({"available": False, "error": "live predictor artifact is not trained"}, HTTPStatus.SERVICE_UNAVAILABLE)
+            else:
+                self._json(live_predictor.options())
         else:
             self._json({"error": "not found"}, HTTPStatus.NOT_FOUND)
 
@@ -70,7 +83,14 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body = self._body()
             if path == "/api/run/start":
-                engine.start(body.get("mode", "demo"), body.get("provider", "demo"))
+                engine.start(
+                    body.get("mode", "demo"),
+                    body.get("provider", "demo"),
+                    body.get("limits"),
+                    bootstrap_verified=body.get("bootstrap_verified", True),
+                )
+            elif path == "/api/run/continue":
+                engine.continue_campaign(body.get("limits"))
             elif path == "/api/run/pause":
                 engine.pause()
             elif path == "/api/run/resume":
@@ -81,6 +101,16 @@ class Handler(BaseHTTPRequestHandler):
                 engine.reset()
             elif path == "/api/steer":
                 engine.steer(str(body.get("instruction", "")))
+            elif path == "/api/predict/slate":
+                if not live_predictor.available:
+                    self._json({"ok": False, "error": "live predictor artifact is not trained"}, HTTPStatus.SERVICE_UNAVAILABLE)
+                    return
+                prediction = live_predictor.predict(
+                    None if body.get("user_id") in {None, ""} else str(body["user_id"]),
+                    int(body.get("limit", 10)),
+                )
+                self._json({"ok": True, **prediction})
+                return
             else:
                 self._json({"error": "not found"}, HTTPStatus.NOT_FOUND)
                 return

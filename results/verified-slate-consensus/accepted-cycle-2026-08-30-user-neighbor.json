@@ -1,0 +1,78 @@
+{
+  "status": "verified_improvement",
+  "objective": "training-only user-neighbor collaborative correction",
+  "protocol": {
+    "training_dates": "20220408-20220421",
+    "validation_dates": "20220422-20220428",
+    "temporal_selection": "fit 20220408-20220418; screen on 20220419-20220421",
+    "final_selection": "four disjoint user-id-modulo folds",
+    "validation_outcomes_used_as_features": false,
+    "hidden_test_accessed": false
+  },
+  "previous_champion": {
+    "primary": 0.6127808094024658,
+    "gauc": 0.6822733879089355,
+    "ndcg5": 0.5432882308959961
+  },
+  "new_champion": {
+    "primary": 0.612804651260376,
+    "gauc": 0.6822999715805054,
+    "ndcg5": 0.5433093309402466,
+    "users": 22377,
+    "rows": 124909
+  },
+  "gain": {
+    "primary": 0.00002384185791015625,
+    "gauc": 0.00002658367156982422,
+    "ndcg5": 0.00002110004425048828,
+    "over_baseline_primary": 0.011335134506225586
+  },
+  "candidate": {
+    "artifact": "runtime/user-neighbor-cf-n60.npz",
+    "artifact_key": "positive_p2.0_s8.0",
+    "tracked_trainer": "scripts/train_user_neighbor_cf.py",
+    "similarity": "cosine over binary training user-item exposures",
+    "neighbors": 60,
+    "similarity_power": 2.0,
+    "neighbor_smoothing": 8.0,
+    "item_prior_smoothing": 20.0,
+    "accepted_weight": 0.002,
+    "fold_weights": [0.002, 0.002, 0.002, 0.002],
+    "heldout_fold_primary_gains": [
+      0.0000380278,
+      0.0000196099,
+      0.0000212789,
+      0.0000163913
+    ]
+  },
+  "rejected_rankers": {
+    "PairLogitPairwise": {
+      "standalone_primary": 0.6118788719177246,
+      "cross_fitted_primary": 0.6127787828445435
+    },
+    "QuerySoftMax": {
+      "standalone_primary": 0.6112478971481323,
+      "cross_fitted_primary": 0.6127710342407227
+    }
+  },
+  "resource_usage": {
+    "successful_tracked_run_wall_seconds_sum": 784.497,
+    "cpu_seconds": 2133.987,
+    "cpu_hours": 0.592774,
+    "peak_rss_mb": 4427.641,
+    "gpu_hours": 0.0,
+    "accepted_trainer": {
+      "wall_seconds": 6.943,
+      "cpu_hours": 0.002244,
+      "peak_rss_mb": 4239.0
+    },
+    "verification": {
+      "wall_seconds": 15.561,
+      "cpu_hours": 0.004322,
+      "peak_rss_mb": 1092.594
+    }
+  },
+  "target_primary": 0.7,
+  "target_reached": false,
+  "remaining_gap": 0.08719534873962398
+}

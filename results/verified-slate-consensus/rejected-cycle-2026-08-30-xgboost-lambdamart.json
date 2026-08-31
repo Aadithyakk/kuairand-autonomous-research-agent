@@ -1,0 +1,25 @@
+{
+  "status": "rejected",
+  "objective": "XGBoost LambdaMART batch-slate ranking",
+  "protocol": {
+    "train_features": "same leak-free temporal batch-slate feature matrix as the accepted CatBoost rankers",
+    "fit_dates": "20220414-20220419",
+    "temporal_holdout_dates": "20220420-20220421",
+    "validation_dates": "20220422-20220428",
+    "ranking_unit": "user",
+    "hidden_test_accessed": false,
+    "validation_outcomes_used_as_features": false
+  },
+  "runs": [
+    {"objective": "rank:ndcg", "seed": 829, "primary": 0.6117139, "wall_seconds": 20.446, "cpu_hours": 0.010309, "peak_rss_mb": 2749.766, "gpu_hours": 0.0},
+    {"objective": "rank:pairwise", "seed": 839, "primary": 0.61172867, "wall_seconds": 21.205, "cpu_hours": 0.010923, "peak_rss_mb": 2735.844, "gpu_hours": 0.0},
+    {"objective": "rank:map", "seed": 849, "primary": 0.61188686, "wall_seconds": 22.324, "cpu_hours": 0.009613, "peak_rss_mb": 2743.25, "gpu_hours": 0.0},
+    {"objective": "rank:map", "seed": 857, "primary": 0.6118113, "wall_seconds": 22.983, "cpu_hours": 0.009882, "peak_rss_mb": 2733.0, "gpu_hours": 0.0},
+    {"objective": "rank:map", "seed": 863, "primary": 0.61194855, "wall_seconds": 22.687, "cpu_hours": 0.009508, "peak_rss_mb": 2783.0, "gpu_hours": 0.0}
+  ],
+  "ensemble": {
+    "method": "within-user rank mean of the three rank:map seeds",
+    "primary": 0.6118993
+  },
+  "decision": "No objective selected a nonzero global residual against the 0.612858 champion. The strongest structural gate retained a held-out fold regression, so neither the individual rankers nor their ensemble was promoted."
+}

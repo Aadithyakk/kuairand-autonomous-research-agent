@@ -1,0 +1,24 @@
+{
+  "status": "invalidated_after_fold_audit",
+  "objective": "training-user-balanced pointwise tree correction",
+  "branch": "feature/experiment-resource-tracking",
+  "original_commit": "62e65e6",
+  "reason": "The original audit selected folds from actual user IDs but reported held-out gains using ordinal user codes modulo four. Correcting row fold membership to folds[user_codes] invalidated the tree-only promotion.",
+  "preceding_champion": {
+    "primary": 0.612804651260376,
+    "gauc": 0.6822999715805054,
+    "ndcg5": 0.5433093309402466
+  },
+  "corrected_tree_only_audit": {
+    "fine_grid_fold_weights": [0.001875, 0.001875, 0.003125, 0.001875],
+    "heldout_fold_primary_gains": [0.0, 0.0000045299530029296875, -0.000007331371307373047, -0.0000016689300537109375],
+    "oof_primary": 0.61280357837677,
+    "fixed_mean_weight": 0.0021875,
+    "fixed_primary": 0.6128088235855103,
+    "fixed_fold_primary_gains": [0.0, 0.0000045299530029296875, 0.000013768672943115234, -0.0000016689300537109375],
+    "accepted": false
+  },
+  "resolution": "The tree is not retained as an independent stage. A subsequent corrected two-dimensional audit accepts it only as one component of an inseparable joint residual with the frozen watch-ratio DeepFM; see accepted-cycle-2026-08-30-joint-terminal-residual.json.",
+  "validation_outcomes_used_as_features": false,
+  "hidden_test_accessed": false
+}

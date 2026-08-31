@@ -1,0 +1,135 @@
+{
+  "alignment": {
+    "finite_scores": true,
+    "rows": 249694,
+    "sha256": "4102bd7a5647c29556a095965de2a4dc9a2f0b6e1967a1e56491836b61552de6"
+  },
+  "artifacts": {
+    "plan": "results/calibrated-ranking/confidence-plan.json",
+    "scores": "runtime/parallel-calibrated-ranking/confidence/screen-scores.npz",
+    "training_details": "runtime/parallel-calibrated-ranking/confidence/screen-training-details.json"
+  },
+  "experiment": "confidence-aware heteroscedastic pointwise ranking",
+  "locked_screen": {
+    "acceptance_primary_gain": 0.0001,
+    "candidate_gains": {
+      "GAUC": -0.005167961120605469,
+      "nDCG@5": -0.003043055534362793,
+      "primary": -0.004105508327484131
+    },
+    "candidate_metrics": {
+      "GAUC": 0.6589169502258301,
+      "nDCG@5": 0.5630190372467041,
+      "primary": 0.6109679937362671,
+      "rows": 249694,
+      "users": 24262
+    },
+    "control_metrics": {
+      "GAUC": 0.6640849113464355,
+      "nDCG@5": 0.5660620927810669,
+      "primary": 0.6150735020637512,
+      "rows": 249694,
+      "users": 24262
+    },
+    "evaluation": "2022-04-15..2022-04-21",
+    "refit": "2022-04-08..2022-04-14"
+  },
+  "merits_locked_confirmation": false,
+  "penalty_selection": {
+    "candidate_scans": [
+      {
+        "metrics": {
+          "GAUC": 0.6664855480194092,
+          "nDCG@5": 0.5555689930915833,
+          "primary": 0.6110272407531738,
+          "rows": 332039,
+          "users": 23066
+        },
+        "penalty": 0.0
+      },
+      {
+        "metrics": {
+          "GAUC": 0.6664847731590271,
+          "nDCG@5": 0.5555202960968018,
+          "primary": 0.6110025644302368,
+          "rows": 332039,
+          "users": 23066
+        },
+        "penalty": 0.01
+      },
+      {
+        "metrics": {
+          "GAUC": 0.6664931178092957,
+          "nDCG@5": 0.5555014610290527,
+          "primary": 0.6109973192214966,
+          "rows": 332039,
+          "users": 23066
+        },
+        "penalty": 0.025
+      },
+      {
+        "metrics": {
+          "GAUC": 0.6664013266563416,
+          "nDCG@5": 0.5555019378662109,
+          "primary": 0.6109516620635986,
+          "rows": 332039,
+          "users": 23066
+        },
+        "penalty": 0.05
+      },
+      {
+        "metrics": {
+          "GAUC": 0.666555643081665,
+          "nDCG@5": 0.555557370185852,
+          "primary": 0.6110565066337585,
+          "rows": 332039,
+          "users": 23066
+        },
+        "penalty": 0.1
+      }
+    ],
+    "control_metrics": {
+      "GAUC": 0.6699634790420532,
+      "nDCG@5": 0.55731600522995,
+      "primary": 0.6136397123336792,
+      "rows": 332039,
+      "users": 23066
+    },
+    "selection": "2022-04-12..2022-04-14",
+    "training": "2022-04-08..2022-04-11",
+    "zero_preference": true
+  },
+  "protocol": {
+    "confirmation_accessed": false,
+    "hidden_test_outcome_fields_accessed": false,
+    "identical_mean_initialization_and_batch_order": true,
+    "incidents": [],
+    "monte_carlo_inference": false,
+    "penalty_grid_predeclared": [
+      0.0,
+      0.01,
+      0.025,
+      0.05,
+      0.1
+    ],
+    "penalty_locked_before_screen": true
+  },
+  "resource_usage_total": {
+    "cpu_hours": 0.007938,
+    "cpu_seconds": 28.577,
+    "cpu_utilization_percent": 128.25,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 791.266,
+    "wall_seconds": 22.282
+  },
+  "rows": {
+    "core": 559379,
+    "locked_screen": 249694,
+    "selection": 332039
+  },
+  "selected_penalty": 0.1,
+  "status": "screen_rejected"
+}

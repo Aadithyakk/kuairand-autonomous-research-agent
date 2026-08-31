@@ -1,0 +1,93 @@
+{
+  "all_four_holdout_folds_nonnegative": false,
+  "artifact": "runtime/parallel-masknet/confirmation-scores.npz",
+  "baseline_metrics_recomputed": {
+    "gauc": 0.6823537349700928,
+    "ndcg5": 0.5433623194694519,
+    "primary": 0.6128580570220947
+  },
+  "candidate_standalone_metrics": {
+    "gauc": 0.6706189513206482,
+    "ndcg5": 0.5372615456581116,
+    "primary": 0.6039402484893799
+  },
+  "champion_manifest_metrics": {
+    "gauc": 0.6823537349700928,
+    "ndcg5": 0.5433623194694519,
+    "primary": 0.6128580570220947,
+    "rows": 124909,
+    "users": 22377
+  },
+  "experiment": "MaskNet residual against frozen champion",
+  "fixed_gains": {
+    "gauc": 6.556510925292969e-07,
+    "ndcg5": 0.0,
+    "primary": 2.980232238769531e-07
+  },
+  "fixed_improves_both_metrics": false,
+  "fixed_metrics": {
+    "gauc": 0.6823543906211853,
+    "ndcg5": 0.5433623194694519,
+    "primary": 0.6128583550453186
+  },
+  "fixed_weight": -0.052500000000000005,
+  "folds": [
+    {
+      "fold": 0,
+      "holdout_gauc_gain": -2.9861927032470703e-05,
+      "holdout_ndcg5_gain": -7.927417755126953e-06,
+      "holdout_primary_gain": -1.8894672393798828e-05,
+      "selected_weight": -0.085,
+      "selection_primary_gain": 1.722574234008789e-05
+    },
+    {
+      "fold": 1,
+      "holdout_gauc_gain": -2.950429916381836e-05,
+      "holdout_ndcg5_gain": -0.00012737512588500977,
+      "holdout_primary_gain": -7.843971252441406e-05,
+      "selected_weight": -0.13,
+      "selection_primary_gain": 5.036592483520508e-05
+    },
+    {
+      "fold": 2,
+      "holdout_gauc_gain": -0.0002809762954711914,
+      "holdout_ndcg5_gain": -4.0531158447265625e-06,
+      "holdout_primary_gain": -0.00014251470565795898,
+      "selected_weight": 0.135,
+      "selection_primary_gain": 6.92605972290039e-05
+    },
+    {
+      "fold": 3,
+      "holdout_gauc_gain": -3.1054019927978516e-05,
+      "holdout_ndcg5_gain": 4.941225051879883e-05,
+      "holdout_primary_gain": 9.179115295410156e-06,
+      "selected_weight": -0.13,
+      "selection_primary_gain": 2.1398067474365234e-05
+    }
+  ],
+  "grid": {
+    "maximum": 0.25,
+    "minimum": -0.25,
+    "step": 0.005
+  },
+  "hidden_test_accessed": false,
+  "merits_promotion": false,
+  "protocol": "four actual-user-ID folds; choose weight on three folds from a zero-preferring [-0.25,0.25] grid; report held-out fourth",
+  "resource_usage": {
+    "cpu_hours": 0.01795,
+    "cpu_seconds": 64.621,
+    "cpu_utilization_percent": 99.57,
+    "device": "cpu",
+    "gpu_count": 0,
+    "gpu_hours": 0.0,
+    "peak_gpu_memory_mb": 0.0,
+    "peak_rss_mb": 902.188,
+    "wall_seconds": 64.899
+  },
+  "selected_weights": [
+    -0.085,
+    -0.13,
+    0.135,
+    -0.13
+  ]
+}
