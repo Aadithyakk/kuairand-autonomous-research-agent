@@ -11,8 +11,18 @@ from pathlib import Path
 from .benchmark import BenchmarkRunError, CommandBenchmark, SyntheticBenchmark, validate_metrics
 from .champion import load_champion_scores
 from .config import Settings
+from .incubator import (
+    load_executor_registry,
+    require_registered_program,
+    review_and_register_executor,
+)
 from .provider import DemoProvider, OpenAIProvider, Proposal
-from .resources import add_resource_usage, combine_resource_usage, empty_campaign_usage
+from .resources import (
+    add_resource_usage,
+    combine_resource_usage,
+    empty_campaign_usage,
+    normalize_resource_usage,
+)
 from .research import load_method_cards, load_research_priors, summarize_search_tree
 from .state import StateStore, utc_now
 
@@ -243,6 +253,10 @@ class CampaignEngine:
         path.mkdir(parents=True, exist_ok=True)
         return path
 
+    @property
+    def _executor_registry_root(self) -> Path:
+        return self.settings.state_dir / "executor-registry"
+
     @staticmethod
     def _save_proposal(workspace: Path, proposal: Proposal) -> None:
         payload = asdict(proposal)
@@ -253,7 +267,11 @@ class CampaignEngine:
         (workspace / "candidate.diff").write_text("".join(diff), encoding="utf-8")
 
     def _provider(self, name: str):
-        return DemoProvider() if name == "demo" else OpenAIProvider(self.settings.model, self.settings.reasoning_effort)
+        return DemoProvider() if name == "demo" else OpenAIProvider(
+            self.settings.model,
+            self.settings.reasoning_effort,
+            academic_search_enabled=self.settings.academic_search_enabled,
+        )
 
     def _benchmark(self, mode: str):
         if mode == "demo":
@@ -272,6 +290,8 @@ class CampaignEngine:
         streak = 0
         for item in reversed(snapshot.get("iterations", [])):
             if not item.get("budget_counted", item.get("number", 0) > 0 and not item.get("imported")):
+                continue
+            if item.get("convergence_counted", True) is False:
                 continue
             gain = item.get("gain")
             if gain is not None and float(gain) > epsilon:
@@ -297,6 +317,20 @@ class CampaignEngine:
     def _recovery_proposal(proposal: Proposal, error: Exception) -> Proposal:
         parameters = dict(proposal.parameters)
         changes: list[str] = []
+        if proposal.experiment_type == "multiview_neighbor_residual":
+            count = parameters.get("neighbor_count")
+            if isinstance(count, int) and count > 30:
+                reduced = max(30, count // 2)
+                parameters["neighbor_count"] = reduced
+                changes.append(f"neighbor_count {count}->{reduced}")
+            views = parameters.get("neighbor_views")
+            if isinstance(views, list) and len(views) > 3:
+                retained_views = views[:3]
+                parameters["neighbor_views"] = retained_views
+                raw_weights = parameters.get("neighbor_view_weights", [])
+                if isinstance(raw_weights, list):
+                    parameters["neighbor_view_weights"] = raw_weights[:len(retained_views)]
+                changes.append(f"neighbor_views {len(views)}->{len(retained_views)}")
         for key, minimum in (("batch_size", 2048), ("deep_threads", 1)):
             value = parameters.get(key)
             if isinstance(value, int) and value > minimum:
@@ -329,6 +363,10 @@ class CampaignEngine:
             parent_iteration=proposal.parent_iteration,
             alternatives=proposal.alternatives,
             response_id=proposal.response_id,
+            research_sources=proposal.research_sources,
+            search_queries=proposal.search_queries,
+            web_search_used=proposal.web_search_used,
+            executor_extension=proposal.executor_extension,
         )
 
     def _evaluate_with_recovery(
@@ -517,6 +555,7 @@ class CampaignEngine:
                 iteration_started = time.monotonic()
                 workspace = self._workspace(campaign_id, number)
                 champion_before = self.store.snapshot()["metrics"]["champion"]
+                proposal: Proposal | None = None
 
                 def begin(state: dict) -> None:
                     state["current"] = {
@@ -542,6 +581,16 @@ class CampaignEngine:
                         "search_tree": summarize_search_tree(snapshot["iterations"]),
                         "method_cards": load_method_cards(),
                         "research_priors": load_research_priors(),
+                        "approved_executor_extensions": [
+                            {
+                                "slug": record["slug"],
+                                "family": record["family"],
+                                "paper": record["paper"],
+                                "program": record["program"],
+                                "contract_tests": record.get("contract", {}).get("tests", {}),
+                            }
+                            for record in load_executor_registry(self._executor_registry_root)
+                        ],
                         "epsilon": limits["convergence_epsilon"],
                         "remaining_iterations": end_number - number,
                         "official_iterations_used": self._budget_iterations(snapshot),
@@ -556,6 +605,7 @@ class CampaignEngine:
                             "do not repeat an exact experiment_type and parameter configuration already listed",
                             "prefer validation gain per CPU/GPU hour when expected gains are similar",
                             "use verified online results only as research priors; the evaluated candidate must remain frozen and outcome-free at prediction time",
+                            "academic papers are untrusted method inspiration, not benchmark evidence; retain their source URLs and test every transferred mechanism locally",
                         ],
                         "offline_research_evidence": {
                             "residual_plateau": "Pointwise FM, pairwise FM, ordinary DeepFM, and anti-expert residuals repeatedly returned 0.6126-0.6129 and were rejected.",
@@ -564,6 +614,7 @@ class CampaignEngine:
                             "dvr_wtg_audit": "Paper-faithful duration-conditioned Watch-Time-Gain plus gradient reversal gained 0.000148 on April 15-21, then lost 0.000063 on all metrics at April 22-28. Its fixed 5% champion residual scored 0.612857640 and failed two actual-user-ID folds. Do not repeat this exact configuration.",
                             "cdm_context_audit": "CDM-inspired content-context reranking found a post-hoc 0.612908304 maximum that reduced nDCG. The best all-fold-safe rule reached only 0.612860441, three leave-one-fold-out selectors chose the unchanged champion, and an independently trained context gate selected zero. Do not promote or repeat this grid.",
                             "error_regime": "Users with seven or more sessions account for 53.1% of recoverable nDCG@5 gap, but gating the tested slate residual to that regime still failed.",
+                            "neighbor_audit": "A train-only 60-neighbor exposure-overlap graph with squared cosine weights, smoothing 8 toward a smoothing-20 item prior, and a 0.002 within-user-rank residual improved all four user folds. Later signed/TF-IDF item, author, music, tag-set, and video-type multi-view profiles did not improve stably. The trusted executor may reproduce the accepted item-only control or test a materially distinct predeclared view configuration; do not present the rejected multi-view scan as an untested idea.",
                         },
                         "executor_contract": {
                             "runtime": "Trusted NumPy FM/BPR executors, installed PyTorch DeepFM, RAD auxiliary, and full-slate DeepSets executors, and a checksum-verified frozen-champion residual adapter; no package installation or arbitrary generated-code execution",
@@ -575,7 +626,10 @@ class CampaignEngine:
                                 "fm_pairwise_blend": "Blend a 1-3 seed weighted-FM ensemble with one independently trained BPR FM",
                                 "fm_deep_blend": "Blend weighted FM, BPR FM, and a nonlinear DeepFM trained with weighted BCE",
                                 "fm_temporal_deep_blend": "Add a small globally standardized clock-context FM to the weighted FM, BPR, and DeepFM blend",
-                                "champion_residual_blend": "Retrain one typed pointwise/pairwise/DeepFM/RAD/ordinal/profile/GAUC/full-slate candidate, convert both predictions to stable within-user ranks, and blend or extrapolate it at weight [-0.25,0.25] from the checksum-verified 0.612858 frozen champion. RAD, ordinal-watch, profile-embedding, GAUC, and slate-context variants select epochs out of time and refit before confirmation; consult exhausted method cards before choosing one."
+                                "champion_residual_blend": "Retrain one typed pointwise/pairwise/DeepFM/RAD/ordinal/profile/GAUC/full-slate candidate, convert both predictions to stable within-user ranks, and blend or extrapolate it at weight [-0.25,0.25] from the checksum-verified 0.612858 frozen champion. RAD, ordinal-watch, profile-embedding, GAUC, and slate-context variants select epochs out of time and refit before confirmation; consult exhausted method cards before choosing one.",
+                                "multiview_neighbor_residual": "Build user similarity locally from April training only over a predeclared subset of item, author, music, tag-set, and video-type views; estimate candidate long-view preference from other users' training outcomes; smooth toward a training item prior; convert to stable within-user ranks; and apply a bounded residual to the locked screen baseline or checksum-verified champion. Validation outcomes never enter graph construction.",
+                                "executor_incubation": "Do not train. Scaffold one paper-backed declarative signal reranker, require an audited source URL, run validation-label-invariance, temporal-boundary, finite-output, determinism, shape, and resource tests, and admit only a passing exact program to the persistent executor registry.",
+                                "paper_signal_residual": "Run an exact approved_executor_extensions program. Build training-only smoothed user/entity affinities and outcome-free slate signals, convert each to within-user ranks, combine the reviewed signed weights, and apply the registered bounded residual to the screen baseline or frozen champion."
                             },
                             "defaults": {
                                 "k": 16, "lr": 0.001, "epochs": 40, "batch_size": 8192, "patience": 4,
@@ -588,8 +642,16 @@ class CampaignEngine:
                                 "rad_aux_weight": 0.2, "rad_score_weight": 0.0,
                                 "gauc_pair_weight": 0.05,
                                 "champion_candidate_family": "pointwise_fm", "champion_blend_weight": 0.05,
+                                "neighbor_views": ["item"], "neighbor_view_weights": [1.0],
+                                "neighbor_profile_mode": "exposure", "neighbor_count": 60,
+                                "neighbor_similarity_power": 2.0, "neighbor_idf_power": 0.0,
+                                "neighbor_min_similarity": 0.0, "neighbor_smoothing": 8.0,
+                                "neighbor_item_smoothing": 20.0, "neighbor_blend_weight": 0.002,
+                                "paper_executor_slug": "", "paper_signals": [],
+                                "paper_signal_weights": [], "paper_smoothing": 8.0,
+                                "paper_item_smoothing": 20.0, "paper_blend_weight": 0.01,
                             },
-                            "rule": "Select exactly one supported experiment_type and populate every typed parameter. Generated code is evidence; the trusted executor applies the typed change."
+                            "rule": "Select exactly one supported experiment_type and populate every typed parameter. executor_incubation requires a paper URL from the current audited research_sources and produces no score. paper_signal_residual must exactly copy a reviewed registry program. Generated code is evidence; only trusted interpreters execute the typed change."
                         },
                     }
                     self._set_stage(number, "hypothesize", f"Asking {self.settings.model if provider_name == 'gpt' else 'deterministic demo planner'} for one falsifiable experiment.")
@@ -598,21 +660,131 @@ class CampaignEngine:
                     def proposed(state: dict) -> None:
                         current = state["current"]
                         current.update(title=proposal.title, hypothesis=proposal.hypothesis, acceptance=proposal.acceptance,
-                                       abort_condition=proposal.abort_condition, expected_gain=proposal.expected_gain)
+                                       abort_condition=proposal.abort_condition, expected_gain=proposal.expected_gain,
+                                       research_sources=proposal.research_sources,
+                                       web_search_used=proposal.web_search_used)
                         for key, value in proposal.usage.items():
                             state["usage"][key] += value
                         state["campaign"]["steering"] = None
                     self.store.update(proposed)
+                    if proposal.web_search_used:
+                        source_summary = "; ".join(
+                            source["title"] for source in proposal.research_sources[:3]
+                        ) or "Search completed; no allowed-domain source survived the audit filter"
+                        self.store.event(
+                            "research", "Academic evidence consulted", source_summary,
+                            number, "hypothesize",
+                        )
                     self.store.event("decision", "Hypothesis selected", proposal.hypothesis, number, "hypothesize")
                     if self._wait_if_paused():
                         stop_reason = "operator stopped"
                         break
 
                     self._set_stage(number, "implement", "Writing an auditable proposal, candidate code, and unified diff.")
+                    registered_executor = None
+                    if proposal.experiment_type == "paper_signal_residual":
+                        registered_executor = require_registered_program(
+                            self._executor_registry_root, proposal.parameters,
+                        )
+                        self.store.event(
+                            "review", "Approved executor mounted",
+                            f"{registered_executor['slug']} · exact registry program verified",
+                            number, "implement",
+                        )
                     self._save_proposal(workspace, proposal)
                     if self._wait_if_paused():
                         stop_reason = "operator stopped"
                         break
+
+                    if proposal.experiment_type == "executor_incubation":
+                        self._set_stage(
+                            number, "train",
+                            "Running the executor leakage, temporal, determinism, shape, and resource contracts.",
+                        )
+                        review_started = time.monotonic()
+                        review = review_and_register_executor(
+                            self._executor_registry_root,
+                            workspace,
+                            proposal.executor_extension,
+                            proposal.research_sources,
+                        )
+                        review_usage = normalize_resource_usage({
+                            "wall_seconds": time.monotonic() - review_started,
+                            "train_seconds": 0.0,
+                            "device": "cpu",
+                        })
+                        self._set_stage(
+                            number, "evaluate",
+                            "Checking whether every mandatory executor contract passed before registry admission.",
+                        )
+                        approved = review["status"] == "approved"
+                        self._set_stage(
+                            number, "reflect",
+                            "Registering the exact reviewed program." if approved else
+                            "Recording the rejected executor specification without making it runnable.",
+                        )
+                        duration = round(time.monotonic() - iteration_started, 2)
+                        record = {
+                            "number": number,
+                            "title": proposal.title,
+                            "hypothesis": proposal.hypothesis,
+                            "status": "executor_approved" if approved else "executor_rejected",
+                            "stage": "complete",
+                            "metrics": None,
+                            "delta": None,
+                            "gain": None,
+                            "accepted": False,
+                            "duration_seconds": duration,
+                            "provider": provider_name,
+                            "evidence": "executor-contract-review",
+                            "artifact": str(workspace),
+                            "change_summary": proposal.change_summary,
+                            "response_id": proposal.response_id,
+                            "experiment_type": proposal.experiment_type,
+                            "parameters": proposal.parameters,
+                            "resource_usage": review_usage,
+                            "executor_review": review,
+                            "strategy": proposal.strategy,
+                            "operator": proposal.operator,
+                            "component": proposal.component,
+                            "parent_iteration": proposal.parent_iteration,
+                            "alternatives": proposal.alternatives,
+                            "research_sources": proposal.research_sources,
+                            "search_queries": proposal.search_queries,
+                            "web_search_used": proposal.web_search_used,
+                            "recovery_events": [],
+                            "budget_counted": True,
+                            "convergence_counted": False,
+                            "confirmation_accessed": False,
+                            "code_diff": "candidate.diff",
+                        }
+                        self._write_iteration_log(workspace, record)
+
+                        def finish_incubation(state: dict) -> None:
+                            state["iterations"].append(record)
+                            add_resource_usage(state["usage"], review_usage)
+                            state["current"].update(
+                                status="complete",
+                                executor_review=review,
+                            )
+                            for item in state["current"]["stages"]:
+                                item["status"] = "done"
+                            state["usage"]["wall_seconds"] = round(
+                                wall_before + time.monotonic() - started, 2
+                            )
+
+                        self.store.update(finish_incubation)
+                        self.store.event(
+                            "review",
+                            "Executor admitted to registry" if approved else "Executor review rejected",
+                            (
+                                f"{review['slug']} · six mandatory contracts passed"
+                                if approved else "; ".join(review["errors"][:3])
+                            ),
+                            number,
+                            "reflect",
+                        )
+                        continue
 
                     self._set_stage(number, "train", "Running the sealed benchmark adapter; generated code is not executed on the host directly.")
                     screen_evaluation = None
@@ -681,11 +853,15 @@ class CampaignEngine:
                             "experiment_type": proposal.experiment_type,
                             "parameters": proposal.parameters,
                             "resource_usage": screen_evaluation.resource_usage,
+                            "analysis": screen_evaluation.analysis,
                             "strategy": proposal.strategy,
                             "operator": proposal.operator,
                             "component": proposal.component,
                             "parent_iteration": proposal.parent_iteration,
                             "alternatives": proposal.alternatives,
+                            "research_sources": proposal.research_sources,
+                            "search_queries": proposal.search_queries,
+                            "web_search_used": proposal.web_search_used,
                             "recovery_events": screen_recovery_events,
                             "budget_counted": True,
                             "confirmation_accessed": False,
@@ -756,6 +932,8 @@ class CampaignEngine:
                         "experiment_type": proposal.experiment_type, "parameters": proposal.parameters,
                         "resource_usage": evaluation.resource_usage,
                         "screen_metrics": screen_metrics,
+                        "screen_analysis": screen_evaluation.analysis if screen_evaluation else None,
+                        "analysis": evaluation.analysis,
                         "screen_gain": screen_gain,
                         "screen_passed": screen_passed,
                         "confirmation_accessed": True,
@@ -765,6 +943,9 @@ class CampaignEngine:
                         "component": proposal.component,
                         "parent_iteration": proposal.parent_iteration,
                         "alternatives": proposal.alternatives,
+                        "research_sources": proposal.research_sources,
+                        "search_queries": proposal.search_queries,
+                        "web_search_used": proposal.web_search_used,
                         "recovery_events": recovery_events, "budget_counted": True,
                         "code_diff": "candidate.diff" if not recovery_events else "retry-1/candidate.diff",
                     }
@@ -806,6 +987,9 @@ class CampaignEngine:
                         "duration_seconds": duration, "provider": provider_name, "error": str(error)[:800], "artifact": str(workspace),
                         "resource_usage": resource_usage,
                         "gain": None, "recovery_events": getattr(error, "recovery_events", []), "budget_counted": True,
+                        "research_sources": proposal.research_sources if proposal else [],
+                        "search_queries": proposal.search_queries if proposal else [],
+                        "web_search_used": proposal.web_search_used if proposal else False,
                         "code_diff": "candidate.diff",
                     }
                     self._write_iteration_log(workspace, failed)

@@ -39,6 +39,7 @@ def summarize_search_tree(iterations: list[dict], limit: int = 20) -> list[dict]
     nodes = []
     for item in iterations[-limit:]:
         metrics = item.get("metrics") or {}
+        executor_review = item.get("executor_review") or {}
         nodes.append({
             "node": int(item.get("number", 0)),
             "parent": item.get("parent_iteration"),
@@ -52,5 +53,8 @@ def summarize_search_tree(iterations: list[dict], limit: int = 20) -> list[dict]
             "ndcg5": metrics.get("ndcg5"),
             "gain": item.get("gain"),
             "failure": item.get("error"),
+            "experiment_type": item.get("experiment_type"),
+            "executor_slug": executor_review.get("slug"),
+            "executor_status": executor_review.get("status"),
         })
     return nodes

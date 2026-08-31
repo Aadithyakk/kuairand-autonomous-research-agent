@@ -13,6 +13,13 @@ from backend.kuailab.benchmark import SyntheticBenchmark, validate_metrics
 from backend.kuailab.champion import blend_with_champion, load_champion_scores, within_user_rank
 from backend.kuailab.config import Settings
 from backend.kuailab.engine import CampaignEngine
+from backend.kuailab.incubator import (
+    EXECUTOR_FAMILY,
+    REQUIRED_CONTRACT_TESTS,
+    load_executor_registry,
+    require_registered_program,
+    review_and_register_executor,
+)
 from backend.kuailab.provider import DemoProvider, OpenAIProvider
 from backend.kuailab.ordinal import build_ordinal_watch_labels
 from backend.kuailab.pairwise import sample_pair_indices
@@ -22,6 +29,8 @@ from backend.kuailab.slate import build_slate_features
 from backend.kuailab.research import load_method_cards, load_research_priors, summarize_search_tree
 from backend.kuailab.state import StateStore
 from backend.kuailab.live_predictor import predict_slate, score_candidate
+from backend.kuailab.neighbors import build_multiview_neighbor_scores
+from backend.kuailab.paper_executor import build_paper_signal_scores
 from scripts.train_dvr_wtg import auxiliary_targets, final_scores, fit_wtg_reference
 from scripts.audit_cdm_context_grid import prepare_context, rerank
 
@@ -97,10 +106,198 @@ class CoreTests(unittest.TestCase):
         response = {"output": [{"content": [{"type": "output_text", "text": "{\"ok\":true}"}]}]}
         self.assertEqual(OpenAIProvider._output_text(response), '{"ok":true}')
 
+    def test_academic_search_trace_keeps_only_allowed_https_sources(self):
+        response = {
+            "output": [
+                {
+                    "type": "web_search_call",
+                    "action": {
+                        "type": "search",
+                        "query": "user similarity recommender systems ranking paper",
+                        "queries": ["multi-view collaborative filtering paper"],
+                        "sources": [
+                            {"title": "Allowed preprint", "url": "https://arxiv.org/abs/2302.02352"},
+                            {"title": "Untrusted blog", "url": "https://example.com/recommenders"},
+                            {"title": "Insecure URL", "url": "http://dl.acm.org/doi/10.1/test"},
+                        ],
+                    },
+                },
+                {
+                    "type": "message",
+                    "content": [{
+                        "type": "output_text",
+                        "text": "{}",
+                        "annotations": [{
+                            "type": "url_citation",
+                            "title": "Allowed proceedings paper",
+                            "url": "https://proceedings.mlr.press/v202/example.html",
+                        }],
+                    }],
+                },
+            ],
+        }
+        sources, queries = OpenAIProvider._research_trace(response)
+        self.assertEqual(
+            [source["domain"] for source in sources],
+            ["arxiv.org", "proceedings.mlr.press"],
+        )
+        self.assertEqual(len(queries), 2)
+        self.assertTrue(all(source["url"].startswith("https://") for source in sources))
+
+    def test_academic_search_is_bounded_and_returns_source_metadata(self):
+        options = OpenAIProvider._academic_search_options()
+        self.assertEqual(options["max_tool_calls"], 2)
+        self.assertEqual(options["tool_choice"], "auto")
+        self.assertEqual(options["include"], ["web_search_call.action.sources"])
+        self.assertEqual(options["tools"][0]["type"], "web_search")
+        self.assertIn("arxiv.org", options["tools"][0]["filters"]["allowed_domains"])
+
     def test_openai_provider_uses_verified_tls_context(self):
         context = OpenAIProvider._ssl_context()
         self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED)
         self.assertTrue(context.check_hostname)
+
+    def test_openai_strict_schema_requires_every_object_property(self):
+        def assert_strict_objects(node, path="schema"):
+            if isinstance(node, dict):
+                if node.get("type") == "object":
+                    properties = node.get("properties", {})
+                    self.assertEqual(
+                        set(node.get("required", [])),
+                        set(properties),
+                        f"{path} must require every declared property",
+                    )
+                for key, value in node.items():
+                    assert_strict_objects(value, f"{path}.{key}")
+            elif isinstance(node, list):
+                for index, value in enumerate(node):
+                    assert_strict_objects(value, f"{path}[{index}]")
+
+        assert_strict_objects(OpenAIProvider._proposal_schema())
+
+    def test_multiview_neighbor_scores_ignore_validation_outcomes(self):
+        train = [
+            (20220408, "u1", "v1", "a1", "0", 10_000.0, 1, 8, 1_000, 9_000.0),
+            (20220408, "u1", "v2", "a2", "0", 10_000.0, 0, 8, 2_000, 1_000.0),
+            (20220408, "u2", "v1", "a1", "0", 10_000.0, 1, 9, 3_000, 8_000.0),
+            (20220408, "u2", "v3", "a3", "1", 20_000.0, 0, 9, 4_000, 2_000.0),
+            (20220408, "u3", "v2", "a2", "1", 10_000.0, 0, 10, 5_000, 1_000.0),
+            (20220408, "u3", "v3", "a3", "1", 20_000.0, 1, 10, 6_000, 18_000.0),
+        ]
+        valid = [
+            (20220422, "u1", "v3", "a3", "1", 20_000.0, 0, 11, 7_000, 0.0),
+            (20220422, "u2", "v2", "a2", "0", 10_000.0, 1, 11, 8_000, 0.0),
+            (20220422, "u3", "v1", "a1", "0", 10_000.0, 1, 11, 9_000, 0.0),
+        ]
+        changed = [tuple([*row[:6], 1 - row[6], *row[7:]]) for row in valid]
+        metadata = {
+            "v1": {"author_id": "a1", "music_id": "m1", "tag": "dance", "video_type": "NORMAL"},
+            "v2": {"author_id": "a2", "music_id": "m1", "tag": "comedy", "video_type": "NORMAL"},
+            "v3": {"author_id": "a3", "music_id": "m2", "tag": "dance", "video_type": "AD"},
+        }
+        parameters = {
+            "neighbor_views": ["item", "author", "music", "tag", "video_type"],
+            "neighbor_view_weights": [0.4, 0.2, 0.15, 0.15, 0.1],
+            "neighbor_profile_mode": "exposure",
+            "neighbor_count": 10,
+            "neighbor_similarity_power": 2.0,
+            "neighbor_idf_power": 0.5,
+            "neighbor_min_similarity": 0.0,
+            "neighbor_smoothing": 2.0,
+            "neighbor_item_smoothing": 4.0,
+        }
+        scores, diagnostics = build_multiview_neighbor_scores(
+            train, valid, Path("."), parameters, video_metadata=metadata,
+        )
+        changed_scores, _ = build_multiview_neighbor_scores(
+            train, changed, Path("."), parameters, video_metadata=metadata,
+        )
+        np.testing.assert_allclose(scores, changed_scores)
+        self.assertTrue(np.all(np.isfinite(scores)))
+        self.assertFalse(diagnostics["validation_outcomes_accessed"])
+        self.assertEqual(diagnostics["views"], parameters["neighbor_views"])
+
+    def test_paper_signal_scores_ignore_validation_outcomes(self):
+        train = [
+            (20220408, "u1", "v1", "a1", "0", 10_000.0, 1, 8, 1_000, 9_000.0),
+            (20220408, "u1", "v2", "a2", "0", 20_000.0, 0, 8, 2_000, 2_000.0),
+            (20220409, "u2", "v1", "a1", "1", 10_000.0, 1, 9, 3_000, 8_000.0),
+            (20220409, "u2", "v3", "a3", "1", 30_000.0, 0, 9, 4_000, 3_000.0),
+        ]
+        valid = [
+            (20220422, "u1", "v1", "a1", "0", 10_000.0, 0, 11, 7_000, 0.0),
+            (20220422, "u1", "v3", "a3", "1", 30_000.0, 1, 11, 8_000, 0.0),
+            (20220422, "u2", "v2", "a2", "0", 20_000.0, 1, 11, 9_000, 0.0),
+        ]
+        changed = [tuple([*row[:6], 1 - row[6], *row[7:]]) for row in valid]
+        metadata = {
+            "v1": {"author_id": "a1", "music_id": "m1", "tag": "dance", "video_type": "NORMAL"},
+            "v2": {"author_id": "a2", "music_id": "m1", "tag": "comedy", "video_type": "NORMAL"},
+            "v3": {"author_id": "a3", "music_id": "m2", "tag": "dance", "video_type": "AD"},
+        }
+        parameters = {
+            "paper_executor_slug": "paper_affinity_v1",
+            "paper_signals": ["user_author_affinity", "tag_prior", "duration_match"],
+            "paper_signal_weights": [0.6, 0.25, 0.15],
+            "paper_smoothing": 4.0,
+            "paper_item_smoothing": 8.0,
+            "paper_blend_weight": 0.01,
+        }
+        scores, diagnostics = build_paper_signal_scores(
+            train, valid, Path("."), parameters, video_metadata=metadata,
+        )
+        changed_scores, _ = build_paper_signal_scores(
+            train, changed, Path("."), parameters, video_metadata=metadata,
+        )
+        np.testing.assert_allclose(scores, changed_scores)
+        self.assertTrue(np.all(np.isfinite(scores)))
+        self.assertFalse(diagnostics["validation_outcomes_accessed"])
+        self.assertFalse(diagnostics["hidden_test_accessed"])
+
+    def test_executor_incubator_registers_only_exact_audited_program(self):
+        paper_url = "https://arxiv.org/abs/2302.02352"
+        extension = {
+            "requested": True,
+            "slug": "paper_affinity_v1",
+            "paper_title": "A reviewed recommender systems method",
+            "paper_url": paper_url,
+            "family": EXECUTOR_FAMILY,
+            "method_summary": "Combine smoothed author affinity with duration compatibility ranks.",
+            "why_new_executor": "The current executors cannot express this paper-backed signed combination.",
+            "signals": ["user_author_affinity", "duration_match"],
+            "signal_weights": [0.7, 0.3],
+            "smoothing": 8.0,
+            "entity_smoothing": 20.0,
+            "blend_weight": 0.01,
+            "resource_class": "small",
+            "required_tests": sorted(REQUIRED_CONTRACT_TESTS),
+        }
+        sources = [{"title": "Audited paper", "url": paper_url, "domain": "arxiv.org"}]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            review = review_and_register_executor(
+                root / "registry", root / "workspace", extension, sources,
+            )
+            self.assertEqual(review["status"], "approved")
+            self.assertTrue(all(review["contract"]["tests"].values()))
+            self.assertFalse(review["generated_code_executed"])
+            self.assertTrue((root / "workspace" / "executor-incubator" / "paper_affinity_v1" / "manifest.json").exists())
+            self.assertEqual(len(load_executor_registry(root / "registry")), 1)
+            parameters = dict(review["program"])
+            self.assertEqual(
+                require_registered_program(root / "registry", parameters)["slug"],
+                "paper_affinity_v1",
+            )
+            parameters["paper_signal_weights"] = [0.6, 0.4]
+            with self.assertRaisesRegex(ValueError, "exact reviewed registry program"):
+                require_registered_program(root / "registry", parameters)
+
+            unaudited = {**extension, "slug": "unaudited_method", "paper_url": "https://example.com/paper"}
+            rejected = review_and_register_executor(
+                root / "registry", root / "rejected-workspace", unaudited, sources,
+            )
+            self.assertEqual(rejected["status"], "rejected")
+            self.assertTrue(any("audited HTTPS" in error for error in rejected["errors"]))
 
     def test_pairwise_sampler_uses_same_user_logged_negatives(self):
         users = ["u1", "u1", "u1", "u2", "u2", "u3"]

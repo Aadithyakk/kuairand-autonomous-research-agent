@@ -21,6 +21,7 @@ class Evaluation:
     runtime_seconds: float
     evidence: str
     resource_usage: dict
+    analysis: dict | None = None
 
     def metrics(self) -> dict[str, float]:
         return {"primary": self.primary, "gauc": self.gauc, "ndcg5": self.ndcg5}
@@ -146,6 +147,7 @@ class CommandBenchmark:
         return Evaluation(
             primary=float(metrics["primary"]), gauc=float(metrics["gauc"]), ndcg5=float(metrics["ndcg5"]),
             runtime_seconds=runtime_seconds, evidence=evidence, resource_usage=usage,
+            analysis=metrics.get("analysis") if isinstance(metrics.get("analysis"), dict) else None,
         )
 
     def baseline(self, workspace: Path) -> Evaluation:

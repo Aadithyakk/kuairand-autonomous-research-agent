@@ -24,6 +24,8 @@ if str(ROOT) not in sys.path:
 from backend.kuailab.resources import ProcessResourceTracker
 from backend.kuailab.pairwise import sample_pair_indices
 from backend.kuailab.champion import blend_with_champion, load_champion_scores, within_user_rank
+from backend.kuailab.neighbors import build_multiview_neighbor_scores
+from backend.kuailab.paper_executor import build_paper_signal_scores
 
 
 STARTER = Path(os.getenv("KUAI_STARTER_KIT_DIR", ROOT / "external" / "kuairand-starter-kit")).resolve()
@@ -259,14 +261,195 @@ def train_pairwise(
     return best_scores, {"objective": "bpr_pairwise", "seed": seed, "epochs": history}
 
 
+def train_multiview_neighbor_residual(
+    splits: dict,
+    output_dir: Path,
+    proposal: dict,
+    data_dir: Path,
+    *,
+    mount_champion: bool,
+) -> dict:
+    parameters = proposal.get("parameters", {})
+    encoded, dimension = data_module.encode(splits)
+    train_x, train_y, _ = encoded["train"]
+    valid_x, valid_y, valid_users = encoded["valid"]
+    neighbor_scores, diagnostics = build_multiview_neighbor_scores(
+        splits["train"], splits["valid"], data_dir, parameters,
+    )
+    if mount_champion:
+        base_scores, champion_manifest = load_champion_scores(expected_rows=len(valid_y))
+        base_source = "checksum_verified_validation_champion"
+        base_history = None
+    else:
+        # The fast loop must compare like with like. Rebuild the exact locked
+        # pointwise-FM screen baseline, then apply only the proposed neighbour
+        # residual; validation labels never enter the neighbour construction.
+        base_scores, base_history = train_one(
+            train_x, train_y, valid_x, valid_y, valid_users, dimension,
+            output_dir, {}, 0, 1.0, checkpoint_prefix="neighbor-screen-base",
+        )
+        champion_manifest = None
+        base_source = "retrained_train_only_screen_baseline"
+    blend_weight = max(
+        -0.25, min(float(parameters.get("neighbor_blend_weight", 0.002)), 0.25)
+    )
+    final_scores = blend_with_champion(
+        valid_users, np.asarray(base_scores), neighbor_scores, blend_weight,
+    )
+    candidate_metrics = evaluate_module.evaluate(valid_users, valid_y, neighbor_scores)
+    base_metrics = evaluate_module.evaluate(valid_users, valid_y, base_scores)
+    final_metrics = evaluate_module.evaluate(valid_users, valid_y, final_scores)
+    np.savez_compressed(
+        output_dir / "multiview-neighbor-residual-scores.npz",
+        scores=np.asarray(final_scores, dtype=np.float32),
+        neighbor_scores=np.asarray(neighbor_scores, dtype=np.float32),
+        base_scores=np.asarray(base_scores, dtype=np.float32),
+        blend_weight=np.float32(blend_weight),
+    )
+    (output_dir / "neighbor-diagnostics.json").write_text(
+        json.dumps(diagnostics, indent=2, sort_keys=True), encoding="utf-8"
+    )
+    (output_dir / "training-history.json").write_text(json.dumps({
+        "experiment_type": "multiview_neighbor_residual",
+        "base_source": base_source,
+        "champion_source": champion_manifest.get("validation_scores") if champion_manifest else None,
+        "champion_primary": champion_manifest.get("validation_metrics", {}).get("primary") if champion_manifest else None,
+        "blend_weight": blend_weight,
+        "candidate_metrics": {
+            "primary": float(candidate_metrics["primary"]),
+            "gauc": float(candidate_metrics["GAUC"]),
+            "ndcg5": float(candidate_metrics["nDCG@5"]),
+        },
+        "base_metrics": {
+            "primary": float(base_metrics["primary"]),
+            "gauc": float(base_metrics["GAUC"]),
+            "ndcg5": float(base_metrics["nDCG@5"]),
+        },
+        "neighbor_diagnostics": diagnostics,
+        "screen_base_history": base_history,
+    }, indent=2), encoding="utf-8")
+    return {
+        "primary": float(final_metrics["primary"]),
+        "gauc": float(final_metrics["GAUC"]),
+        "ndcg5": float(final_metrics["nDCG@5"]),
+        "analysis": {
+            "relationship_map": diagnostics,
+            "base_source": base_source,
+            "blend_weight": blend_weight,
+            "standalone_primary": float(candidate_metrics["primary"]),
+            "base_primary": float(base_metrics["primary"]),
+            "final_primary": float(final_metrics["primary"]),
+        },
+    }
+
+
+def train_paper_signal_residual(
+    splits: dict,
+    output_dir: Path,
+    proposal: dict,
+    data_dir: Path,
+    *,
+    mount_champion: bool,
+) -> dict:
+    """Evaluate one exact, registry-approved declarative paper program."""
+    parameters = proposal.get("parameters", {})
+    encoded, dimension = data_module.encode(splits)
+    train_x, train_y, _ = encoded["train"]
+    valid_x, valid_y, valid_users = encoded["valid"]
+    paper_scores, diagnostics = build_paper_signal_scores(
+        splits["train"], splits["valid"], data_dir, parameters,
+    )
+    if mount_champion:
+        base_scores, champion_manifest = load_champion_scores(expected_rows=len(valid_y))
+        base_source = "checksum_verified_validation_champion"
+        base_history = None
+    else:
+        base_scores, base_history = train_one(
+            train_x, train_y, valid_x, valid_y, valid_users, dimension,
+            output_dir, {}, 0, 1.0, checkpoint_prefix="paper-screen-base",
+        )
+        champion_manifest = None
+        base_source = "retrained_train_only_screen_baseline"
+    blend_weight = max(
+        -0.25, min(float(parameters.get("paper_blend_weight", 0.01)), 0.25)
+    )
+    final_scores = blend_with_champion(
+        valid_users, np.asarray(base_scores), paper_scores, blend_weight,
+    )
+    candidate_metrics = evaluate_module.evaluate(valid_users, valid_y, paper_scores)
+    base_metrics = evaluate_module.evaluate(valid_users, valid_y, base_scores)
+    final_metrics = evaluate_module.evaluate(valid_users, valid_y, final_scores)
+    np.savez_compressed(
+        output_dir / "paper-signal-residual-scores.npz",
+        scores=np.asarray(final_scores, dtype=np.float32),
+        paper_scores=np.asarray(paper_scores, dtype=np.float32),
+        base_scores=np.asarray(base_scores, dtype=np.float32),
+        blend_weight=np.float32(blend_weight),
+    )
+    (output_dir / "paper-executor-diagnostics.json").write_text(
+        json.dumps(diagnostics, indent=2, sort_keys=True), encoding="utf-8"
+    )
+    history = {
+        "experiment_type": "paper_signal_residual",
+        "executor_slug": parameters.get("paper_executor_slug"),
+        "base_source": base_source,
+        "champion_source": champion_manifest.get("validation_scores") if champion_manifest else None,
+        "champion_primary": champion_manifest.get("validation_metrics", {}).get("primary") if champion_manifest else None,
+        "blend_weight": blend_weight,
+        "candidate_metrics": {
+            "primary": float(candidate_metrics["primary"]),
+            "gauc": float(candidate_metrics["GAUC"]),
+            "ndcg5": float(candidate_metrics["nDCG@5"]),
+        },
+        "base_metrics": {
+            "primary": float(base_metrics["primary"]),
+            "gauc": float(base_metrics["GAUC"]),
+            "ndcg5": float(base_metrics["nDCG@5"]),
+        },
+        "paper_executor": diagnostics,
+        "screen_base_history": base_history,
+    }
+    (output_dir / "training-history.json").write_text(
+        json.dumps(history, indent=2), encoding="utf-8"
+    )
+    return {
+        "primary": float(final_metrics["primary"]),
+        "gauc": float(final_metrics["GAUC"]),
+        "ndcg5": float(final_metrics["nDCG@5"]),
+        "analysis": {
+            "paper_executor": diagnostics,
+            "base_source": base_source,
+            "blend_weight": blend_weight,
+            "standalone_primary": float(candidate_metrics["primary"]),
+            "base_primary": float(base_metrics["primary"]),
+            "final_primary": float(final_metrics["primary"]),
+        },
+    }
+
+
 def train_fm(
     splits: dict, output_dir: Path, proposal: dict, *, mount_champion: bool = True,
+    data_dir: Path | None = None,
 ) -> dict:
+    parameters = proposal.get("parameters", {})
+    experiment_type = proposal.get("experiment_type", "fm_config")
+    if experiment_type == "multiview_neighbor_residual":
+        if data_dir is None:
+            raise ValueError("multiview_neighbor_residual requires the KuaiRand data directory")
+        return train_multiview_neighbor_residual(
+            splits, output_dir, proposal, data_dir, mount_champion=mount_champion,
+        )
+    if experiment_type == "paper_signal_residual":
+        if data_dir is None:
+            raise ValueError("paper_signal_residual requires the KuaiRand data directory")
+        return train_paper_signal_residual(
+            splits, output_dir, proposal, data_dir, mount_champion=mount_champion,
+        )
+    if experiment_type == "executor_incubation":
+        raise ValueError("executor_incubation is a contract-review stage, not a training job")
     encoded, dimension = data_module.encode(splits)
     train_x, train_y, train_users = encoded["train"]
     valid_x, valid_y, valid_users = encoded["valid"]
-    parameters = proposal.get("parameters", {})
-    experiment_type = proposal.get("experiment_type", "fm_config")
     requested_champion_mode = experiment_type == "champion_residual_blend"
     champion_mode = requested_champion_mode and mount_champion
     champion_families = {
@@ -510,7 +693,10 @@ def main() -> int:
     splits = load_screen_splits(data_dir) if screening else load_development_splits(data_dir)
     data_loading_seconds = time.monotonic() - load_started
     train_started = time.monotonic()
-    metrics = train_fm(splits, output_dir, proposal, mount_champion=not screening)
+    metrics = train_fm(
+        splits, output_dir, proposal, mount_champion=not screening,
+        data_dir=data_dir,
+    )
     metrics["evaluation_tier"] = "internal_screen" if screening else "official_confirmation"
     train_seconds = time.monotonic() - train_started
     metrics["runtime_seconds"] = round(time.monotonic() - started, 3)

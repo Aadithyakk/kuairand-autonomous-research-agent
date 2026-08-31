@@ -187,27 +187,36 @@ function AutonomousLoopVisual() {
         <div className="judge-boundary"><span>✓ Train only</span><span>✓ Validation gates</span><span>✓ Test labels sealed</span></div>
       </div>
 
-      <div className="iteration-ledger">
-        <div className="iteration-ledger-head"><span>EXPERIMENT LEDGER</span><b>5 / 50 iterations</b></div>
-        {autonomousRun.iterations.map((item, index) => <button
-          type="button"
-          className={`${index === iterationIndex ? 'active' : ''} ${item.outcome}`}
-          onClick={() => { setIterationIndex(index); setStageIndex(0); setPlaying(false); }}
-          aria-current={index === iterationIndex ? 'true' : undefined}
-          key={item.iteration}
-        ><span>{item.outcome === 'accepted' ? '✓' : item.outcome === 'invalidated' ? '↻' : '×'}</span><div><b>Iteration {String(item.iteration).padStart(2, '0')}</b><small>{item.title}</small></div><em>{typeof item.primary === 'number' ? item.primary.toFixed(6) : 'invalid'}</em></button>)}
-        <div className="convergence-card"><span>STOP CONDITION</span><b>Converged after iteration 5</b><small>Three consecutive gains below ε = 0.002 · validation-best checkpoint retained.</small></div>
-      </div>
     </div>
 
-    <div className="campaign-telemetry">
-      <div><span>Autonomous result</span><b>{autonomousRun.baseline.primary.toFixed(6)} → {autonomousRun.champion.primary.toFixed(6)}</b></div>
-      <div><span>Agent wall-clock</span><b>{clock(autonomousRun.usage.wall_seconds)}</b></div>
-      <div><span>LLM tokens</span><b>{autonomousRun.usage.total_tokens.toLocaleString()}</b></div>
-      <div><span>Recovery events</span><b>1 handled</b></div>
-      <div><span>Manual interventions</span><b>{autonomousRun.manual_interventions}</b></div>
-      <div className="telemetry-integrity"><span>Integrity</span><b>Hidden test untouched</b></div>
-    </div>
+    <details className="cinema-run-details">
+      <summary>
+        <span>Experiment ledger &amp; resource audit</span>
+        <b>5 iterations · 1 recovery · {autonomousRun.manual_interventions} interventions</b>
+        <i>Open details</i>
+      </summary>
+      <div className="cinema-detail-body">
+        <div className="iteration-ledger">
+          <div className="iteration-ledger-head"><span>EXPERIMENT LEDGER</span><b>5 / 50 iterations</b></div>
+          {autonomousRun.iterations.map((item, index) => <button
+            type="button"
+            className={`${index === iterationIndex ? 'active' : ''} ${item.outcome}`}
+            onClick={() => { setIterationIndex(index); setStageIndex(0); setPlaying(false); }}
+            aria-current={index === iterationIndex ? 'true' : undefined}
+            key={item.iteration}
+          ><span>{item.outcome === 'accepted' ? '✓' : item.outcome === 'invalidated' ? '↻' : '×'}</span><div><b>Iteration {String(item.iteration).padStart(2, '0')}</b><small>{item.title}</small></div><em>{typeof item.primary === 'number' ? item.primary.toFixed(6) : 'invalid'}</em></button>)}
+          <div className="convergence-card"><span>STOP CONDITION</span><b>Converged after iteration 5</b><small>Three consecutive gains below ε = 0.002 · validation-best checkpoint retained.</small></div>
+        </div>
+        <div className="campaign-telemetry">
+          <div><span>Autonomous result</span><b>{autonomousRun.baseline.primary.toFixed(6)} → {autonomousRun.champion.primary.toFixed(6)}</b></div>
+          <div><span>Agent wall-clock</span><b>{clock(autonomousRun.usage.wall_seconds)}</b></div>
+          <div><span>LLM tokens</span><b>{autonomousRun.usage.total_tokens.toLocaleString()}</b></div>
+          <div><span>Recovery events</span><b>1 handled</b></div>
+          <div><span>Manual interventions</span><b>{autonomousRun.manual_interventions}</b></div>
+          <div className="telemetry-integrity"><span>Integrity</span><b>Hidden test untouched</b></div>
+        </div>
+      </div>
+    </details>
   </section>;
 }
 
@@ -287,10 +296,18 @@ export function StageCanvas({ id, inspect, showTree }: { id: string; inspect: (i
   switch (id) {
     case 'inspect': return <>
       <div className="replay-boundary"><b>KuaiRand-Pure · target: long_view</b><div><span>Model selection<br /><strong>08–14 Apr</strong></span><span>Locked screen<br /><strong>15–21 Apr</strong></span><span>Confirmation<br /><strong>22–28 Apr</strong></span></div><small>2022 outcomes · hidden test from 29 Apr excluded in the recorded protocol.</small></div>
-      <CorrelationScan />
-      <div className="replay-facts"><div><strong>{evidence.champion.champion.rows.toLocaleString()}</strong><span>Confirmation impressions</span></div><div><strong>{evidence.champion.champion.users.toLocaleString()}</strong><span>Confirmation users</span></div></div>
-      <p className="replay-note">Model input fields recorded in the config</p><div className="replay-chips">{evidence.screen.matched_configuration.fields.map(field => <code key={field}>{field}</code>)}</div>
-      <p className="replay-unavailable">Missingness and target-balance diagnostics were not saved. This correlation preview was recomputed for the demo from the training window; it was not part of the recorded experiment wave, and no Apr 29 outcome is used.</p>
+      <div className="replay-signal-preview" aria-label="Three relationship scan highlights">
+        <div><span>Past long-view → current</span><b>+0.312</b><small>strongest direct historical signal</small></div>
+        <div><span>Past play time → current</span><b>+0.249</b><small>watch-depth signal</small></div>
+        <div><span>Video duration → current</span><b>+0.003</b><small>almost no linear relationship</small></div>
+      </div>
+      <details className="stage-data-disclosure">
+        <summary><span>Explore the interactive correlation matrix</span><small>6 behaviours · 36 relationships · training window only</small><i>Open analysis</i></summary>
+        <CorrelationScan />
+        <div className="replay-facts"><div><strong>{evidence.champion.champion.rows.toLocaleString()}</strong><span>Confirmation impressions</span></div><div><strong>{evidence.champion.champion.users.toLocaleString()}</strong><span>Confirmation users</span></div></div>
+        <p className="replay-note">Model input fields recorded in the config</p><div className="replay-chips">{evidence.screen.matched_configuration.fields.map(field => <code key={field}>{field}</code>)}</div>
+        <p className="replay-unavailable">Missingness and target-balance diagnostics were not saved. This correlation preview was recomputed for the demo from the training window; it was not part of the recorded experiment wave, and no Apr 29 outcome is used.</p>
+      </details>
       <button className="replay-text-button" onClick={() => inspect('wave')}>Inspect the temporal protocol →</button>
     </>;
     case 'research': return <>
@@ -385,22 +402,17 @@ export default function ResearchReplay({ suspended = false }: { suspended?: bool
 
   return <section className={`research-replay ${mode === 'audit' ? 'replay-audit' : ''}`} aria-label="Agent Research Replay">
     <AutonomousLoopVisual />
-    <div className="metrics-grid replay-metrics">
-      <article className="metric-card featured"><span>Recorded champion · primary</span><strong>{result.champion_primary.toFixed(6)}</strong><small>Public validation · not hidden test</small></article>
-      <article className="metric-card"><span>GAUC</span><strong>{result.gauc.toFixed(6)}</strong><small>User-level discrimination</small></article>
-      <article className="metric-card"><span>nDCG@5</span><strong>{result.ndcg5.toFixed(6)}</strong><small>Top-five ranking quality</small></article>
-      <article className="metric-card"><span>Validation delta</span><strong>{signed(result.absolute_gain, 6)}</strong><small>+{result.relative_gain_percent.toFixed(2)}% relative vs. {result.baseline_primary.toFixed(6)}</small></article>
-      <article className="metric-card"><span>Recorded research wave</span><strong>{wave.experiments.length} methods</strong><small>{wave.totals.screen_survivors} screen survivor · {wave.totals.champion_promotions} promotions</small></article>
-    </div>
-    <section className="brief-alignment" aria-label="Track 2 protocol alignment">
-      <div><span>Track 2 · required</span><strong>KuaiRand-Pure</strong><small>logged-impression ranking</small></div>
-      <div><span>Target</span><strong>long_view</strong><small>native relevance label</small></div>
-      <div><span>Official metric</span><strong>GAUC / nDCG@5</strong><small>equal-weighted primary</small></div>
-      <div><span>Run boundary</span><strong>50 iterations · 6 h</strong><small>ε 0.002 · patience 3</small></div>
-      <div className="pending"><span>Submission status</span><strong>Validation frozen</strong><small>hidden test untouched</small></div>
+    <section className="replay-summary" aria-label="Recorded validation result and protocol">
+      <div className="replay-summary-primary"><span>Frozen champion · validation primary</span><strong>{result.champion_primary.toFixed(6)}</strong><small>{signed(result.absolute_gain, 6)} vs. reproduced baseline · +{result.relative_gain_percent.toFixed(2)}%</small></div>
+      <div><span>GAUC</span><b>{result.gauc.toFixed(6)}</b></div>
+      <div><span>nDCG@5</span><b>{result.ndcg5.toFixed(6)}</b></div>
+      <div><span>Benchmark</span><b>KuaiRand-Pure</b><small>long_view · within-user ranking</small></div>
+      <div className="replay-summary-seal"><span>Protocol</span><b>✓ Test labels sealed</b><small>Public validation result</small></div>
     </section>
-    <div className="replay-intro"><div><p className="eyebrow">Evidence, not a monologue</p><h2>Agent Research Replay</h2><p>A promising idea. A controlled test. A decision you can inspect.</p></div><div className="replay-mode" aria-label="Presentation mode"><button aria-pressed={mode === 'story'} onClick={() => { dispatch({ type: 'mode', value: 'story' }); setTree(false); setSourceId(null); }}>Story</button><button aria-pressed={mode === 'audit'} onClick={() => dispatch({ type: 'mode', value: 'audit' })}>Audit</button></div></div>
-    <p className="replay-provenance">Recorded reports · curated {clock(replayDuration)} sequence, not an agent transcript. The champion predates this experiment; replay does not train or change it.</p>
+    <div className="replay-section-head">
+      <div><p className="eyebrow">Evidence, not a monologue</p><h2>Inspect one research decision at a time.</h2><p>Recorded reports · curated {clock(replayDuration)} sequence, not an agent transcript. The champion predates this experiment; replay does not train or change it.</p></div>
+      <div className="replay-mode" aria-label="Presentation mode"><button aria-pressed={mode === 'story'} onClick={() => { dispatch({ type: 'mode', value: 'story' }); setTree(false); setSourceId(null); }}>Story</button><button aria-pressed={mode === 'audit'} onClick={() => dispatch({ type: 'mode', value: 'audit' })}>Audit</button></div>
+    </div>
     <section className="replay-player panel" aria-label="Replay playback">
       <div className="replay-controls"><button className="button primary" onClick={() => { if (playing) dispatch({ type: 'pause' }); else { dispatch({ type: 'play' }); setTree(false); setSourceId(null); } }}>{playing ? 'Pause' : time >= replayDuration ? 'Replay story' : 'Play story'}</button><button className="replay-skip" aria-label="Previous stage" disabled={index === 0} onClick={() => jump(index - 1)}>←</button><button className="replay-skip" aria-label="Next stage" disabled={index === replaySteps.length - 1} onClick={() => jump(index + 1)}>→</button><span className="mono">{clock(time)} / {clock(replayDuration)}</span><label>Speed <select value={speed} onChange={event => dispatch({ type: 'speed', value: Number(event.target.value) })}><option value={0.5}>0.5×</option><option value={1}>1×</option><option value={2}>2×</option></select></label><small>{mode === 'audit' ? 'Audit pauses playback. Play story to resume.' : 'Presentation time, not training time'}</small></div>
       <input aria-label="Replay position" aria-valuetext={`${clock(time)}, ${step.stage}: ${step.title}`} type="range" min={0} max={replayDuration} step={0.25} value={time} onChange={event => { dispatch({ type: 'seek', value: Number(event.target.value) }); setSourceId(null); setTree(false); }} />
@@ -409,8 +421,11 @@ export default function ResearchReplay({ suspended = false }: { suspended?: bool
     <div className="replay-grid">
       <section className="panel replay-canvas" aria-busy={transitioning}><div className="replay-canvas-heading"><p className="eyebrow">{tree ? 'The research landscape' : `${String(index + 1).padStart(2, '0')} / 08 · ${step.stage}`}</p><button className="replay-text-button" aria-pressed={tree} onClick={() => { if (tree) setTree(false); else showTree(); }}>{tree ? '← Stage view' : 'Research tree ↗'}</button></div><div className={`replay-stage-content ${transitioning ? 'is-transitioning' : ''}`} key={tree ? `tree-${branch}` : step.id}><h3 className="replay-typed-title">{tree ? 'One champion. Ten alternatives.' : step.title}</h3><p>{tree ? 'Click a branch to inspect its outcome and measured cost.' : step.subtitle}</p>{tree ? <ResearchTree selected={branch} select={setBranch} /> : <StageCanvas id={step.id} inspect={inspect} showTree={showTree} />}</div>{transitioning && <div className="replay-thinking" role="status"><div className="thinking-mark"><i /><i /><i /></div><p><b>{thinkingLabels[step.id]}</b><span>Replaying recorded evidence</span></p><em><i /><i /><i /></em></div>}</section>
       <section className={`panel replay-decision ${transitioning ? 'is-thinking' : ''}`} aria-live="polite" aria-atomic="true"><p className="eyebrow">Decision card · editorial summary</p><div className="replay-decision-copy" key={tree ? `decision-tree-${branch}` : `decision-${step.id}`}><h3>{tree ? 'The same gate for every idea.' : 'Why this step?'}</h3>{tree ? <dl><dt>What was tested</dt><dd>{wave.experiments.find(item => item.id === branch)!.method}</dd><dt>Why this comparison</dt><dd>Every alternative must improve its matched control before it can challenge the frozen champion.</dd><dt>Evidence</dt><dd>The selected branch record and wave protocol are available in the evidence trail.</dd><dt>What would prove it wrong</dt><dd>{wave.protocol.promotion_gate}</dd></dl> : <dl><dt>What I noticed</dt><dd>{step.observation}</dd><dt>Why this test</dt><dd>{step.rationale}</dd><dt>What I’m testing</dt><dd>{step.testing}</dd><dt>What would prove me wrong</dt><dd>{step.falsifier}</dd></dl>}</div><div className="replay-decision-footer">Observable evidence + editorial explanation. Not private chain-of-thought.</div></section>
-      <aside className="panel replay-evidence" id="replay-evidence"><p className="eyebrow">Evidence trail · {mode === 'audit' ? 'all artifacts' : 'this step'}</p><h3>Follow the receipts</h3><div className="replay-source-list">{sourceChoices.map(source => <button key={source.id} className={source.id === selectedSource.id ? 'selected' : ''} onClick={() => inspect(source.id)} aria-pressed={source.id === selectedSource.id}><span>↳</span><b>{source.title}</b><small>JSON</small></button>)}</div><div className="replay-source-detail" key={selectedSource.id}><b>{selectedSource.title}</b><p>{selectedSource.path}</p><details open={mode === 'audit'}><summary>Inspect report extract</summary><pre tabIndex={0} aria-label={`${selectedSource.title} JSON extract`}>{JSON.stringify(selectedSource.excerpt, null, 2)}</pre></details><details><summary>Source fingerprint · SHA-256</summary><code>{selectedSource.sha256}</code><p>Hash of the original report file. This view contains selected fields, not the full file. A matching hash identifies content; it does not independently prove the experiment.</p></details></div><a className="button ghost" href="/research-replay.json" download="kuailab-research-evidence.json" onClick={() => dispatch({ type: 'pause' })}>Download evidence bundle ↓</a><p className="replay-note">7 report extracts + source fingerprints. No raw outcomes or model binaries.</p></aside>
     </div>
+    <details className="panel replay-evidence-disclosure" open={mode === 'audit'} key={`evidence-${mode}`}>
+      <summary><div><p className="eyebrow">Evidence trail</p><h3>Open the receipts behind this stage.</h3></div><div><span>{sourceChoices.length} source{sourceChoices.length === 1 ? '' : 's'}</span><b>{mode === 'audit' ? 'Full audit view' : 'Stage evidence'}</b><i>Open evidence</i></div></summary>
+      <aside className="replay-evidence" id="replay-evidence"><div className="replay-source-list">{sourceChoices.map(source => <button key={source.id} className={source.id === selectedSource.id ? 'selected' : ''} onClick={() => inspect(source.id)} aria-pressed={source.id === selectedSource.id}><span>↳</span><b>{source.title}</b><small>JSON</small></button>)}</div><div className="replay-source-detail" key={selectedSource.id}><b>{selectedSource.title}</b><p>{selectedSource.path}</p><details open={mode === 'audit'}><summary>Inspect report extract</summary><pre tabIndex={0} aria-label={`${selectedSource.title} JSON extract`}>{JSON.stringify(selectedSource.excerpt, null, 2)}</pre></details><details><summary>Source fingerprint · SHA-256</summary><code>{selectedSource.sha256}</code><p>Hash of the original report file. This view contains selected fields, not the full file. A matching hash identifies content; it does not independently prove the experiment.</p></details></div><a className="button ghost" href="/research-replay.json" download="kuailab-research-evidence.json" onClick={() => dispatch({ type: 'pause' })}>Download evidence bundle ↓</a><p className="replay-note">7 report extracts + source fingerprints. No raw outcomes or model binaries.</p></aside>
+    </details>
     {mode === 'audit' && <section className="panel replay-audit-notes"><div><p className="eyebrow">Audit boundaries</p><h3>What this evidence does—and doesn’t—say</h3></div><ul><li>Primary = 0.5 × GAUC + 0.5 × nDCG@5. All headline scores are public-validation results, not hidden-test or live-demo scores.</li><li>The baseline-to-champion lift is historical context. This RCR wave made no champion promotion.</li><li>Four user-ID folds are reported; confidence intervals, pre-run hypothesis rankings, and profiling diagnostics were not recorded here.</li><li>Paper relevance and decision explanations are editorial summaries. No private reasoning, invented tool calls, or search timestamps are shown.</li><li>The bundle contains selected report fields. Reproduction still needs the original data, code, and model artifacts.</li></ul></section>}
   </section>;
 }

@@ -22,7 +22,7 @@ The timed narration and recording checklist are in [`docs/JUDGE_DEMO.md`](docs/J
 - GPT-5.6 Sol provider with high reasoning and strict JSON output.
 - Deterministic no-cost demo provider and synthetic benchmark for end-to-end smoke testing.
 - Real KuaiRand-Pure adapter built around the supplied organizer starter kit, plus a fail-closed external-adapter contract for alternative runners.
-- Typed pointwise, positive-weighted, multi-seed, BPR pairwise, pointwise/pairwise-blend, DeepFM, clock-context, and frozen-champion residual experiment executors.
+- Typed pointwise, positive-weighted, multi-seed, BPR pairwise, pointwise/pairwise-blend, DeepFM, clock-context, multi-view-neighbour, reviewed paper-signal, and frozen-champion residual experiment executors.
 - Atomic `state.json`, append-only `events.jsonl`, proposal source, unified diff, runner logs, metrics, failures, and recovery evidence.
 - Champion promotion plus the official global 50-iteration, six-hour, ε=0.002 / three-iteration convergence limits, preserved across continuation.
 - Automatic planner retry and one lower-resource worker retry with both failures, routes, diffs, and compute retained in the evidence log.
@@ -76,6 +76,61 @@ The 0.612858 validation champion is no longer metrics-only bootstrap evidence. R
 5. evaluates on April 22–28, saves the candidate checkpoints and blended scores in the isolated iteration workspace, and promotes only a positive primary-score gain.
 
 The hidden split remains unavailable to this adapter. Set **Mount verified 0.612858 champion** in the dashboard; the agent can then choose this family autonomously. Operator steering is optional, for example: `Try champion_residual_blend with a pairwise_fm candidate and a conservative positive weight.`
+
+## Autonomous multi-view user neighbours
+
+Real campaigns also expose a typed `multiview_neighbor_residual` family. The
+planner can choose item, author, music, tag-set, and video-type views; exposure,
+positive-only, or signed train-profile construction; cosine/IDF settings;
+neighbour count; Bayesian smoothing; and a bounded residual weight. All graph
+edges, similarities, priors, and neighbour outcomes come exclusively from the
+current training block. The evaluation rows contribute identifiers and static
+video metadata, never `long_view`, play time, or another target-period outcome.
+
+The fast screen rebuilds the locked train-only FM baseline and applies the
+proposed neighbour residual. Confirmation instead blends against the
+checksum-verified champion. Compact relationship diagnostics—selected views,
+support coverage, support quantiles, and standalone/base/final scores—are saved
+with the iteration and returned to the planner on the next turn. This makes the
+feature search iterative rather than prompt-only. The research memory states
+that the accepted historical control used 60 item-exposure neighbours, squared
+cosine weights, smoothing 8, item smoothing 20, and weight 0.002; exact rejected
+signed/TF-IDF multi-view configurations must not be presented as new work.
+
+## Audited academic paper search
+
+GPT campaigns may use the Responses API hosted web-search tool when retained
+evidence has a genuine knowledge gap or the experiment search has plateaued.
+The proposal call is limited to two searches and to primary academic hosts such
+as arXiv, ACM, IEEE, OpenReview, PMLR, NeurIPS proceedings, ACL Anthology, and
+Springer. Consulted HTTPS sources and search queries are domain-checked, saved in
+`proposal.json` and `iteration-log.json`, emitted into the live trace, and shown
+as clickable evidence beside the resulting experiment.
+
+Papers are method inspiration, not benchmark evidence. The planner must map a
+paper mechanism onto one existing typed executor, state it as a hypothesis, and
+pass the same train-only screen and sealed confirmation gate. A published score
+can never become a KuaiRand score. Set `KUAILAB_ACADEMIC_SEARCH=false` to run a
+campaign using only the checked-in research memory.
+
+### Reviewed paper-to-executor gate
+
+When a useful paper mechanism cannot be represented by an existing family, the
+planner can spend one iteration on `executor_incubation`. It submits a paper URL
+from that iteration's audited search trace and a declarative program containing
+one to six supported train-only signals: smoothed user/item/author/music/tag or
+video-type affinity, entity priors, repeat penalties, slate-frequency penalties,
+or duration compatibility. It does not submit executable Python.
+
+The engine scaffolds an auditable wrapper and admits the exact program to the
+persistent registry only after six mandatory checks pass: validation-label
+invariance, temporal fit boundary, finite output, determinism, output shape, and
+resource budget. Large-resource proposals and unaudited URLs are rejected. A
+later iteration may run `paper_signal_residual`, but only with parameters that
+exactly match the registered program; it then uses the normal train-only screen,
+sealed confirmation, and zero-preferring champion promotion rules. Incubation
+produces no benchmark score and does not advance the small-gain convergence
+streak. Model-generated arbitrary Python is never executed.
 
 The worker also exposes a `slate_context_deepfm` champion candidate. Unlike the
 row-wise residuals, it batches complete user slates, pools a permutation-invariant

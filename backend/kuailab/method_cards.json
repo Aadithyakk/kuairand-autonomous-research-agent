@@ -317,5 +317,16 @@
     "fit": "The validated champion is an expensive ensemble; RCR shows that a neural ranker can improve internally but lacks complementary residual signal. Distillation instead asks the student to reproduce the champion directly.",
     "smallest_ablation": "Compare a compact pointwise student with and without ranking distillation using strictly out-of-fold teacher scores, then audit score retention, latency, RAM, and all three organizer metrics.",
     "risk": "Teacher predictions must be cross-fitted for training rows, and matching the champion is a deployment objective rather than evidence of a higher validation score."
+  },
+  {
+    "id": "multiview_user_neighbor",
+    "category": "features",
+    "status": "attempted-mixed",
+    "paper": "Item-based collaborative filtering recommendation algorithms",
+    "source": "https://dl.acm.org/doi/10.1145/371920.372071",
+    "method": "Construct train-only user profiles over item, author, music, tag-set, and video-type views; retrieve cosine-nearest users; and smooth their candidate-item long-view evidence toward a training item prior.",
+    "fit": "Directly tests the hypothesis that users sharing only a subset of tastes should provide a personalized ranking residual beyond the heterogeneous champion.",
+    "smallest_ablation": "The accepted control is item-exposure similarity with 60 neighbors, squared cosine weights, neighbor smoothing 8, item smoothing 20, and residual weight 0.002. The autonomous executor may reproduce it or change one predeclared view/profile component at a time.",
+    "risk": "A later signed and TF-IDF multi-view scan over item, author, music, tag-set, and type profiles did not improve stably and one held-out fold regressed. Do not repeat those exact combinations or describe multi-view itself as untested."
   }
 ]

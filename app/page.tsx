@@ -18,6 +18,12 @@ const judgeSteps = [
 ] as const;
 
 type Metrics = { primary: number; gauc: number; ndcg5: number };
+type ResearchSource = { title: string; url: string; domain: string };
+type ExecutorReview = {
+  slug: string; status: 'approved' | 'rejected'; family?: string;
+  contract?: { tests?: Record<string, boolean> } | null; errors?: string[];
+  generated_code_executed?: boolean; arbitrary_python_allowed?: boolean;
+};
 type Stage = { name: string; status: 'done' | 'active' | 'waiting' };
 type ResourceUsage = {
   wall_seconds: number; train_seconds: number; cpu_seconds: number; cpu_hours: number; cpu_utilization_percent: number;
@@ -26,7 +32,13 @@ type ResourceUsage = {
 type Iteration = {
   number: number; title: string; status: string; stage: string; metrics: Metrics | null; delta: number | null;
   gain?: number; duration_seconds: number; error?: string; evidence?: string; artifact?: string; accepted: boolean; budget_counted?: boolean; resource_usage?: ResourceUsage | null;
-  screen_metrics?: Metrics | null; screen_gain?: number | null; screen_passed?: boolean; confirmation_accessed?: boolean;
+  screen_metrics?: Metrics | null; screen_gain?: number | null; screen_passed?: boolean; confirmation_accessed?: boolean; experiment_type?: string;
+  analysis?: {
+    relationship_map?: { views?: string[]; neighbor_count?: number; supported_prediction_fraction?: number };
+    paper_executor?: { executor_slug?: string; signals?: string[]; signal_support?: Record<string, number> };
+  } | null;
+  research_sources?: ResearchSource[]; search_queries?: string[]; web_search_used?: boolean;
+  executor_review?: ExecutorReview;
 };
 type EventItem = { id: number; time: string; kind: string; title: string; detail: string; iteration?: number; stage?: string };
 type LiveUser = { user_id: string; candidate_count: number };
@@ -53,8 +65,8 @@ type LivePrediction = {
 type RunLimits = { max_iterations: number; max_hours: number; convergence_epsilon: number; convergence_patience: number; bootstrap_verified: boolean };
 type State = {
   campaign: { id: string | null; status: string; mode: string; provider: string; started_at: string | null; stop_reason: string | null; steering: string | null; continuations: number; session_start_iteration: number; session_start_wall_seconds: number; manual_interventions: number; failure_count: number; recovery_count: number; consecutive_small_gains: number; limits: RunLimits };
-  config: { model: string; reasoning_effort: string; max_iterations: number; max_hours: number; convergence_epsilon: number; convergence_patience: number; api_key_available: boolean; dataset_available: boolean; adapter_available: boolean; champion_available: boolean };
-  current: null | { number: number; title: string; hypothesis: string; stage: string; status: string; activity: string; stages: Stage[]; acceptance: string; abort_condition: string; expected_gain: number | null; error?: string };
+  config: { model: string; reasoning_effort: string; max_iterations: number; max_hours: number; convergence_epsilon: number; convergence_patience: number; api_key_available: boolean; dataset_available: boolean; adapter_available: boolean; champion_available: boolean; academic_search_enabled?: boolean };
+  current: null | { number: number; title: string; hypothesis: string; stage: string; status: string; activity: string; stages: Stage[]; acceptance: string; abort_condition: string; expected_gain: number | null; error?: string; research_sources?: ResearchSource[]; web_search_used?: boolean; executor_review?: ExecutorReview };
   metrics: { baseline: Metrics; champion: Metrics; delta: number };
   usage: { input_tokens: number; output_tokens: number; reasoning_tokens: number; total_tokens: number; wall_seconds: number; train_seconds: number; cpu_seconds: number; cpu_hours: number; gpu_hours: number; peak_rss_mb: number; peak_gpu_memory_mb: number; experiments_measured: number };
   iterations: Iteration[];
@@ -70,8 +82,8 @@ function computeHours(value: number) { return value < 0.01 ? `${(value * 60).toF
 function memory(value?: number) { return value ? `${Math.round(value).toLocaleString()} MB` : '—'; }
 function timeLabel(value: string) { return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 function statusTone(status: string) {
-  if (status === 'accepted' || status === 'complete') return 'good';
-  if (status === 'failed') return 'warn';
+  if (status === 'accepted' || status === 'complete' || status === 'executor_approved') return 'good';
+  if (status === 'failed' || status === 'executor_rejected') return 'warn';
   if (status === 'screened_out') return 'warn';
   if (status === 'running') return 'active';
   return 'base';
@@ -128,6 +140,132 @@ function browserPrediction(artifact: LiveArtifact, userId: string, limit = 10): 
     prediction_id: new Date().toISOString(), user_id: userId, target_date: artifact.target.date,
     model: artifact.model.name, execution: 'browser', ranking, evaluation: artifact.evaluation, integrity: artifact.integrity,
   };
+}
+
+const liveStageMessages: Record<string, string[]> = {
+  inspect: [
+    'Loading the retained champion and temporal validation protocol',
+    'Indexing accepted, rejected, and recovered experiments',
+    'Checking compute budget and convergence guardrails',
+    'Packaging a sealed evidence context for the researcher',
+  ],
+  hypothesize: [
+    'Comparing one exploit, one explore, and one innovate branch',
+    'Cross-checking candidate ideas against exhausted method cards',
+    'Estimating validation value per unit of compute',
+    'Waiting for one schema-valid, falsifiable experiment',
+  ],
+  implement: [
+    'Materializing the selected typed configuration',
+    'Writing an auditable proposal and candidate diff',
+    'Verifying the executor contract before training',
+  ],
+  train: [
+    'Running the train-only temporal screen',
+    'Tracking compute, memory, and recovery signals',
+    'Keeping confirmation outcomes sealed until the gate passes',
+  ],
+  evaluate: [
+    'Comparing primary score against the retained champion',
+    'Checking GAUC and nDCG@5 safety constraints',
+    'Validating metric bounds and evidence provenance',
+  ],
+  reflect: [
+    'Recording the promotion decision and resource cost',
+    'Appending the result to research memory',
+    'Preparing evidence for the next autonomous iteration',
+  ],
+};
+
+function LiveAgentWorkbench({
+  current,
+  status,
+  model,
+  champion,
+  evidenceCount,
+  remainingIterations,
+}: {
+  current: State['current'];
+  status: string;
+  model: string;
+  champion?: Metrics;
+  evidenceCount: number;
+  remainingIterations: number;
+}) {
+  const stage = current?.stage ?? 'inspect';
+  const messages = useMemo(
+    () => liveStageMessages[stage] ?? [current?.activity ?? 'Waiting for live evidence'],
+    [current?.activity, stage],
+  );
+  const stageIndex = Math.max(0, Object.keys(stageLabels).indexOf(stage));
+  const running = status === 'running' && current?.status === 'running';
+  const [messageIndex, setMessageIndex] = useState(0);
+  const [typedLength, setTypedLength] = useState(0);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduceMotion(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
+    if (!running || reduceMotion) return;
+    const message = messages[messageIndex % messages.length];
+    const complete = typedLength >= message.length;
+    const timer = window.setTimeout(() => {
+      if (complete) {
+        setMessageIndex((index) => (index + 1) % messages.length);
+        setTypedLength(0);
+      } else {
+        setTypedLength((length) => length + 1);
+      }
+    }, complete ? 1250 : 22);
+    return () => window.clearTimeout(timer);
+  }, [messageIndex, messages, reduceMotion, running, typedLength]);
+
+  const activeMessage = messages[messageIndex % messages.length];
+  const typedMessage = running && !reduceMotion ? activeMessage.slice(0, typedLength) : activeMessage;
+  const statusLabel = status === 'paused' ? 'Paused by operator' : running ? 'Live autonomous loop' : 'Latest agent state';
+
+  return <div className={`live-agent-workbench stage-${stage} ${running ? 'is-running' : ''}`} aria-live="polite">
+    <div className="live-orbit" aria-hidden="true">
+      <div className="live-orbit-ring ring-one"><i /><i /><i /></div>
+      <div className="live-orbit-ring ring-two"><i /><i /></div>
+      <div className="live-agent-core"><small>STAGE</small><span>{String(stageIndex + 1).padStart(2, '0')}</span></div>
+    </div>
+
+    <div className="live-agent-copy">
+      <div className="live-agent-meta"><span><i /> {statusLabel}</span><b>{model} · {stageLabels[stage] ?? stage} / 06</b></div>
+      <h3>{stageLabels[stage] ?? stage} evidence pass</h3>
+      <p className="live-typed-line"><span>{typedMessage || '\u00a0'}</span>{running && <i aria-hidden="true" />}</p>
+      <p className="live-engine-activity">{current?.activity ?? 'Stage transitions and evidence will appear here in real time.'}</p>
+      {current?.web_search_used && <div className="live-paper-evidence">
+        <span>Academic search audited</span>
+        <b>{current.research_sources?.length ?? 0} allowed-domain {(current.research_sources?.length ?? 0) === 1 ? 'source' : 'sources'}</b>
+        {current.research_sources?.slice(0, 2).map((source) => <a href={source.url} target="_blank" rel="noreferrer" key={source.url}>{source.title}</a>)}
+      </div>}
+      {current?.executor_review && <div className={`live-executor-review ${current.executor_review.status}`}>
+        <span>Paper executor gate</span>
+        <b>{current.executor_review.slug} · {current.executor_review.status}</b>
+        <small>{current.executor_review.contract?.tests
+          ? `${Object.values(current.executor_review.contract.tests).filter(Boolean).length}/${Object.keys(current.executor_review.contract.tests).length} contracts passed`
+          : current.executor_review.errors?.[0] ?? 'Awaiting contract evidence'}</small>
+      </div>}
+      <div className="live-frontier" aria-label="Required experiment strategies">
+        {['Exploit', 'Explore', 'Innovate'].map((strategy) => <span key={strategy}>{strategy}</span>)}
+      </div>
+    </div>
+
+    <div className="live-evidence-stack" aria-label="Evidence being supplied to the agent">
+      <div><span>Champion</span><b>{champion?.primary.toFixed(6) ?? '—'}</b><i /></div>
+      <div><span>Research memory</span><b>{evidenceCount} records</b><i /></div>
+      <div><span>Session budget</span><b>{remainingIterations} {remainingIterations === 1 ? 'attempt' : 'attempts'}</b><i /></div>
+      <div className="sealed"><span>Evaluation boundary</span><b>Hidden test sealed</b><i /></div>
+    </div>
+  </div>;
 }
 
 export default function Home() {
@@ -291,9 +429,8 @@ export default function Home() {
   const failure = describeFailure(current?.error);
   const completedCount = officialIterationsUsed;
   const runLimits = state?.campaign.limits ?? { max_iterations: state?.config.max_iterations ?? 50, max_hours: state?.config.max_hours ?? 6, convergence_epsilon: state?.config.convergence_epsilon ?? 0.002, convergence_patience: state?.config.convergence_patience ?? 3, bootstrap_verified: true };
-  const remainingSeconds = Math.max(0, 21600 - (state?.usage.wall_seconds ?? 0));
   const officialMode = setupMode === 'new' ? mode === 'kuairand' : state?.campaign.mode === 'kuairand';
-  const events = useMemo(() => [...(state?.events ?? [])].reverse().slice(0, 7), [state]);
+  const events = useMemo(() => [...(state?.events ?? [])].reverse().slice(0, 5), [state]);
 
   return (
     <main className="app-shell">
@@ -330,26 +467,21 @@ export default function Home() {
         </header>
 
         {view === 'replay' ? <ResearchReplay suspended={showJudgeWalkthrough} /> : <>
-        <section className="judge-hero" aria-labelledby="judge-hero-title">
-          <div className="judge-hero-copy">
-            <div className="verified-kicker"><i /> Verified validation evidence · hidden test untouched</div>
-            <h2 id="judge-hero-title">An AI research agent that improves models—and knows when not to deploy them.</h2>
-            <p>KuaiLab proposes, trains, evaluates, and reflects under a sealed temporal protocol. Every decision is tied to metrics, compute, and an auditable artifact.</p>
-            <div className="judge-hero-actions">
-              <button className="button judge-primary" type="button" onClick={openJudgeWalkthrough}>Start the judge walkthrough <span>→</span></button>
-              <a className="text-link" href="#iterations">Inspect the live evidence <span>↓</span></a>
-            </div>
+        <section className="live-overview" aria-labelledby="live-overview-title">
+          <div className="live-overview-primary">
+            <p className="eyebrow">Verified champion · hidden test sealed</p>
+            <div><strong id="live-overview-title">{score(champion?.primary, 6)}</strong><span>{state ? `${state.metrics.delta >= 0 ? '+' : ''}${state.metrics.delta.toFixed(6)}` : '—'} vs baseline</span></div>
           </div>
-          <div className="judge-result" aria-label="Verified performance improvement">
-            <div className="score-journey">
-              <div><span>Reproduced baseline</span><strong>{judgeShowcase.result.baseline_primary.toFixed(6)}</strong></div>
-              <span className="journey-arrow">→</span>
-              <div className="champion-score"><span>Verified champion</span><strong>{judgeShowcase.result.champion_primary.toFixed(6)}</strong></div>
-            </div>
-            <div className="gain-line"><strong>{signed(judgeShowcase.result.absolute_gain)}</strong><span>absolute validation delta · +{judgeShowcase.result.relative_gain_percent.toFixed(2)}% relative · {judgeShowcase.benchmark.validation_users.toLocaleString()} users</span></div>
-            <div className="criterion-row" aria-label="Judging criteria covered">
-              {judgeShowcase.criteria.map((criterion, index) => <span key={criterion.name}>{String(index + 1).padStart(2, '0')} {criterion.name.split(' ')[0]} · {criterion.weight_percent}%</span>)}
-            </div>
+          <div className="live-overview-metrics" aria-label="Champion metrics and campaign usage">
+            <div><span>GAUC</span><b>{score(champion?.gauc, 6)}</b></div>
+            <div><span>nDCG@5</span><b>{score(champion?.ndcg5, 6)}</b></div>
+            <div><span>Experiments</span><b>{String(officialIterationsUsed).padStart(2, '0')} / 50</b></div>
+            <div><span>Compute</span><b>{computeHours(state?.usage.cpu_hours ?? 0)} CPU</b></div>
+          </div>
+          <div className="live-overview-state">
+            <span className={`live-pill ${status}`}><i /> {connected ? status : 'offline'}</span>
+            <b>{current ? `Iteration ${String(current.number).padStart(3, '0')}` : 'Campaign standing by'}</b>
+            <small>{active ? current?.activity : state?.campaign.stop_reason ?? 'Ready for a bounded experiment.'}</small>
           </div>
         </section>
 
@@ -357,56 +489,8 @@ export default function Home() {
         {error && <div className="banner error-banner" role="alert"><b>Couldn’t complete that action.</b> {error}<button onClick={() => setError('')} aria-label="Dismiss">×</button></div>}
         {connected && synthetic && <div className="banner warn-banner"><b>Synthetic smoke-test evidence.</b> These scores—including the 0.6250 demo ceiling—are simulated to test the workflow, not trained KuaiRand validation results.</div>}
 
-        <section className="panel live-predictor" id="live-prediction" aria-labelledby="live-prediction-title">
-          <div className="panel-heading">
-            <div><p className="eyebrow">Deployable model · target outcomes sealed</p><h2 id="live-prediction-title">Rank an unseen April 29 slate</h2></div>
-            <span className="predictor-badge"><i /> Scores calculated on click</span>
-          </div>
-          <div className="predictor-layout">
-            <div className="predictor-copy">
-              <p>This is a compact logistic deployment surrogate, separate from the frozen research ensemble. It uses April 8–21 history, learns on April 22–28, and receives no April 29 engagement outcomes.</p>
-              <div className="predictor-controls">
-                <label>User slate
-                  <select value={predictionUser} onChange={(event) => { setPredictionUser(event.target.value); setPrediction(null); }} disabled={!liveArtifact}>
-                    {(liveArtifact?.users ?? []).map((user) => <option value={user.user_id} key={user.user_id}>User {user.user_id} · {user.candidate_count} candidates</option>)}
-                  </select>
-                </label>
-                <button className="button judge-primary" type="button" onClick={runLivePrediction} disabled={!liveArtifact || predictionLoading}>{predictionLoading ? 'Analysing slate…' : 'Run live prediction →'}</button>
-              </div>
-              {predictionLoading && <div className="predictor-working" role="status" aria-live="polite">
-                <div className="predictor-working-head"><span><i /><i /><i /></span><b>KuaiLab is analysing user {predictionUser}</b></div>
-                <ol>{['Build history-safe features', 'Score every candidate exposure', 'Sort the top long-view predictions'].map((label, phase) => <li className={phase < predictionPhase ? 'done' : phase === predictionPhase ? 'active' : ''} key={label}><span>{phase < predictionPhase ? '✓' : phase + 1}</span><b>{label}</b></li>)}</ol>
-              </div>}
-              {predictionError && <p className="predictor-error" role="alert">{predictionError}</p>}
-              <div className="predictor-integrity">
-                <span><b>✓</b> April 29 labels excluded</span><span><b>✓</b> No saved prediction scores</span><span><b>✓</b> Browser fallback works without API</span>
-              </div>
-            </div>
-            <aside className="predictor-evaluation">
-              <span>Honest Apr 28 proxy</span>
-              <strong>{liveArtifact ? liveArtifact.evaluation.primary.toFixed(6) : 'Loading…'}</strong>
-              <div><b>GAUC {liveArtifact ? liveArtifact.evaluation.gauc.toFixed(4) : '—'}</b><b>nDCG@5 {liveArtifact ? liveArtifact.evaluation.ndcg5.toFixed(4) : '—'}</b></div>
-              <small>One-day surrogate holdout. It is not the official-protocol 0.612858 validation result.</small>
-            </aside>
-          </div>
-          {prediction && <div className="prediction-result" aria-live="polite">
-            <div className="prediction-result-heading"><div><span>Prediction {prediction.prediction_id.slice(11, 19)} UTC</span><b>User {prediction.user_id} · top {prediction.ranking.length}</b></div><span className="execution-chip">{prediction.execution === 'server' ? 'Local API inference' : 'Browser inference'}</span></div>
-            <div className="prediction-table-wrap"><table><thead><tr><th>Rank</th><th>Video</th><th>Author</th><th>Context</th><th>Duration</th><th>Long-view score</th></tr></thead><tbody>
-              {prediction.ranking.map((candidate) => <tr key={`${candidate.rank}-${candidate.video_id}`}><td className="rank-cell">#{candidate.rank}</td><td className="mono">{candidate.video_id}</td><td className="mono">{candidate.author_id}</td><td>{candidate.video_type} · tab {candidate.tab} · {String(candidate.hour).padStart(2, '0')}:00</td><td>{candidate.duration_seconds.toFixed(1)}s</td><td><div className="score-bar"><i style={{ width: `${Math.max(2, candidate.score * 100)}%` }} /><b>{candidate.score.toFixed(4)}</b></div></td></tr>)}
-            </tbody></table></div>
-          </div>}
-        </section>
-
-        <div className="metrics-grid">
-          <article className="metric-card featured"><span>{synthetic ? 'Demo primary · simulated' : 'Champion primary · verified'}</span><strong>{score(champion?.primary, 6)}</strong><small>{state ? `${state.metrics.delta >= 0 ? '+' : ''}${state.metrics.delta.toFixed(6)} over ${synthetic ? 'demo' : 'reproduced'} baseline` : 'Waiting for local engine'}</small></article>
-          <article className="metric-card"><span>GAUC</span><strong>{score(champion?.gauc, 6)}</strong><small>{synthetic ? 'simulated smoke test' : 'validation-best'}</small></article>
-          <article className="metric-card"><span>nDCG@5</span><strong>{score(champion?.ndcg5, 6)}</strong><small>{synthetic ? 'simulated smoke test' : 'validation-best'}</small></article>
-          <article className="metric-card"><span>Compute used</span><strong>{computeHours(state?.usage.cpu_hours ?? 0)} CPU</strong><small>{computeHours(state?.usage.gpu_hours ?? 0)} GPU · {memory(state?.usage.peak_rss_mb)} peak RAM</small></article>
-          <article className="metric-card"><span>Official research budget</span><strong>{String(officialIterationsUsed).padStart(2, '0')} / 50</strong><small>{elapsed(state?.usage.wall_seconds ?? 0)} / 06:00:00 · {elapsed(remainingSeconds)} left</small></article>
-        </div>
-
         <div className="content-grid">
-          <section className="panel active-run">
+          <section className={`panel active-run ${status === 'running' ? 'is-running' : ''}`}>
             <div className="panel-heading">
               <div><p className="eyebrow">{current ? `Iteration ${String(current.number).padStart(3, '0')}` : 'Campaign state'}</p><h2>{current?.title ?? (status === 'idle' ? 'Ready for the first experiment' : 'No active iteration')}</h2></div>
               <span className="agent-badge">{state?.campaign.provider === 'gpt' ? state.config.model : 'Demo planner'} · {synthetic ? 'synthetic benchmark' : state?.config.reasoning_effort ?? 'high'}</span>
@@ -419,7 +503,15 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            <div className={`activity-card ${current?.status === 'failed' ? 'failed' : ''}`}>
+            {current && current.status !== 'failed' ? <LiveAgentWorkbench
+              key={`${current.number}-${current.stage}`}
+              current={current}
+              status={status}
+              model={state?.campaign.provider === 'gpt' ? state.config.model : 'Demo planner'}
+              champion={champion}
+              evidenceCount={state?.iterations.length ?? 0}
+              remainingIterations={Math.max(0, runLimits.max_iterations - completedCount)}
+            /> : <div className={`activity-card ${current?.status === 'failed' ? 'failed' : ''}`}>
               <div className="activity-icon">{current?.status === 'failed' ? '!' : '⌘'}</div>
               <div><strong>{current ? `${stageLabels[current.stage] ?? current.stage} ${current.status === 'failed' ? 'failed' : 'stage'}` : 'Engine standing by'}</strong>
                 {failure
@@ -427,16 +519,19 @@ export default function Home() {
                   : <p>{current?.activity ?? 'Stage transitions and evidence will appear here in real time.'}</p>}
               </div>
               {status === 'running' && <span className="pulse-dots">•••</span>}
-            </div>
-            <div className="run-meta">
-              <div><span>Acceptance</span><b>{current?.acceptance ?? `Any positive gain · stop sensitivity ${runLimits.convergence_epsilon.toFixed(6)}`}</b></div>
-              <div><span>Abort condition</span><b>{current?.abort_condition ?? 'Invalid metrics, timeout, or runner failure'}</b></div>
-              <div><span>Resources</span><b>{(state?.usage.total_tokens ?? 0).toLocaleString()} tokens · {computeHours(state?.usage.cpu_hours ?? 0)} CPU · {computeHours(state?.usage.gpu_hours ?? 0)} GPU</b></div>
-            </div>
+            </div>}
+            <details className="run-details">
+              <summary><span>Experiment guardrails</span><b>{(state?.usage.total_tokens ?? 0).toLocaleString()} tokens · {computeHours(state?.usage.cpu_hours ?? 0)} CPU</b></summary>
+              <div className="run-meta">
+                <div><span>Acceptance</span><b>{current?.acceptance ?? `Any positive gain · stop sensitivity ${runLimits.convergence_epsilon.toFixed(6)}`}</b></div>
+                <div><span>Abort condition</span><b>{current?.abort_condition ?? 'Invalid metrics, timeout, or runner failure'}</b></div>
+                <div><span>Resources</span><b>{computeHours(state?.usage.gpu_hours ?? 0)} GPU · {memory(state?.usage.peak_rss_mb)} peak RAM</b></div>
+              </div>
+            </details>
           </section>
 
           <aside className="panel event-panel" id="trace">
-            <div className="panel-heading"><div><p className="eyebrow">Append-only evidence</p><h2>Live trace</h2></div><span className="evidence-dot" title="Persisted locally" /></div>
+            <div className="panel-heading"><div><p className="eyebrow">Append-only evidence</p><h2>Latest trace</h2></div><span className="evidence-dot" title="Persisted locally" /></div>
             <ol className="timeline">
               {events.map((item, index) => <li className={index === 0 ? 'current' : ''} key={item.id}><time>{timeLabel(item.time)}</time><div><b>{item.title}</b><p title={item.detail}>{describeFailure(item.detail)?.detail || item.detail}</p></div></li>)}
             </ol>
@@ -447,11 +542,54 @@ export default function Home() {
           <div className="panel-heading"><div><p className="eyebrow">Campaign history</p><h2>Iterations</h2></div><span className="subtle">{synthetic ? 'Synthetic workflow evidence · no model training' : 'Validation-best checkpoint retained · hidden test untouched'}</span></div>
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Iteration</th><th>Experiment</th><th>Status</th><th>Fast screen</th><th>Confirmed primary</th><th>Δ baseline</th><th>Train</th><th>Compute</th><th>Peak RAM</th></tr></thead>
-              <tbody>{[...(state?.iterations ?? [])].reverse().map((item) => <tr key={item.number}><td className="mono">#{String(item.number).padStart(3, '0')}</td><td><b>{item.title}</b>{item.error && <small className="row-note" title={item.error}>{describeFailure(item.error)?.detail || item.error}</small>}</td><td><span className={`status ${statusTone(item.status)}`}>{item.status}</span></td><td className="mono">{score(item.screen_metrics?.primary, 6)}</td><td className="mono">{score(item.metrics?.primary, 6)}</td><td className={`mono ${(item.delta ?? 0) > 0 ? 'positive' : ''}`}>{item.delta == null ? '—' : `${item.delta >= 0 ? '+' : ''}${item.delta.toFixed(6)}`}</td><td className="mono">{item.resource_usage ? elapsed(item.resource_usage.train_seconds) : elapsed(item.duration_seconds)}</td><td className="mono resource-cell">{item.resource_usage ? `${computeHours(item.resource_usage.cpu_hours)} CPU · ${computeHours(item.resource_usage.gpu_hours)} GPU` : '—'}</td><td className="mono">{memory(item.resource_usage?.peak_rss_mb)}</td></tr>)}</tbody>
+              <thead><tr><th>Iteration</th><th>Experiment</th><th>Status</th><th>Primary</th><th>Δ baseline</th><th>Cost</th></tr></thead>
+              <tbody>{[...(state?.iterations ?? [])].reverse().map((item) => <tr key={item.number}><td className="mono">#{String(item.number).padStart(3, '0')}</td><td><b>{item.title}</b><small className="row-meta">{item.screen_metrics ? `Screen ${score(item.screen_metrics.primary, 6)} · ` : ''}{item.resource_usage ? `${elapsed(item.resource_usage.train_seconds)} train · ${memory(item.resource_usage.peak_rss_mb)}` : 'Imported evidence'}</small>{item.analysis?.relationship_map && <small className="row-note">Neighbour map · {(item.analysis.relationship_map.views ?? []).join(' + ')} · k={item.analysis.relationship_map.neighbor_count ?? '—'} · {((item.analysis.relationship_map.supported_prediction_fraction ?? 0) * 100).toFixed(1)}% supported</small>}{item.analysis?.paper_executor && <small className="executor-review-note">Paper executor · {item.analysis.paper_executor.executor_slug ?? 'reviewed program'} · {(item.analysis.paper_executor.signals ?? []).join(' + ')}</small>}{item.executor_review && <small className={`executor-review-note ${item.executor_review.status}`}>Executor gate · {item.executor_review.slug} · {item.executor_review.contract?.tests ? `${Object.values(item.executor_review.contract.tests).filter(Boolean).length}/${Object.keys(item.executor_review.contract.tests).length} contracts` : item.executor_review.errors?.[0] ?? item.executor_review.status}</small>}{Boolean(item.research_sources?.length) && <small className="paper-sources"><span>Academic evidence</span>{item.research_sources?.slice(0, 3).map((source) => <a href={source.url} target="_blank" rel="noreferrer" key={source.url}>{source.title}</a>)}</small>}{item.error && <small className="row-note" title={item.error}>{describeFailure(item.error)?.detail || item.error}</small>}</td><td><span className={`status ${statusTone(item.status)}`}>{item.status.replaceAll('_', ' ')}</span></td><td className="mono">{score(item.metrics?.primary, 6)}</td><td className={`mono ${(item.delta ?? 0) > 0 ? 'positive' : ''}`}>{item.delta == null ? '—' : `${item.delta >= 0 ? '+' : ''}${item.delta.toFixed(6)}`}</td><td className="mono resource-cell">{item.resource_usage ? `${computeHours(item.resource_usage.cpu_hours)} CPU` : '—'}</td></tr>)}</tbody>
             </table>
           </div>
         </section>
+
+        <details className="secondary-disclosure" open={Boolean(predictionLoading || prediction)}>
+          <summary>
+            <div><p className="eyebrow">Optional deployment evidence</p><h2>Live prediction demo</h2></div>
+            <div><span>Apr 28 proxy</span><b>{liveArtifact ? liveArtifact.evaluation.primary.toFixed(6) : 'Loading…'}</b><i>Open demo</i></div>
+          </summary>
+          <section className="panel live-predictor" id="live-prediction" aria-labelledby="live-prediction-title">
+            <div className="panel-heading">
+              <div><p className="eyebrow">Deployable model · target outcomes sealed</p><h2 id="live-prediction-title">Rank an unseen April 29 slate</h2></div>
+              <span className="predictor-badge"><i /> Scores calculated on click</span>
+            </div>
+            <div className="predictor-layout">
+              <div className="predictor-copy">
+                <p>A compact deployment surrogate trained without April 29 engagement outcomes. It is intentionally separate from the frozen research ensemble.</p>
+                <div className="predictor-controls">
+                  <label>User slate
+                    <select value={predictionUser} onChange={(event) => { setPredictionUser(event.target.value); setPrediction(null); }} disabled={!liveArtifact}>
+                      {(liveArtifact?.users ?? []).map((user) => <option value={user.user_id} key={user.user_id}>User {user.user_id} · {user.candidate_count} candidates</option>)}
+                    </select>
+                  </label>
+                  <button className="button judge-primary" type="button" onClick={runLivePrediction} disabled={!liveArtifact || predictionLoading}>{predictionLoading ? 'Analysing slate…' : 'Run live prediction →'}</button>
+                </div>
+                {predictionLoading && <div className="predictor-working" role="status" aria-live="polite">
+                  <div className="predictor-working-head"><span><i /><i /><i /></span><b>KuaiLab is analysing user {predictionUser}</b></div>
+                  <ol>{['Build history-safe features', 'Score every candidate exposure', 'Sort the top long-view predictions'].map((label, phase) => <li className={phase < predictionPhase ? 'done' : phase === predictionPhase ? 'active' : ''} key={label}><span>{phase < predictionPhase ? '✓' : phase + 1}</span><b>{label}</b></li>)}</ol>
+                </div>}
+                {predictionError && <p className="predictor-error" role="alert">{predictionError}</p>}
+                <div className="predictor-integrity"><span><b>✓</b> April 29 labels excluded</span><span><b>✓</b> Scores calculated on request</span></div>
+              </div>
+              <aside className="predictor-evaluation">
+                <span>Honest Apr 28 proxy</span><strong>{liveArtifact ? liveArtifact.evaluation.primary.toFixed(6) : 'Loading…'}</strong>
+                <div><b>GAUC {liveArtifact ? liveArtifact.evaluation.gauc.toFixed(4) : '—'}</b><b>nDCG@5 {liveArtifact ? liveArtifact.evaluation.ndcg5.toFixed(4) : '—'}</b></div>
+                <small>One-day surrogate holdout, not the official validation score.</small>
+              </aside>
+            </div>
+            {prediction && <div className="prediction-result" aria-live="polite">
+              <div className="prediction-result-heading"><div><span>Prediction {prediction.prediction_id.slice(11, 19)} UTC</span><b>User {prediction.user_id} · top {prediction.ranking.length}</b></div><span className="execution-chip">{prediction.execution === 'server' ? 'Local API inference' : 'Browser inference'}</span></div>
+              <div className="prediction-table-wrap"><table><thead><tr><th>Rank</th><th>Video</th><th>Author</th><th>Context</th><th>Duration</th><th>Long-view score</th></tr></thead><tbody>
+                {prediction.ranking.map((candidate) => <tr key={`${candidate.rank}-${candidate.video_id}`}><td className="rank-cell">#{candidate.rank}</td><td className="mono">{candidate.video_id}</td><td className="mono">{candidate.author_id}</td><td>{candidate.video_type} · tab {candidate.tab} · {String(candidate.hour).padStart(2, '0')}:00</td><td>{candidate.duration_seconds.toFixed(1)}s</td><td><div className="score-bar"><i style={{ width: `${Math.max(2, candidate.score * 100)}%` }} /><b>{candidate.score.toFixed(4)}</b></div></td></tr>)}
+              </tbody></table></div>
+            </div>}
+          </section>
+        </details>
 
         <section className="readiness-strip" aria-label="Connection readiness">
           <div><span className={state?.config.api_key_available ? 'ready' : 'missing'} />GPT key <b>{state?.config.api_key_available ? 'ready' : 'not set'}</b></div>
@@ -588,7 +726,7 @@ export default function Home() {
           <label>Small-gain threshold<input type="number" min="0" max="0.01" step="0.00001" value={officialMode ? 0.002 : convergenceEpsilon} onChange={(event) => setConvergenceEpsilon(Number(event.target.value))} disabled={officialMode} required /></label>
           <label>Stop after small gains<input type="number" min="0" max="50" step="1" value={officialMode ? 3 : convergencePatience} onChange={(event) => setConvergencePatience(Number(event.target.value))} disabled={officialMode} required /></label>
         </div>
-        <p className="modal-note">Real KuaiRand campaigns enforce the 50-iteration, six-hour, ε=0.002 / three-iteration convergence rule. Train-only fast screening protects the confirmation split; tiny confirmed gains must preserve both GAUC and nDCG@5. Failures are retried once and logged.</p>
+        <p className="modal-note">Real KuaiRand campaigns enforce the 50-iteration, six-hour, ε=0.002 / three-iteration convergence rule. The planner can test train-only multi-view user-neighbour maps and {state?.config.academic_search_enabled === false ? 'uses only retained research memory' : 'may perform a two-call, academic-domain paper search when evidence has a real gap'}. Paper claims become hypotheses, never reported benchmark results. Fast screening protects the confirmation split; tiny confirmed gains must preserve both GAUC and nDCG@5. Failures are retried once and logged.</p>
         <button className="button primary wide" type="submit">{setupMode === 'continue' ? 'Continue autonomous research' : 'Start autonomous campaign'}</button>
       </form></div>}
 

@@ -14,6 +14,9 @@
 | ε=0.002, N=3 convergence | Forced for every real KuaiRand campaign | Complete |
 | Validation-best checkpoint selection | Positive-gain promotion; 0.612858 evidence bootstrap | Complete |
 | Continue training from validation-best model | `champion_residual_blend` retrains typed candidates against the checksum-verified frozen champion | Complete |
+| Autonomous relational dataset analysis | `multiview_neighbor_residual` maps train-only item/author/music/tag/type neighbours, returns compact support diagnostics to the next planner iteration, and applies a bounded frozen-champion residual | Complete |
+| Autonomous academic method discovery | GPT proposals may perform at most two allowed-domain academic searches; sources and queries are audited, persisted, displayed, and treated only as hypotheses for sealed local evaluation | Complete |
+| Safe autonomous executor extension | `executor_incubation` scaffolds paper-backed declarative signal programs, requires an audited source and six leakage/determinism/resource contracts, and registers only the exact passing program for later sealed evaluation; arbitrary generated Python stays disabled | Complete |
 | Hidden test accessed only once | Excluded from development loader; guarded receipt on final export | Ready; intentionally not run |
 | Required CSV schema | `scripts/export_submission.py`; checked validation artifact | Complete |
 | Per-iteration hypothesis and code diff | `proposal.json`, `candidate.py`, `candidate.diff`, `iteration-log.json` | Complete |

@@ -18,6 +18,12 @@ def _float(name: str, default: float) -> float:
     return float(os.getenv(name, str(default)))
 
 
+def _bool(name: str, default: bool) -> bool:
+    return os.getenv(name, "true" if default else "false").strip().lower() in {
+        "1", "true", "yes", "on",
+    }
+
+
 @dataclass(frozen=True)
 class Settings:
     host: str = os.getenv("KUAILAB_HOST", "127.0.0.1")
@@ -33,6 +39,7 @@ class Settings:
     state_dir: Path = Path(os.getenv("KUAILAB_STATE_DIR", str(PROJECT_ROOT / "runtime"))).resolve()
     dataset_path: str = os.getenv("KUAIRAND_DATA_PATH", "")
     experiment_command: str = os.getenv("KUAI_EXPERIMENT_COMMAND", "")
+    academic_search_enabled: bool = _bool("KUAILAB_ACADEMIC_SEARCH", True)
 
     @property
     def api_key_available(self) -> bool:
