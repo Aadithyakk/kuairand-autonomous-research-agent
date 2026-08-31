@@ -127,6 +127,7 @@ export default function Home() {
   const [predictionUser, setPredictionUser] = useState('');
   const [prediction, setPrediction] = useState<LivePrediction | null>(null);
   const [predictionLoading, setPredictionLoading] = useState(false);
+  const [predictionPhase, setPredictionPhase] = useState(0);
   const [predictionError, setPredictionError] = useState('');
 
   const refresh = useCallback(async () => {
@@ -173,6 +174,12 @@ export default function Home() {
     window.addEventListener('keydown', navigate);
     return () => window.removeEventListener('keydown', navigate);
   }, [showJudgeWalkthrough]);
+
+  useEffect(() => {
+    if (!predictionLoading) return;
+    const timer = window.setInterval(() => setPredictionPhase((phase) => Math.min(2, phase + 1)), 380);
+    return () => window.clearInterval(timer);
+  }, [predictionLoading]);
 
   function openJudgeWalkthrough() {
     setJudgeStep(0);
@@ -227,8 +234,11 @@ export default function Home() {
 
   async function runLivePrediction() {
     if (!predictionUser || !liveArtifact) return;
+    const started = performance.now();
+    setPredictionPhase(0);
     setPredictionLoading(true);
     setPredictionError('');
+    let nextPrediction: LivePrediction;
     try {
       const response = await fetch(`${API}/api/predict/slate`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -236,12 +246,14 @@ export default function Home() {
       });
       if (!response.ok) throw new Error('Local prediction API is unavailable');
       const payload = await response.json() as LivePrediction & { ok: true };
-      setPrediction({ ...payload, execution: 'server' });
+      nextPrediction = { ...payload, execution: 'server' };
     } catch {
-      setPrediction(browserPrediction(liveArtifact, predictionUser, 10));
-    } finally {
-      setPredictionLoading(false);
+      nextPrediction = browserPrediction(liveArtifact, predictionUser, 10);
     }
+    const remaining = Math.max(0, 1250 - (performance.now() - started));
+    if (remaining) await new Promise((resolve) => window.setTimeout(resolve, remaining));
+    setPrediction(nextPrediction);
+    setPredictionLoading(false);
   }
 
   const status = state?.campaign.status ?? 'offline';
@@ -333,8 +345,12 @@ export default function Home() {
                     {(liveArtifact?.users ?? []).map((user) => <option value={user.user_id} key={user.user_id}>User {user.user_id} · {user.candidate_count} candidates</option>)}
                   </select>
                 </label>
-                <button className="button judge-primary" type="button" onClick={runLivePrediction} disabled={!liveArtifact || predictionLoading}>{predictionLoading ? 'Scoring…' : 'Run live prediction →'}</button>
+                <button className="button judge-primary" type="button" onClick={runLivePrediction} disabled={!liveArtifact || predictionLoading}>{predictionLoading ? 'Analysing slate…' : 'Run live prediction →'}</button>
               </div>
+              {predictionLoading && <div className="predictor-working" role="status" aria-live="polite">
+                <div className="predictor-working-head"><span><i /><i /><i /></span><b>KuaiLab is analysing user {predictionUser}</b></div>
+                <ol>{['Build history-safe features', 'Score every candidate exposure', 'Sort the top long-view predictions'].map((label, phase) => <li className={phase < predictionPhase ? 'done' : phase === predictionPhase ? 'active' : ''} key={label}><span>{phase < predictionPhase ? '✓' : phase + 1}</span><b>{label}</b></li>)}</ol>
+              </div>}
               {predictionError && <p className="predictor-error" role="alert">{predictionError}</p>}
               <div className="predictor-integrity">
                 <span><b>✓</b> April 29 labels excluded</span><span><b>✓</b> No saved prediction scores</span><span><b>✓</b> Browser fallback works without API</span>

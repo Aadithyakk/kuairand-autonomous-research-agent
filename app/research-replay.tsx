@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useReducer, useState, type CSSProperties } from 'react';
+import { useEffect, useReducer, useRef, useState, type CSSProperties } from 'react';
 import evidence from '../public/research-replay.json';
+import correlationPreview from '../public/correlation-preview.json';
 import { clock, initialReplayState, replayDuration, replayReducer, replaySteps, signed, stepAt, stepStart } from './replay-model';
 
 const wave = evidence.wave;
@@ -11,6 +12,57 @@ const controlRun = evidence.screen.runs.find(item => item.alpha === 0)!;
 const metricKeys = ['primary', 'GAUC', 'nDCG@5'] as const;
 type Metrics = { primary: number; GAUC: number; 'nDCG@5': number };
 type SourceId = typeof evidence.sources[number]['id'];
+
+const thinkingLabels: Record<string, string> = {
+  inspect: 'Analysing dataset structure', research: 'Reviewing ranking literature', hypothesize: 'Comparing candidate hypotheses',
+  implement: 'Checking the controlled change', train: 'Reading training telemetry', screen: 'Evaluating the locked screen',
+  confirm: 'Checking the confirmation split', reflect: 'Testing the promotion gate',
+};
+
+function CorrelationScan() {
+  const [selected, setSelected] = useState<[number, number]>([1, 5]);
+  const [complete, setComplete] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setComplete(true), 1450);
+    return () => window.clearTimeout(timer);
+  }, []);
+  const [row, column] = selected;
+  const value = correlationPreview.matrix[row][column];
+  const rowFeature = correlationPreview.features[row];
+  const columnFeature = correlationPreview.features[column];
+  return <section className={`correlation-scan ${complete ? 'complete' : 'scanning'}`} aria-labelledby="correlation-title">
+    <div className="correlation-heading">
+      <div><span id="correlation-title">Training-window relationship scan</span><b>{complete ? 'Analysis ready' : 'Scanning recorded statistics'}</b></div>
+      <div className="correlation-status" role="status"><i /><span>{correlationPreview.rows.toLocaleString()} chronological impressions</span><em>{complete ? 'complete' : 'analysing'}</em></div>
+    </div>
+    <div className="correlation-matrix-wrap">
+      <div className="correlation-columns"><span />{correlationPreview.features.map(feature => <b title={feature.description} key={feature.id}>{feature.short}</b>)}</div>
+      {correlationPreview.matrix.map((values, rowIndex) => <div className="correlation-row" key={correlationPreview.features[rowIndex].id}>
+        <b title={correlationPreview.features[rowIndex].description}>{correlationPreview.features[rowIndex].short}</b>
+        {values.map((cell, columnIndex) => {
+          const strength = Math.abs(cell);
+          const diagonal = rowIndex === columnIndex;
+          const backgroundColor = diagonal ? '#173b2a' : cell >= 0 ? `rgba(31,107,72,${0.08 + strength * 0.72})` : `rgba(166,85,45,${0.08 + strength * 0.62})`;
+          return <button
+            type="button"
+            className={selected[0] === rowIndex && selected[1] === columnIndex ? 'selected' : ''}
+            style={{ backgroundColor, color: diagonal || strength > .58 ? '#fff' : '#243329', '--cell-delay': `${(rowIndex * values.length + columnIndex) * 28}ms` } as CSSProperties}
+            onMouseEnter={() => setSelected([rowIndex, columnIndex])}
+            onFocus={() => setSelected([rowIndex, columnIndex])}
+            onClick={() => setSelected([rowIndex, columnIndex])}
+            aria-label={`${correlationPreview.features[rowIndex].short} and ${correlationPreview.features[columnIndex].short}: correlation ${cell.toFixed(4)}`}
+            key={`${rowIndex}-${columnIndex}`}
+          >{cell.toFixed(2)}</button>;
+        })}
+      </div>)}
+    </div>
+    <div className="correlation-insight" aria-live="polite">
+      <div><span>Selected relationship</span><strong>{value >= 0 ? '+' : '−'}{Math.abs(value).toFixed(4)}</strong></div>
+      <p><b>{rowFeature.short} × {columnFeature.short}</b><span>{rowFeature.description} {columnFeature.description}</span></p>
+    </div>
+    <footer><span><i className="positive-cell" /> positive</span><span><i className="negative-cell" /> negative</span><p>Recomputed from Apr 8–21 only · diagnostic, not a champion feature-selection claim.</p></footer>
+  </section>;
+}
 
 function MetricComparison({ base, candidate, delta, baselineLabel }: { base: Metrics; candidate: Metrics; delta: Metrics; baselineLabel: string }) {
   return <div className="replay-comparison">
@@ -43,9 +95,10 @@ export function StageCanvas({ id, inspect, showTree }: { id: string; inspect: (i
   switch (id) {
     case 'inspect': return <>
       <div className="replay-boundary"><b>KuaiRand-Pure · target: long_view</b><div><span>Model selection<br /><strong>08–14 Apr</strong></span><span>Locked screen<br /><strong>15–21 Apr</strong></span><span>Confirmation<br /><strong>22–28 Apr</strong></span></div><small>2022 outcomes · hidden test from 29 Apr excluded in the recorded protocol.</small></div>
+      <CorrelationScan />
       <div className="replay-facts"><div><strong>{evidence.champion.champion.rows.toLocaleString()}</strong><span>Confirmation impressions</span></div><div><strong>{evidence.champion.champion.users.toLocaleString()}</strong><span>Confirmation users</span></div></div>
       <p className="replay-note">Model input fields recorded in the config</p><div className="replay-chips">{evidence.screen.matched_configuration.fields.map(field => <code key={field}>{field}</code>)}</div>
-      <p className="replay-unavailable">Missingness, target balance, and correlation diagnostics were not saved in this evidence bundle. No profile charts are invented.</p>
+      <p className="replay-unavailable">Missingness and target-balance diagnostics were not saved. This correlation preview was recomputed for the demo from the training window; it was not part of the recorded experiment wave, and no Apr 29 outcome is used.</p>
       <button className="replay-text-button" onClick={() => inspect('wave')}>Inspect the temporal protocol →</button>
     </>;
     case 'research': return <>
@@ -111,6 +164,8 @@ export default function ResearchReplay({ suspended = false }: { suspended?: bool
   const [sourceId, setSourceId] = useState<string | null>(null);
   const index = stepAt(time);
   const step = replaySteps[index];
+  const previousStep = useRef(step.id);
+  const [transitioning, setTransitioning] = useState(false);
   const selectedSource = evidence.sources.find(item => item.id === (sourceId ?? step.sources[0]))!;
   const sourceChoices = mode === 'audit' ? evidence.sources : evidence.sources.filter(item => (step.sources as readonly string[]).includes(item.id));
   useEffect(() => {
@@ -124,7 +179,14 @@ export default function ResearchReplay({ suspended = false }: { suspended?: bool
     document.addEventListener('visibilitychange', pauseWhenHidden);
     return () => document.removeEventListener('visibilitychange', pauseWhenHidden);
   }, []);
-  function jump(next: number) { dispatch({ type: 'seek', value: stepStart(next) }); setSourceId(null); setTree(false); }
+  useEffect(() => {
+    if (previousStep.current === step.id) return;
+    previousStep.current = step.id;
+    setTransitioning(true);
+    const timer = window.setTimeout(() => setTransitioning(false), 1050);
+    return () => window.clearTimeout(timer);
+  }, [step.id]);
+  function jump(next: number) { setTransitioning(true); dispatch({ type: 'seek', value: stepStart(next) }); setSourceId(null); setTree(false); }
   function inspect(id: SourceId) { dispatch({ type: 'mode', value: 'audit' }); setSourceId(id); }
   function showTree() { dispatch({ type: 'mode', value: 'audit' }); setTree(true); setSourceId('wave'); }
   const result = evidence.showcase.result;
@@ -145,8 +207,8 @@ export default function ResearchReplay({ suspended = false }: { suspended?: bool
       <nav className="replay-stages" aria-label="Jump to research stage">{replaySteps.map((item, i) => <button key={item.id} aria-current={i === index ? 'step' : undefined} onClick={() => jump(i)}><span>{String(i + 1).padStart(2, '0')}</span>{item.stage}{item.id === 'screen' ? ' · screen' : item.id === 'confirm' ? ' · confirm' : ''}</button>)}</nav>
     </section>
     <div className="replay-grid">
-      <section className="panel replay-canvas"><div className="replay-canvas-heading"><p className="eyebrow">{tree ? 'The research landscape' : `${String(index + 1).padStart(2, '0')} / 08 · ${step.stage}`}</p><button className="replay-text-button" aria-pressed={tree} onClick={() => { if (tree) setTree(false); else showTree(); }}>{tree ? '← Stage view' : 'Research tree ↗'}</button></div><h3>{tree ? 'One champion. Ten alternatives.' : step.title}</h3><p>{tree ? 'Click a branch to inspect its outcome and measured cost.' : step.subtitle}</p>{tree ? <ResearchTree selected={branch} select={setBranch} /> : <StageCanvas id={step.id} inspect={inspect} showTree={showTree} />}</section>
-      <section className="panel replay-decision" aria-live="polite" aria-atomic="true"><p className="eyebrow">Decision card · editorial summary</p><h3>{tree ? 'The same gate for every idea.' : 'Why this step?'}</h3>{tree ? <dl><dt>What was tested</dt><dd>{wave.experiments.find(item => item.id === branch)!.method}</dd><dt>Why this comparison</dt><dd>Every alternative must improve its matched control before it can challenge the frozen champion.</dd><dt>Evidence</dt><dd>The selected branch record and wave protocol are available in the evidence trail.</dd><dt>What would prove it wrong</dt><dd>{wave.protocol.promotion_gate}</dd></dl> : <dl><dt>What I noticed</dt><dd>{step.observation}</dd><dt>Why this test</dt><dd>{step.rationale}</dd><dt>What I’m testing</dt><dd>{step.testing}</dd><dt>What would prove me wrong</dt><dd>{step.falsifier}</dd></dl>}<div className="replay-decision-footer">Observable evidence + editorial explanation. Not private chain-of-thought.</div></section>
+      <section className="panel replay-canvas" aria-busy={transitioning}><div className="replay-canvas-heading"><p className="eyebrow">{tree ? 'The research landscape' : `${String(index + 1).padStart(2, '0')} / 08 · ${step.stage}`}</p><button className="replay-text-button" aria-pressed={tree} onClick={() => { if (tree) setTree(false); else showTree(); }}>{tree ? '← Stage view' : 'Research tree ↗'}</button></div><div className={`replay-stage-content ${transitioning ? 'is-transitioning' : ''}`} key={tree ? `tree-${branch}` : step.id}><h3 className="replay-typed-title">{tree ? 'One champion. Ten alternatives.' : step.title}</h3><p>{tree ? 'Click a branch to inspect its outcome and measured cost.' : step.subtitle}</p>{tree ? <ResearchTree selected={branch} select={setBranch} /> : <StageCanvas id={step.id} inspect={inspect} showTree={showTree} />}</div>{transitioning && <div className="replay-thinking" role="status"><div className="thinking-mark"><i /><i /><i /></div><p><b>{thinkingLabels[step.id]}</b><span>Replaying recorded evidence</span></p><em><i /><i /><i /></em></div>}</section>
+      <section className={`panel replay-decision ${transitioning ? 'is-thinking' : ''}`} aria-live="polite" aria-atomic="true"><p className="eyebrow">Decision card · editorial summary</p><div className="replay-decision-copy" key={tree ? `decision-tree-${branch}` : `decision-${step.id}`}><h3>{tree ? 'The same gate for every idea.' : 'Why this step?'}</h3>{tree ? <dl><dt>What was tested</dt><dd>{wave.experiments.find(item => item.id === branch)!.method}</dd><dt>Why this comparison</dt><dd>Every alternative must improve its matched control before it can challenge the frozen champion.</dd><dt>Evidence</dt><dd>The selected branch record and wave protocol are available in the evidence trail.</dd><dt>What would prove it wrong</dt><dd>{wave.protocol.promotion_gate}</dd></dl> : <dl><dt>What I noticed</dt><dd>{step.observation}</dd><dt>Why this test</dt><dd>{step.rationale}</dd><dt>What I’m testing</dt><dd>{step.testing}</dd><dt>What would prove me wrong</dt><dd>{step.falsifier}</dd></dl>}</div><div className="replay-decision-footer">Observable evidence + editorial explanation. Not private chain-of-thought.</div></section>
       <aside className="panel replay-evidence" id="replay-evidence"><p className="eyebrow">Evidence trail · {mode === 'audit' ? 'all artifacts' : 'this step'}</p><h3>Follow the receipts</h3><div className="replay-source-list">{sourceChoices.map(source => <button key={source.id} className={source.id === selectedSource.id ? 'selected' : ''} onClick={() => inspect(source.id)} aria-pressed={source.id === selectedSource.id}><span>↳</span><b>{source.title}</b><small>JSON</small></button>)}</div><div className="replay-source-detail" key={selectedSource.id}><b>{selectedSource.title}</b><p>{selectedSource.path}</p><details open={mode === 'audit'}><summary>Inspect report extract</summary><pre tabIndex={0} aria-label={`${selectedSource.title} JSON extract`}>{JSON.stringify(selectedSource.excerpt, null, 2)}</pre></details><details><summary>Source fingerprint · SHA-256</summary><code>{selectedSource.sha256}</code><p>Hash of the original report file. This view contains selected fields, not the full file. A matching hash identifies content; it does not independently prove the experiment.</p></details></div><a className="button ghost" href="/research-replay.json" download="kuailab-research-evidence.json" onClick={() => dispatch({ type: 'pause' })}>Download evidence bundle ↓</a><p className="replay-note">7 report extracts + source fingerprints. No raw outcomes or model binaries.</p></aside>
     </div>
     {mode === 'audit' && <section className="panel replay-audit-notes"><div><p className="eyebrow">Audit boundaries</p><h3>What this evidence does—and doesn’t—say</h3></div><ul><li>Primary = 0.5 × GAUC + 0.5 × nDCG@5. All headline scores are public-validation results, not hidden-test or live-demo scores.</li><li>The baseline-to-champion lift is historical context. This RCR wave made no champion promotion.</li><li>Four user-ID folds are reported; confidence intervals, pre-run hypothesis rankings, and profiling diagnostics were not recorded here.</li><li>Paper relevance and decision explanations are editorial summaries. No private reasoning, invented tool calls, or search timestamps are shown.</li><li>The bundle contains selected report fields. Reproduction still needs the original data, code, and model artifacts.</li></ul></section>}
