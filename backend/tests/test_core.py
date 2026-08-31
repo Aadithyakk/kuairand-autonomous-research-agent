@@ -8,12 +8,25 @@ from pathlib import Path
 
 from backend.kuailab.benchmark import SyntheticBenchmark, validate_metrics
 from backend.kuailab.config import Settings
-from backend.kuailab.engine import CampaignEngine
+from backend.kuailab.engine import CampaignEngine, convergence_window
 from backend.kuailab.provider import DemoProvider, OpenAIProvider
 from backend.kuailab.state import StateStore
 
 
 class CoreTests(unittest.TestCase):
+    def test_cumulative_convergence_matches_original_campaign(self):
+        baseline = 0.6014695167541504
+        scored = [0.6034932136535645, 0.6036843061447144, 0.6037807464599609]
+        self.assertEqual(convergence_window(scored, baseline, 0.002, 3), (False, scored[-1] - baseline))
+        scored.append(0.6036427021026611)
+        converged, improvement = convergence_window(scored, baseline, 0.002, 3)
+        self.assertTrue(converged)
+        self.assertAlmostEqual(improvement, 0.6037807464599609 - 0.6034932136535645)
+
+    def test_failure_does_not_advance_convergence_window(self):
+        # A failed iteration is not appended, so two scored results cannot fill N=3.
+        self.assertEqual(convergence_window([0.61, 0.611], 0.60, 0.002, 3), (False, None))
+
     def test_demo_proposal_is_auditable(self):
         proposal = DemoProvider().propose({"iteration": 1, "epsilon": 0.002, "steering": None})
         self.assertIn("def configure_experiment", proposal.code)

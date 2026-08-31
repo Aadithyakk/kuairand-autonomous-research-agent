@@ -1,0 +1,31 @@
+{
+  "model": "original KuaiLab weighted FM champion",
+  "config": {
+    "k": 16,
+    "lr": 0.001,
+    "l2": 1e-06,
+    "epochs": 8,
+    "batch_size": 8192,
+    "seed": 0,
+    "positive_weight": 2.75
+  },
+  "training_dates": [
+    20220408,
+    20220421
+  ],
+  "prediction_dates": [
+    20220429,
+    20220508
+  ],
+  "rows": 170588,
+  "schema": [
+    "row_id",
+    "user_id",
+    "video_id",
+    "score"
+  ],
+  "test_labels_loaded": false,
+  "test_labels_scored": false,
+  "sha256": "748f3e5bb9471d1011575f4b5aa2daeeeec26061087a5843b5f599e3731378f6",
+  "runtime_seconds": 20.319
+}

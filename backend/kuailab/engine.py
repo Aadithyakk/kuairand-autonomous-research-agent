@@ -17,6 +17,25 @@ from .state import StateStore, utc_now
 STAGES = ("inspect", "hypothesize", "implement", "train", "evaluate", "reflect")
 
 
+def convergence_window(
+    scored_primaries: list[float], baseline_primary: float, epsilon: float, patience: int
+) -> tuple[bool, float | None]:
+    """Apply the organizer's cumulative scored-iteration convergence rule.
+
+    Failed iterations are deliberately absent from ``scored_primaries``. They
+    still consume an iteration and wall-clock budget in the campaign loop, but
+    neither advance nor reset this window.
+    """
+    if patience < 1:
+        raise ValueError("convergence patience must be positive")
+    if len(scored_primaries) < patience:
+        return False, None
+    recent_best = max(scored_primaries[-patience:])
+    prior_best = max([baseline_primary, *scored_primaries[:-patience]])
+    improvement = recent_best - prior_best
+    return improvement <= epsilon, improvement
+
+
 class CampaignEngine:
     def __init__(self, settings: Settings, store: StateStore):
         self.settings = settings
@@ -154,7 +173,7 @@ class CampaignEngine:
         benchmark = self._benchmark(mode)
         campaign = self.store.snapshot()["campaign"]
         campaign_id = campaign["id"]
-        small_gain_streak = 0
+        scored_primaries: list[float] = []
         stop_reason = "iteration budget reached"
         try:
             if mode == "kuairand":
@@ -270,9 +289,18 @@ class CampaignEngine:
                     self.store.update(finish_iteration)
                     action = "Champion promoted" if accepted else "Candidate rejected"
                     self.store.event("result", action, f"Primary {metrics['primary']:.4f} · gain {gain:+.4f} · {evaluation.evidence}", number, "reflect")
-                    small_gain_streak = small_gain_streak + 1 if gain < self.settings.convergence_epsilon else 0
-                    if small_gain_streak >= self.settings.convergence_patience:
-                        stop_reason = f"converged: {small_gain_streak} consecutive gains below {self.settings.convergence_epsilon:.4f}"
+                    scored_primaries.append(metrics["primary"])
+                    converged, window_gain = convergence_window(
+                        scored_primaries,
+                        snapshot["metrics"]["baseline"]["primary"],
+                        self.settings.convergence_epsilon,
+                        self.settings.convergence_patience,
+                    )
+                    if converged:
+                        stop_reason = (
+                            f"converged: best gain across the last {self.settings.convergence_patience} scored "
+                            f"iterations was {window_gain:+.6f} (epsilon={self.settings.convergence_epsilon:.4f})"
+                        )
                         break
                 except Exception as error:
                     duration = round(time.monotonic() - iteration_started, 2)
