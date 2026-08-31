@@ -12,7 +12,7 @@ npm run verify:demo
 npm run local
 ```
 
-Open `http://localhost:3000` and select **3-minute walkthrough**. This path presents the checked-in **0.612858** validation champion, **+1.89%** relative lift over the reproduced baseline, the autonomous loop, a real rejected deployment decision, compute telemetry, and the exact source artifacts. It does not need an OpenAI key or dataset download. The live campaign controls underneath use the local backend and optional real-mode dependencies.
+Open `http://localhost:3000` and select **3-minute walkthrough**. This path presents the checked-in **0.612858** validation champion, **+0.011389 absolute** lift over the reproduced baseline, the separate five-iteration autonomous run, a real recovered failure, a rejected deployment decision, compute telemetry, and the exact source artifacts. It does not need an OpenAI key or dataset download. The live campaign controls underneath use the local backend and optional real-mode dependencies.
 
 The timed narration and recording checklist are in [`docs/JUDGE_DEMO.md`](docs/JUDGE_DEMO.md). Run `npm run verify:demo` before presenting; it fails if the judge-facing numbers drift from the champion manifest, experiment ledger, worker smoke, or frozen-score checksum.
 

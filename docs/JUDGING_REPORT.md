@@ -4,7 +4,7 @@
 
 KuaiLab implements the complete autonomous research loop—inspect, hypothesize, implement, train, evaluate, and reflect—against the official KuaiRand-Pure temporal split and metric. Candidate code is evidence only; a typed trusted executor owns training and label access. Invalid metrics, missing output, non-zero exits, and timeouts fail closed. A worker failure is retried once through an automatically reduced batch/thread/epoch route, and compute from both attempts remains accounted for. Atomic state, append-only events, per-iteration logs, diffs, metrics, stderr/stdout, and resource summaries support restart and audit.
 
-The current validation-best score is 0.612858 primary (0.682354 GAUC, 0.543362 nDCG@5), +0.011389 absolute over the reproduced 0.601470 FM baseline. The official hidden split remains untouched.
+The recorded autonomous campaign reached 0.603781 primary in five iterations from the reproduced 0.601470 FM baseline. A later offline research sweep produced the current validation-best 0.612858 primary (0.682354 GAUC, 0.543362 nDCG@5), +0.011389 absolute over that baseline. These evidence trails are reported separately; the official hidden split remains untouched.
 
 ## Innovation and problem insight
 

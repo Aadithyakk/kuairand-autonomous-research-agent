@@ -196,9 +196,16 @@ export default function ResearchReplay({ suspended = false }: { suspended?: bool
       <article className="metric-card featured"><span>Recorded champion · primary</span><strong>{result.champion_primary.toFixed(6)}</strong><small>Public validation · not hidden test</small></article>
       <article className="metric-card"><span>GAUC</span><strong>{result.gauc.toFixed(6)}</strong><small>User-level discrimination</small></article>
       <article className="metric-card"><span>nDCG@5</span><strong>{result.ndcg5.toFixed(6)}</strong><small>Top-five ranking quality</small></article>
-      <article className="metric-card"><span>Historical lift</span><strong>+{result.relative_gain_percent.toFixed(2)}%</strong><small>vs. {result.baseline_primary.toFixed(6)} baseline</small></article>
+      <article className="metric-card"><span>Validation delta</span><strong>{signed(result.absolute_gain)}</strong><small>+{result.relative_gain_percent.toFixed(2)}% relative vs. {result.baseline_primary.toFixed(6)}</small></article>
       <article className="metric-card"><span>Recorded research wave</span><strong>{wave.experiments.length} methods</strong><small>{wave.totals.screen_survivors} screen survivor · {wave.totals.champion_promotions} promotions</small></article>
     </div>
+    <section className="brief-alignment" aria-label="Track 2 protocol alignment">
+      <div><span>Track 2 · required</span><strong>KuaiRand-Pure</strong><small>logged-impression ranking</small></div>
+      <div><span>Target</span><strong>long_view</strong><small>native relevance label</small></div>
+      <div><span>Official metric</span><strong>GAUC / nDCG@5</strong><small>equal-weighted primary</small></div>
+      <div><span>Run boundary</span><strong>50 iterations · 6 h</strong><small>ε 0.002 · patience 3</small></div>
+      <div className="pending"><span>Submission status</span><strong>Validation frozen</strong><small>hidden test untouched</small></div>
+    </section>
     <div className="replay-intro"><div><p className="eyebrow">Evidence, not a monologue</p><h2>Agent Research Replay</h2><p>A promising idea. A controlled test. A decision you can inspect.</p></div><div className="replay-mode" aria-label="Presentation mode"><button aria-pressed={mode === 'story'} onClick={() => { dispatch({ type: 'mode', value: 'story' }); setTree(false); setSourceId(null); }}>Story</button><button aria-pressed={mode === 'audit'} onClick={() => dispatch({ type: 'mode', value: 'audit' })}>Audit</button></div></div>
     <p className="replay-provenance">Recorded reports · curated {clock(replayDuration)} sequence, not an agent transcript. The champion predates this experiment; replay does not train or change it.</p>
     <section className="replay-player panel" aria-label="Replay playback">

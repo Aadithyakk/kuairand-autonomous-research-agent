@@ -10,11 +10,11 @@ const stageLabels: Record<string, string> = {
 };
 
 const judgeSteps = [
-  { label: 'Challenge', criterion: 'Impact & relevance', title: 'Improve recommendations without leaking tomorrow into today' },
-  { label: 'Agent', criterion: 'Technical execution', title: 'One falsifiable experiment at a time' },
-  { label: 'Insight', criterion: 'Innovation & insight', title: 'Search broadly, refine narrowly, remember every result' },
-  { label: 'Evidence', criterion: 'Feasibility & practicality', title: 'A strong agent must know when not to deploy' },
-  { label: 'Reproduce', criterion: 'Presentation & communication', title: 'Every headline number resolves to a checked-in artifact' },
+  { label: 'Challenge', criterion: 'Technical execution · 35%', title: 'Improve recommendations without leaking tomorrow into today' },
+  { label: 'Agent', criterion: 'Impact & relevance · 20%', title: 'One falsifiable experiment at a time' },
+  { label: 'Insight', criterion: 'Innovation & insight · 20%', title: 'Search broadly, refine narrowly, remember every result' },
+  { label: 'Evidence', criterion: 'Feasibility & practicality · 15%', title: 'A strong agent must know when not to deploy' },
+  { label: 'Reproduce', criterion: 'Presentation & communication · 10%', title: 'Every headline number resolves to a checked-in artifact' },
 ] as const;
 
 type Metrics = { primary: number; gauc: number; ndcg5: number };
@@ -320,9 +320,9 @@ export default function Home() {
               <span className="journey-arrow">→</span>
               <div className="champion-score"><span>Verified champion</span><strong>{judgeShowcase.result.champion_primary.toFixed(6)}</strong></div>
             </div>
-            <div className="gain-line"><strong>+{judgeShowcase.result.relative_gain_percent.toFixed(2)}%</strong><span>relative lift · {judgeShowcase.benchmark.validation_users.toLocaleString()} users · {judgeShowcase.benchmark.validation_rows.toLocaleString()} rows</span></div>
+            <div className="gain-line"><strong>{signed(judgeShowcase.result.absolute_gain)}</strong><span>absolute validation delta · +{judgeShowcase.result.relative_gain_percent.toFixed(2)}% relative · {judgeShowcase.benchmark.validation_users.toLocaleString()} users</span></div>
             <div className="criterion-row" aria-label="Judging criteria covered">
-              {judgeShowcase.criteria.map((criterion, index) => <span key={criterion.name}>{String(index + 1).padStart(2, '0')} {criterion.name.split(' ')[0]}</span>)}
+              {judgeShowcase.criteria.map((criterion, index) => <span key={criterion.name}>{String(index + 1).padStart(2, '0')} {criterion.name.split(' ')[0]} · {criterion.weight_percent}%</span>)}
             </div>
           </div>
         </section>
@@ -338,7 +338,7 @@ export default function Home() {
           </div>
           <div className="predictor-layout">
             <div className="predictor-copy">
-              <p>This is a compact logistic deployment surrogate—not the un-serialized 0.72342 research ensemble. It uses April 8–21 history, learns on April 22–28, and receives no April 29 engagement outcomes.</p>
+              <p>This is a compact logistic deployment surrogate, separate from the frozen research ensemble. It uses April 8–21 history, learns on April 22–28, and receives no April 29 engagement outcomes.</p>
               <div className="predictor-controls">
                 <label>User slate
                   <select value={predictionUser} onChange={(event) => { setPredictionUser(event.target.value); setPrediction(null); }} disabled={!liveArtifact}>
@@ -360,7 +360,7 @@ export default function Home() {
               <span>Honest Apr 28 proxy</span>
               <strong>{liveArtifact ? liveArtifact.evaluation.primary.toFixed(6) : 'Loading…'}</strong>
               <div><b>GAUC {liveArtifact ? liveArtifact.evaluation.gauc.toFixed(4) : '—'}</b><b>nDCG@5 {liveArtifact ? liveArtifact.evaluation.ndcg5.toFixed(4) : '—'}</b></div>
-              <small>One-day surrogate holdout. This is not the week-level 0.723415 champion score.</small>
+              <small>One-day surrogate holdout. It is not the official-protocol 0.612858 validation result.</small>
             </aside>
           </div>
           {prediction && <div className="prediction-result" aria-live="polite">
@@ -463,7 +463,7 @@ export default function Home() {
                 </div>
                 <div className="result-ribbon">
                   <div><span>Baseline</span><strong>{judgeShowcase.result.baseline_primary.toFixed(6)}</strong></div>
-                  <div className="lift-mark"><span>Verified lift</span><strong>+{judgeShowcase.result.relative_gain_percent.toFixed(2)}%</strong><small>{signed(judgeShowcase.result.absolute_gain)} absolute</small></div>
+                  <div className="lift-mark"><span>Validation delta</span><strong>{signed(judgeShowcase.result.absolute_gain)}</strong><small>+{judgeShowcase.result.relative_gain_percent.toFixed(2)}% relative</small></div>
                   <div><span>Champion</span><strong>{judgeShowcase.result.champion_primary.toFixed(6)}</strong></div>
                 </div>
                 <p className="integrity-callout"><span>✓</span><b>Hidden test untouched.</b> The walkthrough reports public validation evidence only.</p>
@@ -479,7 +479,14 @@ export default function Home() {
                   <article><span>Trusted execution</span><h3>Generated ideas, sealed labels</h3><ul>{judgeShowcase.autonomy.safety.map((item) => <li key={item}>{item}</li>)}</ul></article>
                   <article><span>Bounded autonomy</span><h3>Stops by construction</h3><ul>{judgeShowcase.autonomy.limits.map((item) => <li key={item}>{item}</li>)}</ul></article>
                 </div>
-                <div className="worker-strip"><div><span>Real arm64 smoke run</span><strong>{judgeShowcase.worker_smoke.train_seconds.toFixed(3)}s train</strong></div><div><span>Compute</span><strong>{judgeShowcase.worker_smoke.cpu_hours.toFixed(6)} CPU-h</strong></div><div><span>Peak RAM</span><strong>{judgeShowcase.worker_smoke.peak_rss_mb.toFixed(0)} MB</strong></div><div><span>GPU</span><strong>{judgeShowcase.worker_smoke.gpu_hours.toFixed(1)} hours</strong></div></div>
+                <div className="autonomy-result" aria-label="Recorded autonomous campaign result">
+                  <div className="autonomy-score"><span>Recorded autonomous run</span><strong>{judgeShowcase.autonomous_campaign.baseline_primary.toFixed(6)} → {judgeShowcase.autonomous_campaign.converged_primary.toFixed(6)}</strong><small>{signed(judgeShowcase.autonomous_campaign.absolute_gain)} before later offline research</small></div>
+                  <div><span>Iterations</span><strong>{judgeShowcase.autonomous_campaign.iterations_used} / {judgeShowcase.autonomous_campaign.iterations_limit}</strong></div>
+                  <div><span>Agent wall-clock</span><strong>{elapsed(judgeShowcase.autonomous_campaign.wall_seconds)}</strong></div>
+                  <div><span>LLM usage</span><strong>{judgeShowcase.autonomous_campaign.total_tokens.toLocaleString()} tokens</strong></div>
+                  <div><span>Human input</span><strong>{judgeShowcase.autonomous_campaign.manual_interventions} intervention</strong></div>
+                </div>
+                <div className="recovery-callout"><span>↻</span><p><b>{judgeShowcase.autonomous_campaign.recovered_failures} invalid run recovered.</b> {judgeShowcase.autonomous_campaign.recovery_summary}</p></div>
               </>}
 
               {judgeStep === 2 && <>
@@ -515,6 +522,12 @@ export default function Home() {
                 <div className="reproduce-grid">
                   <article className="command-card"><span>One-command local demo</span><code><i>$</i> npm install<br /><i>$</i> npm run local</code><small>Then open localhost:3000 and choose “3-minute walkthrough”.</small></article>
                   <article className="command-card"><span>Evidence consistency check</span><code><i>$</i> npm run verify:demo</code><small>Fails if the showcase drifts from the champion, experiment-wave, or worker artifacts.</small></article>
+                </div>
+                <div className="submission-checklist" aria-label="Track 2 submission readiness">
+                  <div className="ready"><span>✓</span><p><b>Official task aligned</b><small>KuaiRand-Pure · long_view · GAUC / nDCG@5</small></p></div>
+                  <div className="ready"><span>✓</span><p><b>Autonomy evidence recorded</b><small>Hypotheses, diffs, metrics, recovery, tokens, wall-clock, and intervention count</small></p></div>
+                  <div className="ready"><span>✓</span><p><b>Public-validation result frozen</b><small>{judgeShowcase.result.champion_primary.toFixed(6)} · {signed(judgeShowcase.result.absolute_gain)} over reproduced baseline</small></p></div>
+                  <div className="pending"><span>→</span><p><b>Final hidden-test score pending</b><small>Generate exactly once after the team freezes the final submission</small></p></div>
                 </div>
                 <div className="artifact-list"><div className="artifact-heading"><span>Source of truth</span><b>{judgeShowcase.artifacts.length} checked-in artifacts</b></div>{judgeShowcase.artifacts.map((artifact) => <code key={artifact}>{artifact}</code>)}</div>
                 <div className="limitations"><span>Honest boundary</span>{judgeShowcase.limitations.map((limitation) => <p key={limitation}><i>!</i>{limitation}</p>)}</div>

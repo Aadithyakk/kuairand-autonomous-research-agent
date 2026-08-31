@@ -8,7 +8,7 @@
       "id": "showcase",
       "title": "Benchmark & historical result",
       "path": "public/judge-showcase.json",
-      "sha256": "b46a13ecdc463708e8315b64ce37e22c587f5f777fc2b3f83c7a898dae260e7f",
+      "sha256": "43caddbe0a2d7cecfdad8596e6dcf27a91eaa94969f0e5cfbd34710caa364867",
       "excerpt": {
         "benchmark": {
           "dataset": "KuaiRand-Pure",

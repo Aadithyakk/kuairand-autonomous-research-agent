@@ -25,7 +25,7 @@ KuaiRand-Pure only; no external training data or pretrained weights trained on c
 
 ## Results
 
-The official validation baseline is 0.6016 primary (0.6674 GAUC, 0.5357 nDCG@5). Our independently reproduced baseline is 0.601470. The current validation-best recipe reaches **0.612858 primary**, with **0.682354 GAUC** and **0.543362 nDCG@5**: +0.011389 absolute and +1.89% relative over the reproduced baseline. The hidden test remains untouched.
+The official validation baseline is 0.6016 primary (0.6674 GAUC, 0.5357 nDCG@5). Our independently reproduced baseline is 0.601470. A recorded five-iteration autonomous campaign reached **0.603781** with one manual intervention, 24,802 LLM tokens, and 479.67 seconds of agent wall-clock. The later validation-best research recipe reaches **0.612858 primary**, with **0.682354 GAUC** and **0.543362 nDCG@5**: +0.011389 absolute and +1.89% relative over the reproduced baseline. We report those two evidence trails separately; the hidden test remains untouched.
 
 ## Challenges
 

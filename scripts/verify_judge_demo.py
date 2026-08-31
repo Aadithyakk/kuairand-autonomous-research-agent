@@ -34,6 +34,7 @@ def main() -> None:
     showcase = load("public/judge-showcase.json")
     champion = load("results/verified-slate-consensus/summary.json")
     wave = load("results/calibrated-ranking/summary.json")
+    campaign = load("results/run-9ecfd2aa09/summary.json")
     worker = load("results/final-model/autonomous-worker-smoke.json")
     manifest = load("results/final-model/manifest.json")
 
@@ -60,6 +61,35 @@ def main() -> None:
         raise SystemExit("FAIL validation row count does not match champion evidence")
     if benchmark["validation_users"] != verified["users"]:
         raise SystemExit("FAIL validation user count does not match champion evidence")
+
+    displayed_campaign = showcase["autonomous_campaign"]
+    require_close("campaign baseline", displayed_campaign["baseline_primary"], campaign["baseline"]["primary"])
+    require_close("campaign converged score", displayed_campaign["converged_primary"], campaign["champion"]["primary"])
+    require_close(
+        "campaign absolute gain",
+        displayed_campaign["absolute_gain"],
+        campaign["champion"]["primary"] - campaign["baseline"]["primary"],
+    )
+    require_close("campaign wall-clock", displayed_campaign["wall_seconds"], campaign["usage"]["wall_seconds"])
+    require_close("campaign tokens", displayed_campaign["total_tokens"], campaign["usage"]["total_tokens"])
+    require_close("campaign interventions", displayed_campaign["manual_interventions"], campaign["manual_interventions"])
+    if displayed_campaign["iterations_used"] != len(campaign["iterations"]):
+        raise SystemExit("FAIL autonomous campaign iteration count drifted")
+    if displayed_campaign["recovered_failures"] != sum(item["outcome"] == "invalidated" for item in campaign["iterations"]):
+        raise SystemExit("FAIL autonomous campaign recovery count drifted")
+    if displayed_campaign["stop_reason"] != campaign["stop_reason"]:
+        raise SystemExit("FAIL autonomous campaign stop reason drifted")
+
+    expected_weights = {
+        "Technical execution": 35,
+        "Innovation & insight": 20,
+        "Impact & relevance": 20,
+        "Feasibility & practicality": 15,
+        "Presentation & communication": 10,
+    }
+    displayed_weights = {item["name"]: item["weight_percent"] for item in showcase["criteria"]}
+    if displayed_weights != expected_weights or sum(displayed_weights.values()) != 100:
+        raise SystemExit("FAIL judging-criteria weights do not match the Track 2 brief")
 
     totals = wave["totals"]
     displayed_wave = showcase["experiment_wave"]
@@ -114,6 +144,12 @@ def main() -> None:
     print(f"  lift      {result['absolute_gain']:+.9f} ({result['relative_gain_percent']:+.2f}%)")
     print(f"  metric    GAUC {result['gauc']:.6f} · nDCG@5 {result['ndcg5']:.6f}")
     print(f"  evidence  {len(showcase['artifacts'])} artifacts · score archive SHA-256 verified")
+    print(
+        "  autonomy  "
+        f"{displayed_campaign['iterations_used']} iterations · "
+        f"{displayed_campaign['total_tokens']:,} tokens · "
+        f"{displayed_campaign['manual_interventions']} manual intervention"
+    )
     print("  integrity hidden test untouched · synthetic scores excluded")
 
 

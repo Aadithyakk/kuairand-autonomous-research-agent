@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | Reproduce organizer FM baseline | `scripts/kuairand_runner.py`; `results/run-9ecfd2aa09/baseline` | Complete |
 | Autonomous read → hypothesize → implement → train → evaluate → reflect loop | `backend/kuailab/engine.py`, dashboard live trace | Complete |
-| Improve over baseline | 0.612858 vs reproduced 0.601470 | Complete |
+| Improve over baseline | Autonomous run: 0.603781; later validation-best research: 0.612858; reproduced baseline: 0.601470 | Complete; evidence kept distinct |
 | Minimal manual intervention | Original autonomous run records one intervention | Complete |
 | Robust recovery/retry/routing | Planner retry, lower-resource worker retry, retained prior champion | Complete |
 | Correct `long_view`, GAUC, nDCG@5 task | Runner hard-codes target and official evaluator | Complete |
@@ -24,7 +24,7 @@
 | Devpost written description | `docs/DEVPOST.md` | Complete |
 | Final model output/checkpoint | Frozen manifest, score archive, validation schema export | Complete for validation |
 | Results table and baseline delta | README, final runbook, judging report | Complete |
-| Public three-minute YouTube demo | Deterministic in-app walkthrough and timed script in `docs/JUDGE_DEMO.md` | Recording/upload pending |
+| Optional ~3-minute demo video | Deterministic in-app walkthrough and timed script in `docs/JUDGE_DEMO.md` | Recommended; recording/upload optional |
 | Bonus KuaiRand-1k/27k | Future work | Optional |
 
 The only deliberately unexecuted step is the organizer's one-time hidden-test run. Running it during development would violate the brief; `docs/FINAL_SUBMISSION.md` contains the final-only procedure.

@@ -41,15 +41,15 @@ After changing source reports, run `npm run replay:sync`, then `npm run test:rep
 
 ### 0:00–0:25 — The challenge
 
-> Recommendation research is still a manual loop: form an idea, edit code, wait for training, compare metrics, and try again. KuaiLab turns that into a bounded autonomous workflow for KuaiRand-Pure. The target is long view, and the score balances per-user GAUC with nDCG at five.
+> Recommendation research is still a manual loop: form an idea, edit code, wait for training, compare metrics, and try again. KuaiLab turns that into a bounded autonomous workflow for KuaiRand-Pure. The target is long view, and the score balances per-user GAUC with nDCG at five. Our frozen validation delta is plus 0.011389; the official competition delta remains unknown until the one-time hidden test.
 
 Show step 1. Point to the train/validation windows, then the reproduced baseline and verified champion.
 
 ### 0:25–1:00 — The autonomous loop
 
-> The LLM chooses what to investigate, but deterministic tools decide whether it worked. Each iteration inspects evidence, states a falsifiable hypothesis, produces an auditable configuration and diff, trains through a sealed evaluator, measures the official metrics and compute, then reflects. The campaign is capped at fifty experiments and six hours, and failures receive only one bounded recovery retry.
+> The LLM chooses what to investigate, but deterministic tools decide whether it worked. In the recorded autonomous campaign, five iterations used 24,802 tokens and 479.67 seconds with one manual intervention. One invalid ensemble run was discarded, its contract was corrected, and the champion was preserved. The campaign improved primary from 0.601470 to 0.603781 before the later offline research sweep.
 
-Show step 2. Pause on the real arm64 worker telemetry.
+Show step 2. Pause on the autonomous campaign result and recovered-run evidence.
 
 ### 1:00–1:35 — Innovation and problem insight
 
@@ -87,13 +87,13 @@ End on the iteration table with **Validation-best checkpoint retained · hidden 
 
 **Can this run without a GPU?** Yes. The verified worker smoke and the displayed experiment wave used zero GPU-hours on Apple arm64.
 
-**What remains before submission?** Record this flow, upload an unlisted public three-minute YouTube video, place its URL in Devpost, and run the hidden test only through the guarded final procedure when authorized.
+**What remains before submission?** Freeze the final Git commit, make the repository public, optionally record the recommended three-minute video, and run the hidden test only through the guarded final procedure when the team is ready. The brief no longer requires a video for this track.
 
-## Recording checklist
+## Optional recording checklist
 
 - Run `npm run verify:demo` immediately before recording.
 - Use the five walkthrough steps in order; do not start a synthetic campaign.
 - Keep the video at or below three minutes.
 - Show the URL bar once so `localhost:3000` is visible.
 - Do not expose an API key, local dataset path, or hidden-test file.
-- Upload to YouTube with public or unlisted visibility and verify the link in a signed-out window.
+- If recording, upload to YouTube with public or unlisted visibility and verify the link in a signed-out window.

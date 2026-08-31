@@ -21,6 +21,20 @@
     "absolute_gain": 0.011388540267944336,
     "relative_gain_percent": 1.8934526107662046
   },
+  "autonomous_campaign": {
+    "run_id": "run-9ecfd2aa09",
+    "baseline_primary": 0.6014695167541504,
+    "converged_primary": 0.6037807464599609,
+    "absolute_gain": 0.0023112297058105,
+    "iterations_used": 5,
+    "iterations_limit": 50,
+    "wall_seconds": 479.67,
+    "total_tokens": 24802,
+    "manual_interventions": 1,
+    "recovered_failures": 1,
+    "stop_reason": "convergence",
+    "recovery_summary": "An invalidated ensemble run was discarded, its runner contract was corrected, and the retained champion was left unchanged."
+  },
   "autonomy": {
     "loop": ["Inspect", "Hypothesize", "Implement", "Train", "Evaluate", "Reflect"],
     "operators": ["Exploit the champion", "Explore a new family", "Innovate from research"],
@@ -57,22 +71,27 @@
   "criteria": [
     {
       "name": "Technical execution",
+      "weight_percent": 35,
       "proof": "A complete six-stage loop, sealed evaluator, recovery route, budgets, and per-run telemetry."
     },
     {
       "name": "Innovation & insight",
+      "weight_percent": 20,
       "proof": "Experiment-tree search combines targeted refinement, method memory, and KuaiRand-specific slate reasoning."
     },
     {
       "name": "Impact & relevance",
+      "weight_percent": 20,
       "proof": "The system turns repeated recommender research into an inspectable autonomous workflow."
     },
     {
       "name": "Feasibility & practicality",
+      "weight_percent": 15,
       "proof": "Local-first, CPU-capable execution with deterministic smoke mode and bounded resource use."
     },
     {
       "name": "Presentation & communication",
+      "weight_percent": 10,
       "proof": "A live control room connects every score and deployment decision to persisted evidence."
     }
   ],
@@ -80,6 +99,7 @@
     "results/verified-slate-consensus/summary.json",
     "results/verified-slate-consensus/proposal.json",
     "results/calibrated-ranking/summary.json",
+    "results/run-9ecfd2aa09/summary.json",
     "results/final-model/manifest.json",
     "results/final-model/autonomous-worker-smoke.json"
   ],
