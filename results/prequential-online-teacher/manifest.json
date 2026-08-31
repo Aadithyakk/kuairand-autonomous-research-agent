@@ -1,0 +1,97 @@
+{
+  "name": "best verified completion-safe prequential ensemble",
+  "evaluation_mode": "online/prequential; not a static locked model",
+  "validation": {
+    "dates": "2022-04-22 through 2022-04-28",
+    "impressions": 124909,
+    "users": 22377,
+    "label": "long_view",
+    "metrics": {
+      "primary": 0.7234153747558594,
+      "gauc": 0.8215715289115906,
+      "ndcg_at_5": 0.6252591609954834
+    },
+    "baseline_primary": 0.6014695167541504,
+    "absolute_improvement": 0.12194585800170898,
+    "relative_improvement_percent": 20.274653096268906,
+    "target_0_7_excess": 0.02341537475585942,
+    "fold_policy": "A stage was promoted only if primary, GAUC, and nDCG@5 were non-decreasing in all four actual-user-ID modulo folds.",
+    "hidden_test_accessed": false
+  },
+  "causality": {
+    "outcome_available_at": "time_ms + play_time_ms",
+    "training_cutoff": "Each block model uses only rows whose outcome-availability timestamp is strictly before that block start.",
+    "same_timestamp_feedback_visible": false
+  },
+  "modeling": {
+    "features": 468,
+    "nonlinear_rankers": [
+      "CatBoost YetiRankPairwise",
+      "CatBoost PairLogitPairwise",
+      "CatBoost QueryRMSE",
+      "CatBoost pointwise Logloss classifiers used as anti-experts"
+    ],
+    "linear_rankers": [
+      "completion-safe pairwise SGD logistic rankers"
+    ],
+    "refresh_schedules_hours": [
+      1,
+      2,
+      3,
+      4,
+      6,
+      8,
+      12,
+      24
+    ],
+    "score_normalization": "raw, within-user z-score, or within-user ordinal rank, selected per stage"
+  },
+  "promotion_lineage": [
+    ["strict_1h_on_current_results.json", "alpha_0.003_z", "date_through_apr24", 1.5, 0.6914309859275818],
+    ["strict_12h_on_1h_results.json", "alpha_0.003_rank", "two_active_days", 1.0, 0.6918697357177734],
+    ["strict_4h_on_12h1h_results.json", "alpha_0.003_z", "date_from_apr25", -0.5, 0.6920742392539978],
+    ["strict_8h_on_current_results.json", "alpha_0.003_raw", "date_from_apr24", 0.15, 0.6925745010375977],
+    ["strict_daily_catboost_ranker_on_current_results.json", "ranker_z", "all", 4.0, 0.6992687582969666],
+    ["strict_daily_catboost_ranker_full_fine_results.json", "ranker_z", "date_through_apr24", 1.7, 0.7004562616348267],
+    ["strict_12h_post_catboost_results.json", "alpha_0.003_rank", "high_score_margin", -0.75, 0.7006934881210327],
+    ["strict_8h_post_12hcatboost_results.json", "alpha_0.003_raw", "date_from_apr25", 0.2, 0.7012803554534912],
+    ["strict_1h_post_best_results.json", "alpha_0.003_rank", "two_active_days", 1.0, 0.7015556693077087],
+    ["strict_12h_catboost_ranker_full_on_best_results.json", "ranker_z", "date_through_apr23", 2.5, 0.7026044130325317],
+    ["strict_6h_catboost_ranker_full_fine_results.json", "ranker_z", "not_medium_slate", 2.4, 0.7031759023666382],
+    ["strict_daily_d5_catboost_ranker_on_best_results.json", "ranker_z", "slate_size_3", 1.5, 0.7033512592315674],
+    ["strict_3h_catboost_ranker_full_on_best_results.json", "ranker_rank", "two_three_sessions", -0.1, 0.7034046053886414],
+    ["strict_daily_pairlogit_catboost_fine_results.json", "ranker_z", "date_through_apr23", 6.6, 0.7065601348876953],
+    ["strict_12h_pairlogit_catboost_fine_results.json", "ranker_raw", "date_from_apr25", 2.6, 0.709580659866333],
+    ["strict_6h_pairlogit_catboost_fine_results.json", "ranker_z", "date_through_apr24", 6.6, 0.7130541801452637],
+    ["strict_12h_pairwise_post_pairlogit_fine_results.json", "alpha_0.003_raw", "date_from_apr25", 1.7, 0.7151913046836853],
+    ["strict_1h_pairwise_post_12hpairwise_results.json", "alpha_0.003_rank", "slate_size_3", -1.5, 0.7153499126434326],
+    ["strict_3h_pairlogit_catboost_fine_results.json", "ranker_rank", "date_from_apr25", -4.6, 0.7168830037117004],
+    ["strict_2h_pairlogit_catboost_fine_results.json", "ranker_raw", "small_slate_le4", -4.0, 0.7172248363494873],
+    ["strict_4h_pairlogit_catboost_fine_results.json", "ranker_z", "date_through_apr24", 2.8, 0.7176759243011475],
+    ["strict_8h_pairlogit_catboost_fine_results.json", "ranker_raw", "date_through_apr23", -1.25, 0.718566358089447],
+    ["postfinal_pair1_results.json", "alpha_0.003_z", "date_from_apr23", -0.75, 0.7188209295272827],
+    ["postpair1_d5_results.json", "ranker_rank", "date_through_apr23", -1.5, 0.7193030118942261],
+    ["postd5_yeti12_results.json", "ranker_z", "date_through_apr23", -1.25, 0.7197402119636536],
+    ["strict_16h_pairlogit_catboost_on_best_results.json", "ranker_z", "date_through_apr24", 1.5, 0.7200778722763062],
+    ["strict_10h_pairlogit_catboost_fine_results.json", "ranker_z", "date_through_apr23", 1.0, 0.7202810049057007],
+    ["strict_20h_pairlogit_catboost_on_best_results.json", "ranker_z", "small_and_high_score_margin", 2.0, 0.7204160690307617],
+    ["strict_14h_post20h_results.json", "ranker_raw", "slate_size_5", -0.25, 0.7204666137695312],
+    ["diverse_existing_gated_results.json", "daily_catboost_classifier_rank", "date_from_apr23", -2.0, 0.7222748398780823],
+    ["queryrmse_gated_on_classifier_best_results.json", "daily_d6_queryrmse_z", "date_from_apr25", 0.25, 0.7224351167678833],
+    ["new_objective_diversity_gated_results.json", "yeti_pair_z", "date_through_apr23", -1.75, 0.7228881120681763],
+    ["fine_d5_pair_on_yeti_results.json", "d5_pair_raw", "three_four_active_days", 0.75, 0.7230373620986938],
+    ["new_base_classifier_gated_results.json", "d5_base_classifier_raw", "small_and_high_recent_coverage", 1.0, 0.7230937480926514],
+    ["refresh_classifier_gated_results.json", "base60_raw", "small_and_two_active_days", -2.0, 0.7232389450073242],
+    ["refresh_only_gated_results.json", "clf_6h_raw", "current_rank_3_to_8", 0.25, 0.7233699560165405],
+    ["d8_pair_gated_final_results.json", "d8_pair_raw", "slate_size_2", -4.0, 0.7234153747558594]
+  ],
+  "artifacts": {
+    "scores": "runtime/prequential-teacher/best_verified_online_scores.npz (generated, not committed)",
+    "score_sha256": "af67d1dd772db26ad154727965ed70c094bdde2ecefec39cd9edd58b43a178eb",
+    "trainer": "scripts/prequential_block_catboost.py",
+    "strict_feature_builder": "scripts/build_prequential_immediate_feedback_features.py",
+    "pairwise_trainer": "scripts/prequential_daily_pairwise_logistic.py",
+    "gated_search": "scripts/gated_twin_residual_search.py"
+  },
+  "caveat": "This is a validation-selected online/prequential result. It should not be presented as a frozen static-model score or as an untouched hidden-test estimate."
+}

@@ -41,6 +41,23 @@ The timed narration and recording checklist are in [`docs/JUDGE_DEMO.md`](docs/J
 - Convergence: stop after three consecutive experiments without a primary gain greater than 0.002.
 - Submission header: `row_id,user_id,video_id,score` with zero-based strictly increasing row IDs.
 
+## Online/prequential research teacher
+
+A separate completion-safe online experiment reaches **`0.723415` primary**
+(`0.821572` GAUC and `0.625259` nDCG@5) on the 124,909 public-validation
+impressions. It retrains on time blocks and exposes an interaction outcome only
+after `time_ms + play_time_ms`, with same-timestamp feedback excluded. Candidate
+corrections are retained only when primary, GAUC, and nDCG@5 are nonnegative in
+all four actual-user-ID folds.
+
+This number is intentionally not mounted as the frozen static champion: it is a
+validation-selected online/prequential teacher rather than an untouched hidden-
+test estimate. The portable feature builders, block trainers, pairwise trainer,
+gated residual search, exact verifier, and run instructions are documented in
+[`docs/PREQUENTIAL_TEACHER.md`](docs/PREQUENTIAL_TEACHER.md). The accepted
+37-stage lineage and final score hash are in
+[`results/prequential-online-teacher/manifest.json`](results/prequential-online-teacher/manifest.json).
+
 ## Champion-mounted autonomous training
 
 The 0.612858 validation champion is no longer metrics-only bootstrap evidence. Real campaigns expose a trusted `champion_residual_blend` experiment family to the LLM. Each such iteration:
