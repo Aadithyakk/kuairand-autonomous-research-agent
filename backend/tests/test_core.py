@@ -21,6 +21,7 @@ from backend.kuailab.rad import build_rad_labels
 from backend.kuailab.slate import build_slate_features
 from backend.kuailab.research import load_method_cards, summarize_search_tree
 from backend.kuailab.state import StateStore
+from backend.kuailab.live_predictor import predict_slate, score_candidate
 from scripts.train_dvr_wtg import auxiliary_targets, final_scores, fit_wtg_reference
 from scripts.audit_cdm_context_grid import prepare_context, rerank
 
@@ -42,6 +43,40 @@ class CoreTests(unittest.TestCase):
             {"exploit", "explore", "innovate"},
         )
         self.assertIn(proposal.strategy, {"exploit", "explore", "innovate"})
+
+    def test_live_predictor_scores_at_request_time_and_sorts_slate(self):
+        artifact = {
+            "model": {
+                "name": "test logistic",
+                "candidate_weights": {"1": 1.0, "2": -1.0},
+                "intercept": 0.0,
+                "numeric_means": [0.0],
+                "numeric_scales": [1.0],
+                "numeric_weights": [0.5],
+            },
+            "users": [{"user_id": "u1", "candidate_count": 2}],
+            "target": {"date": "2022-04-29"},
+            "evaluation": {"primary": 0.5},
+            "integrity": {"target_outcomes_accessed": False},
+            "candidates": [
+                {"user_id": "u1", "video_id": "low", "author_id": "a", "video_type": "NORMAL", "tab": "0", "hour": 8, "duration_seconds": 10, "exposure_index": 0, "categorical_indices": [2], "numeric_values": [0.0]},
+                {"user_id": "u1", "video_id": "high", "author_id": "b", "video_type": "NORMAL", "tab": "1", "hour": 9, "duration_seconds": 20, "exposure_index": 1, "categorical_indices": [1], "numeric_values": [1.0]},
+            ],
+        }
+        self.assertGreater(score_candidate(artifact, artifact["candidates"][1]), 0.5)
+        result = predict_slate(artifact, "u1", 2)
+        self.assertEqual([row["video_id"] for row in result["ranking"]], ["high", "low"])
+        self.assertNotIn("categorical_indices", result["ranking"][0])
+
+    def test_exported_live_candidates_contain_no_outcomes_or_saved_scores(self):
+        artifact_path = Path(__file__).resolve().parents[2] / "public" / "live-predictor.json"
+        if not artifact_path.exists():
+            self.skipTest("live predictor has not been trained")
+        artifact = json.loads(artifact_path.read_text())
+        forbidden = {"long_view", "play_time_ms", "is_click", "is_like", "score"}
+        self.assertFalse({key for row in artifact["candidates"] for key in row}.intersection(forbidden))
+        self.assertFalse(artifact["integrity"]["target_outcomes_accessed"])
+        self.assertFalse(artifact["integrity"]["target_scores_precomputed"])
 
     def test_research_memory_has_prioritized_and_exhausted_cards(self):
         cards = load_method_cards()

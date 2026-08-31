@@ -45,4 +45,5 @@ class Settings:
         data["dataset_available"] = bool(self.dataset_path and Path(self.dataset_path).exists())
         data["adapter_available"] = bool(self.experiment_command)
         data["champion_available"] = champion_available(PROJECT_ROOT)
+        data["live_predictor_available"] = (PROJECT_ROOT / "public" / "live-predictor.json").exists()
         return data

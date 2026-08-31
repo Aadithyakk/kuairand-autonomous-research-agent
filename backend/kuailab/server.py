@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 from .config import Settings
 from .engine import CampaignEngine
+from .live_predictor import LivePredictor
 from .state import StateStore, utc_now
 
 
@@ -28,6 +29,7 @@ def refresh_runtime_config(state: dict) -> None:
 
 store.update(refresh_runtime_config)
 engine = CampaignEngine(settings, store)
+live_predictor = LivePredictor(settings.state_dir.parent / "public" / "live-predictor.json")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -68,6 +70,11 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/events":
             snapshot = store.snapshot()
             self._json({"events": snapshot["events"]})
+        elif path == "/api/predict/options":
+            if not live_predictor.available:
+                self._json({"available": False, "error": "live predictor artifact is not trained"}, HTTPStatus.SERVICE_UNAVAILABLE)
+            else:
+                self._json(live_predictor.options())
         else:
             self._json({"error": "not found"}, HTTPStatus.NOT_FOUND)
 
@@ -94,6 +101,16 @@ class Handler(BaseHTTPRequestHandler):
                 engine.reset()
             elif path == "/api/steer":
                 engine.steer(str(body.get("instruction", "")))
+            elif path == "/api/predict/slate":
+                if not live_predictor.available:
+                    self._json({"ok": False, "error": "live predictor artifact is not trained"}, HTTPStatus.SERVICE_UNAVAILABLE)
+                    return
+                prediction = live_predictor.predict(
+                    None if body.get("user_id") in {None, ""} else str(body["user_id"]),
+                    int(body.get("limit", 10)),
+                )
+                self._json({"ok": True, **prediction})
+                return
             else:
                 self._json({"error": "not found"}, HTTPStatus.NOT_FOUND)
                 return

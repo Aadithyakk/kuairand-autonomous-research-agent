@@ -8,7 +8,7 @@
       "id": "showcase",
       "title": "Benchmark & historical result",
       "path": "public/judge-showcase.json",
-      "sha256": "48ff3b901fe4846f7e41cd254dcff2a325a3ad3034e9bee706a87c69044d16ed",
+      "sha256": "b46a13ecdc463708e8315b64ce37e22c587f5f777fc2b3f83c7a898dae260e7f",
       "excerpt": {
         "benchmark": {
           "dataset": "KuaiRand-Pure",
@@ -40,7 +40,7 @@
       "id": "champion",
       "title": "Frozen champion report",
       "path": "results/verified-slate-consensus/summary.json",
-      "sha256": "6794fbcd04a741565522350a03e04b9423553e5c62daa8202e553c372293be88",
+      "sha256": "31de251234ca582983ded5fda96160052559709adc4742ca1f6d3b88b4c28c4f",
       "excerpt": {
         "champion": {
           "primary": 0.6128580570220947,
@@ -63,7 +63,7 @@
       "id": "wave",
       "title": "Ten-method research wave",
       "path": "results/calibrated-ranking/summary.json",
-      "sha256": "ca5c19260b928afc95517c60ea756e0f590d331cbb60a04e6114894391380708",
+      "sha256": "e38a75273d18e360ed76b78687c0cb1d0d26e1c242979c23ab1476a745fd65c9",
       "excerpt": {
         "campaign": "Parallel calibrated-ranking and interaction-model wave",
         "date": "2026-08-30",
@@ -314,7 +314,7 @@
       "id": "screen",
       "title": "RCR configuration & screen",
       "path": "results/calibrated-ranking/rcr-screen.json",
-      "sha256": "1f1dd0b888f842647500dbe9ad3dc237508148474dcb5259c06bc9585e777847",
+      "sha256": "cff2b12a30e6d92d8d3783e6582d0151554e3bf7479ee2030fef9bd9a731b30f",
       "excerpt": {
         "paper": "https://arxiv.org/abs/2211.01494",
         "protocol": {
@@ -625,7 +625,7 @@
       "id": "confirmation",
       "title": "Locked confirmation",
       "path": "results/calibrated-ranking/rcr-confirmation.json",
-      "sha256": "0da294a1e1ad9bcba838fdd3cf1712971aae65e682264faa799b0606cd323337",
+      "sha256": "dd9df1d1de01ad96ef7daa1dce60c168581667dbdcaadc37ae951208831ca68a",
       "excerpt": {
         "protocol": {
           "evaluation": "Apr22-28",
@@ -768,7 +768,7 @@
       "id": "audit",
       "title": "Champion residual & user folds",
       "path": "results/calibrated-ranking/rcr-residual-audit.json",
-      "sha256": "2ecbcc067fb6c7e1333405c00e7b07f3bdee922af95f2f4b312327154c846bca",
+      "sha256": "5b0918cfabdf16bb9986692df3b77ba54d246d6701b29018db15b79b69b16624",
       "excerpt": {
         "baseline_metrics": {
           "GAUC": 0.6823537349700928,
@@ -882,7 +882,7 @@
       "id": "manifest",
       "title": "Champion artifact manifest",
       "path": "results/final-model/manifest.json",
-      "sha256": "9f4153ab30c0222520cd64bf210486d0b4ddc6eae10c121aa10188311352670a",
+      "sha256": "cd19d5bf8b317fd0e7adea7286356fd1a68c3548563a73a8f0d5f64079c878b8",
       "excerpt": {
         "artifact": "KuaiLab validation-best recipe",
         "validation_metrics": {

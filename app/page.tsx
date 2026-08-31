@@ -29,6 +29,27 @@ type Iteration = {
   screen_metrics?: Metrics | null; screen_gain?: number | null; screen_passed?: boolean; confirmation_accessed?: boolean;
 };
 type EventItem = { id: number; time: string; kind: string; title: string; detail: string; iteration?: number; stage?: string };
+type LiveUser = { user_id: string; candidate_count: number };
+type LiveCandidate = {
+  user_id: string; video_id: string; author_id: string; video_type: string; tab: string; hour: number;
+  duration_seconds: number; exposure_index: number; categorical_indices: number[]; numeric_values: number[];
+};
+type LiveArtifact = {
+  model: {
+    name: string; kind: string; intercept: number; candidate_weights: Record<string, number>;
+    numeric_means: number[]; numeric_scales: number[]; numeric_weights: number[];
+  };
+  evaluation: { window: string; note: string; primary: number; gauc: number; ndcg5: number; users: number; rows: number };
+  target: { date: string; kind: string; cohort_users: number; cohort_rows: number };
+  integrity: { target_outcomes_accessed: false; target_scores_precomputed: false; champion_0_723_used: false };
+  users: LiveUser[];
+  candidates: LiveCandidate[];
+};
+type RankedCandidate = Pick<LiveCandidate, 'user_id' | 'video_id' | 'author_id' | 'video_type' | 'tab' | 'hour' | 'duration_seconds'> & { rank: number; score: number };
+type LivePrediction = {
+  prediction_id: string; user_id: string; target_date: string; model: string; execution: 'server' | 'browser';
+  ranking: RankedCandidate[]; evaluation: LiveArtifact['evaluation']; integrity: LiveArtifact['integrity'];
+};
 type RunLimits = { max_iterations: number; max_hours: number; convergence_epsilon: number; convergence_patience: number; bootstrap_verified: boolean };
 type State = {
   campaign: { id: string | null; status: string; mode: string; provider: string; started_at: string | null; stop_reason: string | null; steering: string | null; continuations: number; session_start_iteration: number; session_start_wall_seconds: number; manual_interventions: number; failure_count: number; recovery_count: number; consecutive_small_gains: number; limits: RunLimits };
@@ -58,6 +79,32 @@ function statusTone(status: string) {
 
 function signed(value: number, digits = 6) { return `${value >= 0 ? '+' : ''}${value.toFixed(digits)}`; }
 
+function candidateProbability(artifact: LiveArtifact, candidate: LiveCandidate) {
+  let logit = artifact.model.intercept;
+  candidate.categorical_indices.forEach((index) => { logit += artifact.model.candidate_weights[String(index)] ?? 0; });
+  candidate.numeric_values.forEach((value, index) => {
+    logit += ((value - artifact.model.numeric_means[index]) / artifact.model.numeric_scales[index]) * artifact.model.numeric_weights[index];
+  });
+  return 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, logit))));
+}
+
+function browserPrediction(artifact: LiveArtifact, userId: string, limit = 10): LivePrediction {
+  const ranking = artifact.candidates
+    .filter((candidate) => candidate.user_id === userId)
+    .map((candidate) => ({ ...candidate, score: candidateProbability(artifact, candidate) }))
+    .sort((left, right) => right.score - left.score || left.exposure_index - right.exposure_index)
+    .slice(0, limit)
+    .map((candidate, index) => ({
+      rank: index + 1, user_id: candidate.user_id, video_id: candidate.video_id, author_id: candidate.author_id,
+      video_type: candidate.video_type, tab: candidate.tab, hour: candidate.hour,
+      duration_seconds: candidate.duration_seconds, score: candidate.score,
+    }));
+  return {
+    prediction_id: new Date().toISOString(), user_id: userId, target_date: artifact.target.date,
+    model: artifact.model.name, execution: 'browser', ranking, evaluation: artifact.evaluation, integrity: artifact.integrity,
+  };
+}
+
 export default function Home() {
   const [view, setView] = useState<'replay' | 'live'>('replay');
   const [state, setState] = useState<State | null>(null);
@@ -76,6 +123,11 @@ export default function Home() {
   const [convergencePatience, setConvergencePatience] = useState(3);
   const [bootstrapVerified, setBootstrapVerified] = useState(true);
   const [instruction, setInstruction] = useState('');
+  const [liveArtifact, setLiveArtifact] = useState<LiveArtifact | null>(null);
+  const [predictionUser, setPredictionUser] = useState('');
+  const [prediction, setPrediction] = useState<LivePrediction | null>(null);
+  const [predictionLoading, setPredictionLoading] = useState(false);
+  const [predictionError, setPredictionError] = useState('');
 
   const refresh = useCallback(async () => {
     try {
@@ -93,6 +145,23 @@ export default function Home() {
     const timer = window.setInterval(refresh, 900);
     return () => { window.clearTimeout(kickoff); window.clearInterval(timer); };
   }, [refresh]);
+
+  useEffect(() => {
+    if (view !== 'live' || liveArtifact) return;
+    let cancelled = false;
+    fetch('/live-predictor.json', { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error('Live predictor artifact is unavailable');
+        return response.json() as Promise<LiveArtifact>;
+      })
+      .then((artifact) => {
+        if (cancelled) return;
+        setLiveArtifact(artifact);
+        setPredictionUser(artifact.users[0]?.user_id ?? '');
+      })
+      .catch((caught) => { if (!cancelled) setPredictionError(caught instanceof Error ? caught.message : 'Could not load live predictor'); });
+    return () => { cancelled = true; };
+  }, [view, liveArtifact]);
 
   useEffect(() => {
     if (!showJudgeWalkthrough) return;
@@ -154,6 +223,25 @@ export default function Home() {
   async function steer(event: FormEvent) {
     event.preventDefault();
     if (await action('/api/steer', { instruction })) { setInstruction(''); setShowSteer(false); }
+  }
+
+  async function runLivePrediction() {
+    if (!predictionUser || !liveArtifact) return;
+    setPredictionLoading(true);
+    setPredictionError('');
+    try {
+      const response = await fetch(`${API}/api/predict/slate`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: predictionUser, limit: 10 }),
+      });
+      if (!response.ok) throw new Error('Local prediction API is unavailable');
+      const payload = await response.json() as LivePrediction & { ok: true };
+      setPrediction({ ...payload, execution: 'server' });
+    } catch {
+      setPrediction(browserPrediction(liveArtifact, predictionUser, 10));
+    } finally {
+      setPredictionLoading(false);
+    }
   }
 
   const status = state?.campaign.status ?? 'offline';
@@ -230,6 +318,42 @@ export default function Home() {
         {!connected && <div className="banner warn-banner"><b>Backend is offline.</b> Start the local engine to enable real controls and live iteration updates.</div>}
         {error && <div className="banner error-banner" role="alert"><b>Couldn’t complete that action.</b> {error}<button onClick={() => setError('')} aria-label="Dismiss">×</button></div>}
         {connected && synthetic && <div className="banner warn-banner"><b>Synthetic smoke-test evidence.</b> These scores—including the 0.6250 demo ceiling—are simulated to test the workflow, not trained KuaiRand validation results.</div>}
+
+        <section className="panel live-predictor" id="live-prediction" aria-labelledby="live-prediction-title">
+          <div className="panel-heading">
+            <div><p className="eyebrow">Deployable model · target outcomes sealed</p><h2 id="live-prediction-title">Rank an unseen April 29 slate</h2></div>
+            <span className="predictor-badge"><i /> Scores calculated on click</span>
+          </div>
+          <div className="predictor-layout">
+            <div className="predictor-copy">
+              <p>This is a compact logistic deployment surrogate—not the un-serialized 0.72342 research ensemble. It uses April 8–21 history, learns on April 22–28, and receives no April 29 engagement outcomes.</p>
+              <div className="predictor-controls">
+                <label>User slate
+                  <select value={predictionUser} onChange={(event) => { setPredictionUser(event.target.value); setPrediction(null); }} disabled={!liveArtifact}>
+                    {(liveArtifact?.users ?? []).map((user) => <option value={user.user_id} key={user.user_id}>User {user.user_id} · {user.candidate_count} candidates</option>)}
+                  </select>
+                </label>
+                <button className="button judge-primary" type="button" onClick={runLivePrediction} disabled={!liveArtifact || predictionLoading}>{predictionLoading ? 'Scoring…' : 'Run live prediction →'}</button>
+              </div>
+              {predictionError && <p className="predictor-error" role="alert">{predictionError}</p>}
+              <div className="predictor-integrity">
+                <span><b>✓</b> April 29 labels excluded</span><span><b>✓</b> No saved prediction scores</span><span><b>✓</b> Browser fallback works without API</span>
+              </div>
+            </div>
+            <aside className="predictor-evaluation">
+              <span>Honest Apr 28 proxy</span>
+              <strong>{liveArtifact ? liveArtifact.evaluation.primary.toFixed(6) : 'Loading…'}</strong>
+              <div><b>GAUC {liveArtifact ? liveArtifact.evaluation.gauc.toFixed(4) : '—'}</b><b>nDCG@5 {liveArtifact ? liveArtifact.evaluation.ndcg5.toFixed(4) : '—'}</b></div>
+              <small>One-day surrogate holdout. This is not the week-level 0.723415 champion score.</small>
+            </aside>
+          </div>
+          {prediction && <div className="prediction-result" aria-live="polite">
+            <div className="prediction-result-heading"><div><span>Prediction {prediction.prediction_id.slice(11, 19)} UTC</span><b>User {prediction.user_id} · top {prediction.ranking.length}</b></div><span className="execution-chip">{prediction.execution === 'server' ? 'Local API inference' : 'Browser inference'}</span></div>
+            <div className="prediction-table-wrap"><table><thead><tr><th>Rank</th><th>Video</th><th>Author</th><th>Context</th><th>Duration</th><th>Long-view score</th></tr></thead><tbody>
+              {prediction.ranking.map((candidate) => <tr key={`${candidate.rank}-${candidate.video_id}`}><td className="rank-cell">#{candidate.rank}</td><td className="mono">{candidate.video_id}</td><td className="mono">{candidate.author_id}</td><td>{candidate.video_type} · tab {candidate.tab} · {String(candidate.hour).padStart(2, '0')}:00</td><td>{candidate.duration_seconds.toFixed(1)}s</td><td><div className="score-bar"><i style={{ width: `${Math.max(2, candidate.score * 100)}%` }} /><b>{candidate.score.toFixed(4)}</b></div></td></tr>)}
+            </tbody></table></div>
+          </div>}
+        </section>
 
         <div className="metrics-grid">
           <article className="metric-card featured"><span>{synthetic ? 'Demo primary · simulated' : 'Champion primary · verified'}</span><strong>{score(champion?.primary)}</strong><small>{state ? `${state.metrics.delta >= 0 ? '+' : ''}${state.metrics.delta.toFixed(4)} over ${synthetic ? 'demo' : 'reproduced'} baseline` : 'Waiting for local engine'}</small></article>
