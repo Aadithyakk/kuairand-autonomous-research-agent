@@ -61,7 +61,7 @@ type State = {
   events: EventItem[];
 };
 
-function score(value?: number | null) { return typeof value === 'number' ? value.toFixed(4) : '—'; }
+function score(value?: number | null, digits = 4) { return typeof value === 'number' ? value.toFixed(digits) : '—'; }
 function elapsed(seconds: number) {
   const whole = Math.max(0, Math.floor(seconds));
   return `${String(Math.floor(whole / 3600)).padStart(2, '0')}:${String(Math.floor((whole % 3600) / 60)).padStart(2, '0')}:${String(whole % 60).padStart(2, '0')}`;
@@ -78,6 +78,31 @@ function statusTone(status: string) {
 }
 
 function signed(value: number, digits = 6) { return `${value >= 0 ? '+' : ''}${value.toFixed(digits)}`; }
+
+// Provider failures arrive as "<summary>: {json}". Show the summary and the human-readable
+// message; keep the untouched payload available behind a disclosure.
+function describeFailure(text?: string | null) {
+  if (!text) return null;
+  const raw = text.trim();
+  const brace = raw.indexOf('{');
+  if (brace < 0) return { headline: raw, detail: raw, raw, structured: false };
+  try {
+    const parsed = JSON.parse(raw.slice(brace)) as { error?: { message?: string }; message?: string };
+    const message = parsed.error?.message ?? parsed.message;
+    if (typeof message !== 'string') throw new Error('no message');
+    return { headline: raw.slice(0, brace).replace(/[\s:]+$/, '') || 'Run failed', detail: message, raw, structured: true };
+  } catch {
+    // Payload may be truncated by the event log; recover the message field if it survived.
+    const salvaged = /"message"\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(raw);
+    if (salvaged) {
+      try {
+        return { headline: raw.slice(0, brace).replace(/[\s:]+$/, '') || 'Run failed', detail: JSON.parse(`"${salvaged[1]}"`) as string, raw, structured: true };
+      } catch { /* fall through to the raw text */ }
+    }
+    // Not a provider JSON payload — leave the text exactly as the engine wrote it.
+    return { headline: raw, detail: raw, raw, structured: false };
+  }
+}
 
 function candidateProbability(artifact: LiveArtifact, candidate: LiveCandidate) {
   let logit = artifact.model.intercept;
@@ -263,6 +288,7 @@ export default function Home() {
   const canContinue = Boolean(!active && state?.campaign.id && status !== 'idle' && officialIterationsUsed < 50 && (state?.usage.wall_seconds ?? 0) < 21600);
   const champion = state?.metrics.champion;
   const current = state?.current;
+  const failure = describeFailure(current?.error);
   const completedCount = officialIterationsUsed;
   const runLimits = state?.campaign.limits ?? { max_iterations: state?.config.max_iterations ?? 50, max_hours: state?.config.max_hours ?? 6, convergence_epsilon: state?.config.convergence_epsilon ?? 0.002, convergence_patience: state?.config.convergence_patience ?? 3, bootstrap_verified: true };
   const remainingSeconds = Math.max(0, 21600 - (state?.usage.wall_seconds ?? 0));
@@ -372,9 +398,9 @@ export default function Home() {
         </section>
 
         <div className="metrics-grid">
-          <article className="metric-card featured"><span>{synthetic ? 'Demo primary · simulated' : 'Champion primary · verified'}</span><strong>{score(champion?.primary)}</strong><small>{state ? `${state.metrics.delta >= 0 ? '+' : ''}${state.metrics.delta.toFixed(4)} over ${synthetic ? 'demo' : 'reproduced'} baseline` : 'Waiting for local engine'}</small></article>
-          <article className="metric-card"><span>GAUC</span><strong>{score(champion?.gauc)}</strong><small>{synthetic ? 'simulated smoke test' : 'validation-best'}</small></article>
-          <article className="metric-card"><span>nDCG@5</span><strong>{score(champion?.ndcg5)}</strong><small>{synthetic ? 'simulated smoke test' : 'validation-best'}</small></article>
+          <article className="metric-card featured"><span>{synthetic ? 'Demo primary · simulated' : 'Champion primary · verified'}</span><strong>{score(champion?.primary, 6)}</strong><small>{state ? `${state.metrics.delta >= 0 ? '+' : ''}${state.metrics.delta.toFixed(6)} over ${synthetic ? 'demo' : 'reproduced'} baseline` : 'Waiting for local engine'}</small></article>
+          <article className="metric-card"><span>GAUC</span><strong>{score(champion?.gauc, 6)}</strong><small>{synthetic ? 'simulated smoke test' : 'validation-best'}</small></article>
+          <article className="metric-card"><span>nDCG@5</span><strong>{score(champion?.ndcg5, 6)}</strong><small>{synthetic ? 'simulated smoke test' : 'validation-best'}</small></article>
           <article className="metric-card"><span>Compute used</span><strong>{computeHours(state?.usage.cpu_hours ?? 0)} CPU</strong><small>{computeHours(state?.usage.gpu_hours ?? 0)} GPU · {memory(state?.usage.peak_rss_mb)} peak RAM</small></article>
           <article className="metric-card"><span>Official research budget</span><strong>{String(officialIterationsUsed).padStart(2, '0')} / 50</strong><small>{elapsed(state?.usage.wall_seconds ?? 0)} / 06:00:00 · {elapsed(remainingSeconds)} left</small></article>
         </div>
@@ -395,7 +421,11 @@ export default function Home() {
             </div>
             <div className={`activity-card ${current?.status === 'failed' ? 'failed' : ''}`}>
               <div className="activity-icon">{current?.status === 'failed' ? '!' : '⌘'}</div>
-              <div><strong>{current ? `${stageLabels[current.stage] ?? current.stage} ${current.status === 'failed' ? 'failed' : 'stage'}` : 'Engine standing by'}</strong><p>{current?.error ?? current?.activity ?? 'Stage transitions and evidence will appear here in real time.'}</p></div>
+              <div><strong>{current ? `${stageLabels[current.stage] ?? current.stage} ${current.status === 'failed' ? 'failed' : 'stage'}` : 'Engine standing by'}</strong>
+                {failure
+                  ? <><p>{failure.headline}</p>{failure.structured && <><p className="failure-message">{failure.detail}</p><details className="failure-raw"><summary>Raw provider payload</summary><pre>{failure.raw}</pre></details></>}</>
+                  : <p>{current?.activity ?? 'Stage transitions and evidence will appear here in real time.'}</p>}
+              </div>
               {status === 'running' && <span className="pulse-dots">•••</span>}
             </div>
             <div className="run-meta">
@@ -408,7 +438,7 @@ export default function Home() {
           <aside className="panel event-panel" id="trace">
             <div className="panel-heading"><div><p className="eyebrow">Append-only evidence</p><h2>Live trace</h2></div><span className="evidence-dot" title="Persisted locally" /></div>
             <ol className="timeline">
-              {events.map((item, index) => <li className={index === 0 ? 'current' : ''} key={item.id}><time>{timeLabel(item.time)}</time><div><b>{item.title}</b><p>{item.detail}</p></div></li>)}
+              {events.map((item, index) => <li className={index === 0 ? 'current' : ''} key={item.id}><time>{timeLabel(item.time)}</time><div><b>{item.title}</b><p title={item.detail}>{describeFailure(item.detail)?.detail || item.detail}</p></div></li>)}
             </ol>
           </aside>
         </div>
@@ -418,7 +448,7 @@ export default function Home() {
           <div className="table-wrap">
             <table>
               <thead><tr><th>Iteration</th><th>Experiment</th><th>Status</th><th>Fast screen</th><th>Confirmed primary</th><th>Δ baseline</th><th>Train</th><th>Compute</th><th>Peak RAM</th></tr></thead>
-              <tbody>{[...(state?.iterations ?? [])].reverse().map((item) => <tr key={item.number}><td className="mono">#{String(item.number).padStart(3, '0')}</td><td><b>{item.title}</b>{item.error && <small className="row-note">{item.error}</small>}</td><td><span className={`status ${statusTone(item.status)}`}>{item.status}</span></td><td className="mono">{score(item.screen_metrics?.primary)}</td><td className="mono">{score(item.metrics?.primary)}</td><td className={`mono ${(item.delta ?? 0) > 0 ? 'positive' : ''}`}>{item.delta == null ? '—' : `${item.delta >= 0 ? '+' : ''}${item.delta.toFixed(4)}`}</td><td className="mono">{item.resource_usage ? elapsed(item.resource_usage.train_seconds) : elapsed(item.duration_seconds)}</td><td className="mono resource-cell">{item.resource_usage ? `${computeHours(item.resource_usage.cpu_hours)} CPU · ${computeHours(item.resource_usage.gpu_hours)} GPU` : '—'}</td><td className="mono">{memory(item.resource_usage?.peak_rss_mb)}</td></tr>)}</tbody>
+              <tbody>{[...(state?.iterations ?? [])].reverse().map((item) => <tr key={item.number}><td className="mono">#{String(item.number).padStart(3, '0')}</td><td><b>{item.title}</b>{item.error && <small className="row-note" title={item.error}>{describeFailure(item.error)?.detail || item.error}</small>}</td><td><span className={`status ${statusTone(item.status)}`}>{item.status}</span></td><td className="mono">{score(item.screen_metrics?.primary, 6)}</td><td className="mono">{score(item.metrics?.primary, 6)}</td><td className={`mono ${(item.delta ?? 0) > 0 ? 'positive' : ''}`}>{item.delta == null ? '—' : `${item.delta >= 0 ? '+' : ''}${item.delta.toFixed(6)}`}</td><td className="mono">{item.resource_usage ? elapsed(item.resource_usage.train_seconds) : elapsed(item.duration_seconds)}</td><td className="mono resource-cell">{item.resource_usage ? `${computeHours(item.resource_usage.cpu_hours)} CPU · ${computeHours(item.resource_usage.gpu_hours)} GPU` : '—'}</td><td className="mono">{memory(item.resource_usage?.peak_rss_mb)}</td></tr>)}</tbody>
             </table>
           </div>
         </section>

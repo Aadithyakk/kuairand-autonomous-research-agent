@@ -19,7 +19,7 @@ export function stepAt(seconds: number) {
 }
 export function advanceTime(seconds: number, delta: number, speed: number) { return clampTime(seconds + (Number.isFinite(delta) ? Math.max(0, delta) : 0) * ([0.5, 1, 2].includes(speed) ? speed : 1)); }
 export function clock(seconds: number) { const s = Math.floor(clampTime(seconds)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
-export function signed(value: number) { return `${value >= 0 ? '+' : '−'}${Math.abs(value).toFixed(9)}`; }
+export function signed(value: number, digits = 9) { return `${value >= 0 ? '+' : '−'}${Math.abs(value).toFixed(digits)}`; }
 
 export type ReplayState = { time: number; playing: boolean; speed: number; mode: 'story' | 'audit' };
 export const initialReplayState: ReplayState = { time: 0, playing: false, speed: 1, mode: 'story' };

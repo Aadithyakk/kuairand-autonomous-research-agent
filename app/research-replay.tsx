@@ -196,7 +196,7 @@ export default function ResearchReplay({ suspended = false }: { suspended?: bool
       <article className="metric-card featured"><span>Recorded champion · primary</span><strong>{result.champion_primary.toFixed(6)}</strong><small>Public validation · not hidden test</small></article>
       <article className="metric-card"><span>GAUC</span><strong>{result.gauc.toFixed(6)}</strong><small>User-level discrimination</small></article>
       <article className="metric-card"><span>nDCG@5</span><strong>{result.ndcg5.toFixed(6)}</strong><small>Top-five ranking quality</small></article>
-      <article className="metric-card"><span>Validation delta</span><strong>{signed(result.absolute_gain)}</strong><small>+{result.relative_gain_percent.toFixed(2)}% relative vs. {result.baseline_primary.toFixed(6)}</small></article>
+      <article className="metric-card"><span>Validation delta</span><strong>{signed(result.absolute_gain, 6)}</strong><small>+{result.relative_gain_percent.toFixed(2)}% relative vs. {result.baseline_primary.toFixed(6)}</small></article>
       <article className="metric-card"><span>Recorded research wave</span><strong>{wave.experiments.length} methods</strong><small>{wave.totals.screen_survivors} screen survivor · {wave.totals.champion_promotions} promotions</small></article>
     </div>
     <section className="brief-alignment" aria-label="Track 2 protocol alignment">
