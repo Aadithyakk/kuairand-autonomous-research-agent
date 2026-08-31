@@ -58,6 +58,13 @@ gated residual search, exact verifier, and run instructions are documented in
 37-stage lineage and final score hash are in
 [`results/prequential-online-teacher/manifest.json`](results/prequential-online-teacher/manifest.json).
 
+The stronger reproduction package adds a single orchestrator, a machine-readable
+37-stage parameter lock, an exact Python dependency lock, SHA-256 checksums for
+the dataset and every published prerequisite, future-label mutation tests, and
+a separately reserved 29 April--8 May final period. Start with
+[`docs/PREQUENTIAL_REPRODUCIBILITY.md`](docs/PREQUENTIAL_REPRODUCIBILITY.md) or
+run `python scripts/reproduce_prequential_teacher.py doctor`.
+
 ## Champion-mounted autonomous training
 
 The 0.612858 validation champion is no longer metrics-only bootstrap evidence. Real campaigns expose a trusted `champion_residual_blend` experiment family to the LLM. Each such iteration:

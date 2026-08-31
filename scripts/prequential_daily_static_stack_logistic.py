@@ -23,7 +23,10 @@ HERE = Path(os.environ.get(
 )).resolve()
 HERE.mkdir(parents=True, exist_ok=True)
 DATA = ROOT / "external" / "KuaiRand-Pure" / "data"
-RUNTIME = ROOT / "runtime"
+RUNTIME = Path(os.environ.get(
+    "KUAI_STATIC_MODEL_ROOT",
+    str(ROOT / "runtime"),
+)).resolve()
 BASE = HERE / "cross_panel_on_online_logistic_pass3_scores.npz"
 OUTPUT = HERE / "prequential_daily_static_stack_logistic_scores.npz"
 REPORT = HERE / "prequential_daily_static_stack_logistic_results.json"

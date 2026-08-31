@@ -123,3 +123,13 @@ python scripts/verify_prequential_teacher.py
 The accepted 37-stage lineage, final hash, routing weights, and evaluation
 caveat are recorded in
 `results/prequential-online-teacher/manifest.json`.
+
+## Locked end-to-end reproduction
+
+The original commands above remain useful for individual experiments. For the
+locked 37-stage replay, exact environment and input checks, release download,
+future-label causality tests, and reserved chronological holdout protocol, use:
+
+```bash
+python scripts/reproduce_prequential_teacher.py reproduce --download --strict-environment
+```

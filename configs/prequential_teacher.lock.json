@@ -1,0 +1,1883 @@
+{
+  "schema_version": 1,
+  "lock_id": "prequential-teacher-0.723415375-v1",
+  "result_type": "validation-selected completion-safe online/prequential rank ensemble",
+  "environment": {
+    "python": "3.13.6",
+    "implementation": "CPython",
+    "system": "Darwin",
+    "machine": "arm64",
+    "macos": "26.6.1",
+    "package_lock": "requirements-prequential.lock.txt",
+    "determinism_note": "SGD sources are deterministic at the locked seed. CatBoost is seeded, but exact bytes can vary with CPU, OS, and thread scheduling; retraining uses numerical tolerance while artifact replay uses SHA-256."
+  },
+  "dataset": {
+    "source_url": "https://www.kaggle.com/datasets/aadithyakumar/kuairand/",
+    "redistributed": false,
+    "standard_log": "external/KuaiRand-Pure/data/log_standard_4_22_to_5_08_pure.csv",
+    "checksum_manifest": "results/prequential-online-teacher/checksums.json"
+  },
+  "periods": {
+    "history": {
+      "start_date": 20220408,
+      "end_date": 20220421,
+      "purpose": "pre-period history and frozen-model training"
+    },
+    "development": {
+      "start_date": 20220422,
+      "end_date": 20220428,
+      "purpose": "public chronological prequential development; repeatedly selected on and therefore not untouched"
+    },
+    "final_holdout": {
+      "start_date": 20220429,
+      "end_date": 20220508,
+      "purpose": "separate chronological final evaluation",
+      "status": "reserved_not_evaluated",
+      "outcomes_accessed": false
+    }
+  },
+  "holdout_protocol": {
+    "mode": "frozen static scorer or externally sealed streaming evaluator",
+    "safe_input_columns": [
+      "user_id",
+      "video_id",
+      "date",
+      "hourmin",
+      "time_ms",
+      "duration_ms",
+      "is_rand",
+      "tab"
+    ],
+    "forbidden_columns": [
+      "is_click",
+      "is_like",
+      "is_follow",
+      "is_comment",
+      "is_forward",
+      "is_hate",
+      "long_view",
+      "play_time_ms",
+      "profile_stay_time",
+      "comment_stay_time",
+      "is_profile_enter"
+    ],
+    "rule": "Local code may export only safe_input_columns. No local metric is produced for the reserved period."
+  },
+  "causality": {
+    "outcome_available_at": "time_ms + max(play_time_ms, 0)",
+    "training_comparison": "outcome_available_at < block_start",
+    "same_timestamp_feedback_visible": false,
+    "test": "tests/test_prequential_causality.py"
+  },
+  "global_rank_semantics": {
+    "normalization_scope": "within user",
+    "transforms": {
+      "raw": "source score unchanged",
+      "z": "(score - within-user mean) / max(within-user std, 1e-6)",
+      "rank": "ascending within-user ordinal rank with stable row-order tie breaking"
+    },
+    "promotion_search": "source transform x deterministic context gate x scalar weight"
+  },
+  "feature_builders": [
+    "scripts/build_causal_streaming_random_features.py",
+    "scripts/build_causal_random_watch_features.py",
+    "scripts/build_causal_random_user_state.py",
+    "scripts/build_causal_random_action_state.py",
+    "scripts/build_causal_random_transition_features.py",
+    "scripts/build_causal_decayed_random_features.py",
+    "scripts/build_prequential_standard_feedback_features.py",
+    "scripts/build_prequential_immediate_feedback_features.py"
+  ],
+  "feature_caches": [
+    "work/prequential_standard_feedback_features.npz",
+    "work/causal_streaming_random_features.npz",
+    "work/causal_random_watch_features.npz",
+    "work/causal_random_user_state_features.npz",
+    "work/causal_decayed_random_features.npz",
+    "work/causal_random_action_state_features.npz",
+    "work/causal_random_transition_features.npz",
+    "work/prequential_immediate_feedback_features.npz"
+  ],
+  "static_models": [
+    "runtime/final-sessionx-consensus.npz",
+    "runtime/stacked-reranker-scores-history-rank_xendcg-cutoff20220413-rolling0-components0-session1-sessionx1-sessionw1.npz",
+    "runtime/history-catboost-classifier-probe-i250-seq40-plain-s151.npz",
+    "runtime/history-deepfm-k16-h128-lr0.001-session-fullmeta-watchratio0.4-s293.npz",
+    "runtime/history-deepfm-k16-h128-lr0.001-session-fullmeta-sessionmargin0.05m1.0f0.1-s293.npz",
+    "runtime/history-catboost-classifier-refit-i500-seq40-session-fullmeta-s257.npz",
+    "runtime/batch-slate-meta-catboost-s751.npz",
+    "runtime/history-deepfm-k16-h128-lr0.001-session-fullmeta-s293.npz",
+    "runtime/history-deepfm-k16-h128-lr0.001-session-fullmeta-aux0.15-s337.npz",
+    "runtime/multitask-a0.2-k16-h128-lr0.001-s71.npz",
+    "runtime/din-h20-k16-hidden128-lr0.001-s0.npz",
+    "runtime/cross-session-gru-e8-h64-head128-s431.npz",
+    "runtime/history-catboost-ranker-probe-i220-seq40-session-s157.npz",
+    "runtime/lgbm-lambdarank-r500-l31-lr0.03-leaf100-s0.npz",
+    "runtime/lightgcn-k32-l2-lr0.01-s0.npz",
+    "runtime/ffm-base-star-k16-lr0.001-s401.npz",
+    "runtime/ordinal-watch-a0.3-k16-h128-lr0.001-s121.npz",
+    "runtime/threshold-deepfm-a0.3-k16-h128-lr0.001-s131.npz",
+    "runtime/stacked-catboost-classifier-scores-extended-cutoff20220413-session1-sessionx1-sessionw0-multir0-trend0-affinity0-ctx0.npz",
+    "runtime/stacked-linear-scores-history-cutoff20220413-rolling0-components0-session1-sessionx1-sessionw0-multir0-trend0-affinity0-ctx0-transition1.npz"
+  ],
+  "expected_final_metrics": {
+    "primary": 0.7234153747558594,
+    "gauc": 0.8215715289115906,
+    "ndcg5": 0.6252591609954834
+  },
+  "baseline_primary": 0.6014695167541504,
+  "release": {
+    "tag": "prequential-teacher-v1",
+    "asset_name": "prequential-teacher-artifacts-v1.tar.gz",
+    "asset_url": "https://github.com/Aadithyakk/kuairand-autonomous-research-agent/releases/download/prequential-teacher-v1/prequential-teacher-artifacts-v1.tar.gz",
+    "asset_sha256": "20a86013476c696968967aa6c9672a33027b37e4cfb516edb56fcfa3eb3f07ca",
+    "dataset_included": false
+  },
+  "stages": [
+    {
+      "id": 1,
+      "name": "strict-1h-on-current",
+      "source": "alpha_0.003_z",
+      "source_key": "alpha_0.003",
+      "transform": "z",
+      "gate": "date_through_apr24",
+      "weight": 1.5,
+      "expected_metrics": {
+        "primary": 0.6914309859275818,
+        "gauc": 0.7835800647735596,
+        "ndcg5": 0.599281907081604
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_1h_pairwise_immediate_scores.npz",
+      "output_artifact": "work/strict_1h_on_current_scores.npz",
+      "report_artifact": "work/strict_1h_on_current_results.json",
+      "generator": {
+        "kind": "pairwise_logistic",
+        "script": "scripts/prequential_daily_pairwise_logistic.py",
+        "report_artifact": "work/strict_1h_pairwise_immediate_results.json",
+        "fixed_parameters": {
+          "loss": "log_loss",
+          "penalty": "l2",
+          "fit_intercept": false,
+          "max_iter": 100,
+          "tol": 0.0001,
+          "average": true,
+          "random_state": 2026,
+          "standard_scaler_with_mean": false,
+          "negatives_per_positive": 2,
+          "pair_sampling": "up to 2 champion-nearest negatives per positive within user"
+        },
+        "env": {
+          "KUAI_PAIRWISE_ALPHAS": "0.003",
+          "KUAI_PAIRWISE_BLOCK_HOURS": 1,
+          "KUAI_PAIRWISE_HISTORY_DAYS": 0,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1,
+          "KUAI_PAIRWISE_NEGATIVES": 2,
+          "KUAI_PAIRWISE_WEIGHT_MODE": "none"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "name": "strict-12h-on-1h",
+      "source": "alpha_0.003_rank",
+      "source_key": "alpha_0.003",
+      "transform": "rank",
+      "gate": "two_active_days",
+      "weight": 1.0,
+      "expected_metrics": {
+        "primary": 0.6918697357177734,
+        "gauc": 0.7840580344200134,
+        "ndcg5": 0.5996814966201782
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_12h_pairwise_immediate_scores.npz",
+      "output_artifact": "work/strict_12h_on_1h_scores.npz",
+      "report_artifact": "work/strict_12h_on_1h_results.json",
+      "generator": {
+        "kind": "pairwise_logistic",
+        "script": "scripts/prequential_daily_pairwise_logistic.py",
+        "report_artifact": "work/strict_12h_pairwise_immediate_results.json",
+        "fixed_parameters": {
+          "loss": "log_loss",
+          "penalty": "l2",
+          "fit_intercept": false,
+          "max_iter": 100,
+          "tol": 0.0001,
+          "average": true,
+          "random_state": 2026,
+          "standard_scaler_with_mean": false,
+          "negatives_per_positive": 2,
+          "pair_sampling": "up to 2 champion-nearest negatives per positive within user"
+        },
+        "env": {
+          "KUAI_PAIRWISE_ALPHAS": "0.003",
+          "KUAI_PAIRWISE_BLOCK_HOURS": 12,
+          "KUAI_PAIRWISE_HISTORY_DAYS": 0,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1,
+          "KUAI_PAIRWISE_NEGATIVES": 2,
+          "KUAI_PAIRWISE_WEIGHT_MODE": "none"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "name": "strict-4h-on-12h1h",
+      "source": "alpha_0.003_z",
+      "source_key": "alpha_0.003",
+      "transform": "z",
+      "gate": "date_from_apr25",
+      "weight": -0.5,
+      "expected_metrics": {
+        "primary": 0.6920742392539978,
+        "gauc": 0.7843688130378723,
+        "ndcg5": 0.5997796654701233
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_4h_pairwise_immediate_scores.npz",
+      "output_artifact": "work/strict_4h_on_12h1h_scores.npz",
+      "report_artifact": "work/strict_4h_on_12h1h_results.json",
+      "generator": {
+        "kind": "pairwise_logistic",
+        "script": "scripts/prequential_daily_pairwise_logistic.py",
+        "report_artifact": "work/strict_4h_pairwise_immediate_results.json",
+        "fixed_parameters": {
+          "loss": "log_loss",
+          "penalty": "l2",
+          "fit_intercept": false,
+          "max_iter": 100,
+          "tol": 0.0001,
+          "average": true,
+          "random_state": 2026,
+          "standard_scaler_with_mean": false,
+          "negatives_per_positive": 2,
+          "pair_sampling": "up to 2 champion-nearest negatives per positive within user"
+        },
+        "env": {
+          "KUAI_PAIRWISE_ALPHAS": "0.003",
+          "KUAI_PAIRWISE_BLOCK_HOURS": 4,
+          "KUAI_PAIRWISE_HISTORY_DAYS": 0,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1,
+          "KUAI_PAIRWISE_NEGATIVES": 2,
+          "KUAI_PAIRWISE_WEIGHT_MODE": "none"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "name": "strict-8h-on-current",
+      "source": "alpha_0.003_raw",
+      "source_key": "alpha_0.003",
+      "transform": "raw",
+      "gate": "date_from_apr24",
+      "weight": 0.15,
+      "expected_metrics": {
+        "primary": 0.6925745010375977,
+        "gauc": 0.7851622104644775,
+        "ndcg5": 0.5999868512153625
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_8h_pairwise_immediate_scores.npz",
+      "output_artifact": "work/strict_8h_on_current_scores.npz",
+      "report_artifact": "work/strict_8h_on_current_results.json",
+      "generator": {
+        "kind": "pairwise_logistic",
+        "script": "scripts/prequential_daily_pairwise_logistic.py",
+        "report_artifact": "work/strict_8h_pairwise_immediate_results.json",
+        "fixed_parameters": {
+          "loss": "log_loss",
+          "penalty": "l2",
+          "fit_intercept": false,
+          "max_iter": 100,
+          "tol": 0.0001,
+          "average": true,
+          "random_state": 2026,
+          "standard_scaler_with_mean": false,
+          "negatives_per_positive": 2,
+          "pair_sampling": "up to 2 champion-nearest negatives per positive within user"
+        },
+        "env": {
+          "KUAI_PAIRWISE_ALPHAS": "0.003",
+          "KUAI_PAIRWISE_BLOCK_HOURS": 8,
+          "KUAI_PAIRWISE_HISTORY_DAYS": 0,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1,
+          "KUAI_PAIRWISE_NEGATIVES": 2,
+          "KUAI_PAIRWISE_WEIGHT_MODE": "none"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "name": "strict-daily-catboost-ranker-on-current",
+      "source": "ranker_z",
+      "source_key": "ranker",
+      "transform": "z",
+      "gate": "all",
+      "weight": 4.0,
+      "expected_metrics": {
+        "primary": 0.6992687582969666,
+        "gauc": 0.7921013832092285,
+        "ndcg5": 0.6064361333847046
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_daily_catboost_ranker_scores.npz",
+      "output_artifact": "work/strict_daily_catboost_ranker_on_current_scores.npz",
+      "report_artifact": "work/strict_daily_catboost_ranker_on_current_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_daily_catboost_ranker_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "YetiRankPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "YetiRankPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 24,
+          "KUAI_CATBOOST_ITERATIONS": 100,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 0,
+          "KUAI_PAIRWISE_STATIC_MODELS": 0
+        }
+      }
+    },
+    {
+      "id": 6,
+      "name": "strict-daily-catboost-ranker-full-fine",
+      "source": "ranker_z",
+      "source_key": "ranker",
+      "transform": "z",
+      "gate": "date_through_apr24",
+      "weight": 1.7,
+      "expected_metrics": {
+        "primary": 0.7004562616348267,
+        "gauc": 0.7928053736686707,
+        "ndcg5": 0.6081071496009827
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_daily_catboost_ranker_full_scores.npz",
+      "output_artifact": "work/strict_daily_catboost_ranker_full_fine_scores.npz",
+      "report_artifact": "work/strict_daily_catboost_ranker_full_fine_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_daily_catboost_ranker_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "YetiRankPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "YetiRankPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 24,
+          "KUAI_CATBOOST_ITERATIONS": 120,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 7,
+      "name": "strict-12h-post-catboost",
+      "source": "alpha_0.003_rank",
+      "source_key": "alpha_0.003",
+      "transform": "rank",
+      "gate": "high_score_margin",
+      "weight": -0.75,
+      "expected_metrics": {
+        "primary": 0.7006934881210327,
+        "gauc": 0.7931562662124634,
+        "ndcg5": 0.6082306504249573
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_12h_pairwise_immediate_scores.npz",
+      "output_artifact": "work/strict_12h_post_catboost_scores.npz",
+      "report_artifact": "work/strict_12h_post_catboost_results.json",
+      "generator": {
+        "kind": "pairwise_logistic",
+        "script": "scripts/prequential_daily_pairwise_logistic.py",
+        "report_artifact": "work/strict_12h_pairwise_immediate_results.json",
+        "fixed_parameters": {
+          "loss": "log_loss",
+          "penalty": "l2",
+          "fit_intercept": false,
+          "max_iter": 100,
+          "tol": 0.0001,
+          "average": true,
+          "random_state": 2026,
+          "standard_scaler_with_mean": false,
+          "negatives_per_positive": 2,
+          "pair_sampling": "up to 2 champion-nearest negatives per positive within user"
+        },
+        "env": {
+          "KUAI_PAIRWISE_ALPHAS": "0.003",
+          "KUAI_PAIRWISE_BLOCK_HOURS": 12,
+          "KUAI_PAIRWISE_HISTORY_DAYS": 0,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1,
+          "KUAI_PAIRWISE_NEGATIVES": 2,
+          "KUAI_PAIRWISE_WEIGHT_MODE": "none"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "name": "strict-8h-post-12hcatboost",
+      "source": "alpha_0.003_raw",
+      "source_key": "alpha_0.003",
+      "transform": "raw",
+      "gate": "date_from_apr25",
+      "weight": 0.2,
+      "expected_metrics": {
+        "primary": 0.7012803554534912,
+        "gauc": 0.7941780686378479,
+        "ndcg5": 0.6083827018737793
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_8h_pairwise_immediate_scores.npz",
+      "output_artifact": "work/strict_8h_post_12hcatboost_scores.npz",
+      "report_artifact": "work/strict_8h_post_12hcatboost_results.json",
+      "generator": {
+        "kind": "pairwise_logistic",
+        "script": "scripts/prequential_daily_pairwise_logistic.py",
+        "report_artifact": "work/strict_8h_pairwise_immediate_results.json",
+        "fixed_parameters": {
+          "loss": "log_loss",
+          "penalty": "l2",
+          "fit_intercept": false,
+          "max_iter": 100,
+          "tol": 0.0001,
+          "average": true,
+          "random_state": 2026,
+          "standard_scaler_with_mean": false,
+          "negatives_per_positive": 2,
+          "pair_sampling": "up to 2 champion-nearest negatives per positive within user"
+        },
+        "env": {
+          "KUAI_PAIRWISE_ALPHAS": "0.003",
+          "KUAI_PAIRWISE_BLOCK_HOURS": 8,
+          "KUAI_PAIRWISE_HISTORY_DAYS": 0,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1,
+          "KUAI_PAIRWISE_NEGATIVES": 2,
+          "KUAI_PAIRWISE_WEIGHT_MODE": "none"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "name": "strict-1h-post-best",
+      "source": "alpha_0.003_rank",
+      "source_key": "alpha_0.003",
+      "transform": "rank",
+      "gate": "two_active_days",
+      "weight": 1.0,
+      "expected_metrics": {
+        "primary": 0.7015556693077087,
+        "gauc": 0.794556200504303,
+        "ndcg5": 0.6085551381111145
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_1h_pairwise_immediate_scores.npz",
+      "output_artifact": "work/strict_1h_post_best_scores.npz",
+      "report_artifact": "work/strict_1h_post_best_results.json",
+      "generator": {
+        "kind": "pairwise_logistic",
+        "script": "scripts/prequential_daily_pairwise_logistic.py",
+        "report_artifact": "work/strict_1h_pairwise_immediate_results.json",
+        "fixed_parameters": {
+          "loss": "log_loss",
+          "penalty": "l2",
+          "fit_intercept": false,
+          "max_iter": 100,
+          "tol": 0.0001,
+          "average": true,
+          "random_state": 2026,
+          "standard_scaler_with_mean": false,
+          "negatives_per_positive": 2,
+          "pair_sampling": "up to 2 champion-nearest negatives per positive within user"
+        },
+        "env": {
+          "KUAI_PAIRWISE_ALPHAS": "0.003",
+          "KUAI_PAIRWISE_BLOCK_HOURS": 1,
+          "KUAI_PAIRWISE_HISTORY_DAYS": 0,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1,
+          "KUAI_PAIRWISE_NEGATIVES": 2,
+          "KUAI_PAIRWISE_WEIGHT_MODE": "none"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "name": "strict-12h-catboost-ranker-full-on-best",
+      "source": "ranker_z",
+      "source_key": "ranker",
+      "transform": "z",
+      "gate": "date_through_apr23",
+      "weight": 2.5,
+      "expected_metrics": {
+        "primary": 0.7026044130325317,
+        "gauc": 0.7956951856613159,
+        "ndcg5": 0.6095136404037476
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_12h_catboost_ranker_full_scores.npz",
+      "output_artifact": "work/strict_12h_catboost_ranker_full_on_best_scores.npz",
+      "report_artifact": "work/strict_12h_catboost_ranker_full_on_best_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_12h_catboost_ranker_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "YetiRankPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "YetiRankPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 12,
+          "KUAI_CATBOOST_ITERATIONS": 120,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 11,
+      "name": "strict-6h-catboost-ranker-full-fine",
+      "source": "ranker_z",
+      "source_key": "ranker",
+      "transform": "z",
+      "gate": "not_medium_slate",
+      "weight": 2.4,
+      "expected_metrics": {
+        "primary": 0.7031759023666382,
+        "gauc": 0.7961036562919617,
+        "ndcg5": 0.6102482080459595
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_6h_catboost_ranker_full_scores.npz",
+      "output_artifact": "work/strict_6h_catboost_ranker_full_fine_scores.npz",
+      "report_artifact": "work/strict_6h_catboost_ranker_full_fine_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_6h_catboost_ranker_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "YetiRankPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "YetiRankPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 6,
+          "KUAI_CATBOOST_ITERATIONS": 100,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 12,
+      "name": "strict-daily-d5-catboost-ranker-on-best",
+      "source": "ranker_z",
+      "source_key": "ranker",
+      "transform": "z",
+      "gate": "slate_size_3",
+      "weight": 1.5,
+      "expected_metrics": {
+        "primary": 0.7033512592315674,
+        "gauc": 0.7963349223136902,
+        "ndcg5": 0.6103675365447998
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_daily_d5_catboost_ranker_full_scores.npz",
+      "output_artifact": "work/strict_daily_d5_catboost_ranker_on_best_scores.npz",
+      "report_artifact": "work/strict_daily_d5_catboost_ranker_on_best_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_daily_d5_catboost_ranker_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "YetiRankPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "YetiRankPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 24,
+          "KUAI_CATBOOST_ITERATIONS": 180,
+          "KUAI_CATBOOST_DEPTH": 5,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 13,
+      "name": "strict-3h-catboost-ranker-full-on-best",
+      "source": "ranker_rank",
+      "source_key": "ranker",
+      "transform": "rank",
+      "gate": "two_three_sessions",
+      "weight": -0.1,
+      "expected_metrics": {
+        "primary": 0.7034046053886414,
+        "gauc": 0.7964072227478027,
+        "ndcg5": 0.61040198802948
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_3h_catboost_ranker_full_scores.npz",
+      "output_artifact": "work/strict_3h_catboost_ranker_full_on_best_scores.npz",
+      "report_artifact": "work/strict_3h_catboost_ranker_full_on_best_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_3h_catboost_ranker_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "YetiRankPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "YetiRankPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 3,
+          "KUAI_CATBOOST_ITERATIONS": 80,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 14,
+      "name": "strict-daily-pairlogit-catboost-fine",
+      "source": "ranker_z",
+      "source_key": "ranker",
+      "transform": "z",
+      "gate": "date_through_apr23",
+      "weight": 6.6,
+      "expected_metrics": {
+        "primary": 0.7065601348876953,
+        "gauc": 0.800696074962616,
+        "ndcg5": 0.6124242544174194
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_daily_pairlogit_catboost_full_scores.npz",
+      "output_artifact": "work/strict_daily_pairlogit_catboost_fine_scores.npz",
+      "report_artifact": "work/strict_daily_pairlogit_catboost_fine_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_daily_pairlogit_catboost_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "PairLogitPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "PairLogitPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 24,
+          "KUAI_CATBOOST_ITERATIONS": 160,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 15,
+      "name": "strict-12h-pairlogit-catboost-fine",
+      "source": "ranker_raw",
+      "source_key": "ranker",
+      "transform": "raw",
+      "gate": "date_from_apr25",
+      "weight": 2.6,
+      "expected_metrics": {
+        "primary": 0.709580659866333,
+        "gauc": 0.8040097951889038,
+        "ndcg5": 0.6151515245437622
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_12h_pairlogit_catboost_full_scores.npz",
+      "output_artifact": "work/strict_12h_pairlogit_catboost_fine_scores.npz",
+      "report_artifact": "work/strict_12h_pairlogit_catboost_fine_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_12h_pairlogit_catboost_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "PairLogitPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "PairLogitPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 12,
+          "KUAI_CATBOOST_ITERATIONS": 120,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 16,
+      "name": "strict-6h-pairlogit-catboost-fine",
+      "source": "ranker_z",
+      "source_key": "ranker",
+      "transform": "z",
+      "gate": "date_through_apr24",
+      "weight": 6.6,
+      "expected_metrics": {
+        "primary": 0.7130541801452637,
+        "gauc": 0.808226466178894,
+        "ndcg5": 0.6178818345069885
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_6h_pairlogit_catboost_full_scores.npz",
+      "output_artifact": "work/strict_6h_pairlogit_catboost_fine_scores.npz",
+      "report_artifact": "work/strict_6h_pairlogit_catboost_fine_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_6h_pairlogit_catboost_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "PairLogitPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "PairLogitPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 6,
+          "KUAI_CATBOOST_ITERATIONS": 80,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 17,
+      "name": "strict-12h-pairwise-post-pairlogit-fine",
+      "source": "alpha_0.003_raw",
+      "source_key": "alpha_0.003",
+      "transform": "raw",
+      "gate": "date_from_apr25",
+      "weight": 1.7,
+      "expected_metrics": {
+        "primary": 0.7151913046836853,
+        "gauc": 0.8116776347160339,
+        "ndcg5": 0.6187049746513367
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_12h_pairwise_immediate_scores.npz",
+      "output_artifact": "work/strict_12h_pairwise_post_pairlogit_fine_scores.npz",
+      "report_artifact": "work/strict_12h_pairwise_post_pairlogit_fine_results.json",
+      "generator": {
+        "kind": "pairwise_logistic",
+        "script": "scripts/prequential_daily_pairwise_logistic.py",
+        "report_artifact": "work/strict_12h_pairwise_immediate_results.json",
+        "fixed_parameters": {
+          "loss": "log_loss",
+          "penalty": "l2",
+          "fit_intercept": false,
+          "max_iter": 100,
+          "tol": 0.0001,
+          "average": true,
+          "random_state": 2026,
+          "standard_scaler_with_mean": false,
+          "negatives_per_positive": 2,
+          "pair_sampling": "up to 2 champion-nearest negatives per positive within user"
+        },
+        "env": {
+          "KUAI_PAIRWISE_ALPHAS": "0.003",
+          "KUAI_PAIRWISE_BLOCK_HOURS": 12,
+          "KUAI_PAIRWISE_HISTORY_DAYS": 0,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1,
+          "KUAI_PAIRWISE_NEGATIVES": 2,
+          "KUAI_PAIRWISE_WEIGHT_MODE": "none"
+        }
+      }
+    },
+    {
+      "id": 18,
+      "name": "strict-1h-pairwise-post-12hpairwise",
+      "source": "alpha_0.003_rank",
+      "source_key": "alpha_0.003",
+      "transform": "rank",
+      "gate": "slate_size_3",
+      "weight": -1.5,
+      "expected_metrics": {
+        "primary": 0.7153499126434326,
+        "gauc": 0.8118944764137268,
+        "ndcg5": 0.6188053488731384
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_1h_pairwise_immediate_scores.npz",
+      "output_artifact": "work/strict_1h_pairwise_post_12hpairwise_scores.npz",
+      "report_artifact": "work/strict_1h_pairwise_post_12hpairwise_results.json",
+      "generator": {
+        "kind": "pairwise_logistic",
+        "script": "scripts/prequential_daily_pairwise_logistic.py",
+        "report_artifact": "work/strict_1h_pairwise_immediate_results.json",
+        "fixed_parameters": {
+          "loss": "log_loss",
+          "penalty": "l2",
+          "fit_intercept": false,
+          "max_iter": 100,
+          "tol": 0.0001,
+          "average": true,
+          "random_state": 2026,
+          "standard_scaler_with_mean": false,
+          "negatives_per_positive": 2,
+          "pair_sampling": "up to 2 champion-nearest negatives per positive within user"
+        },
+        "env": {
+          "KUAI_PAIRWISE_ALPHAS": "0.003",
+          "KUAI_PAIRWISE_BLOCK_HOURS": 1,
+          "KUAI_PAIRWISE_HISTORY_DAYS": 0,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1,
+          "KUAI_PAIRWISE_NEGATIVES": 2,
+          "KUAI_PAIRWISE_WEIGHT_MODE": "none"
+        }
+      }
+    },
+    {
+      "id": 19,
+      "name": "strict-3h-pairlogit-catboost-fine",
+      "source": "ranker_rank",
+      "source_key": "ranker",
+      "transform": "rank",
+      "gate": "date_from_apr25",
+      "weight": -4.6,
+      "expected_metrics": {
+        "primary": 0.7168830037117004,
+        "gauc": 0.8133262395858765,
+        "ndcg5": 0.6204397678375244
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_3h_pairlogit_catboost_full_scores.npz",
+      "output_artifact": "work/strict_3h_pairlogit_catboost_fine_scores.npz",
+      "report_artifact": "work/strict_3h_pairlogit_catboost_fine_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_3h_pairlogit_catboost_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "PairLogitPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "PairLogitPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 3,
+          "KUAI_CATBOOST_ITERATIONS": 60,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 20,
+      "name": "strict-2h-pairlogit-catboost-fine",
+      "source": "ranker_raw",
+      "source_key": "ranker",
+      "transform": "raw",
+      "gate": "small_slate_le4",
+      "weight": -4.0,
+      "expected_metrics": {
+        "primary": 0.7172248363494873,
+        "gauc": 0.8137407898902893,
+        "ndcg5": 0.6207089424133301
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_2h_pairlogit_catboost_full_scores.npz",
+      "output_artifact": "work/strict_2h_pairlogit_catboost_fine_scores.npz",
+      "report_artifact": "work/strict_2h_pairlogit_catboost_fine_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_2h_pairlogit_catboost_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "PairLogitPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "PairLogitPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 2,
+          "KUAI_CATBOOST_ITERATIONS": 50,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 21,
+      "name": "strict-4h-pairlogit-catboost-fine",
+      "source": "ranker_z",
+      "source_key": "ranker",
+      "transform": "z",
+      "gate": "date_through_apr24",
+      "weight": 2.8,
+      "expected_metrics": {
+        "primary": 0.7176759243011475,
+        "gauc": 0.8142791390419006,
+        "ndcg5": 0.6210726499557495
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_4h_pairlogit_catboost_full_scores.npz",
+      "output_artifact": "work/strict_4h_pairlogit_catboost_fine_scores.npz",
+      "report_artifact": "work/strict_4h_pairlogit_catboost_fine_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_4h_pairlogit_catboost_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "PairLogitPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "PairLogitPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 4,
+          "KUAI_CATBOOST_ITERATIONS": 70,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 22,
+      "name": "strict-8h-pairlogit-catboost-fine",
+      "source": "ranker_raw",
+      "source_key": "ranker",
+      "transform": "raw",
+      "gate": "date_through_apr23",
+      "weight": -1.25,
+      "expected_metrics": {
+        "primary": 0.718566358089447,
+        "gauc": 0.815090537071228,
+        "ndcg5": 0.622042179107666
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_8h_pairlogit_catboost_full_scores.npz",
+      "output_artifact": "work/strict_8h_pairlogit_catboost_fine_scores.npz",
+      "report_artifact": "work/strict_8h_pairlogit_catboost_fine_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_8h_pairlogit_catboost_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "PairLogitPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "PairLogitPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 8,
+          "KUAI_CATBOOST_ITERATIONS": 100,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 23,
+      "name": "postfinal_pair1",
+      "source": "alpha_0.003_z",
+      "source_key": "alpha_0.003",
+      "transform": "z",
+      "gate": "date_from_apr23",
+      "weight": -0.75,
+      "expected_metrics": {
+        "primary": 0.7188209295272827,
+        "gauc": 0.8154355883598328,
+        "ndcg5": 0.6222062706947327
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_1h_pairwise_immediate_scores.npz",
+      "output_artifact": "work/postfinal_pair1_scores.npz",
+      "report_artifact": "work/postfinal_pair1_results.json",
+      "generator": {
+        "kind": "pairwise_logistic",
+        "script": "scripts/prequential_daily_pairwise_logistic.py",
+        "report_artifact": "work/strict_1h_pairwise_immediate_results.json",
+        "fixed_parameters": {
+          "loss": "log_loss",
+          "penalty": "l2",
+          "fit_intercept": false,
+          "max_iter": 100,
+          "tol": 0.0001,
+          "average": true,
+          "random_state": 2026,
+          "standard_scaler_with_mean": false,
+          "negatives_per_positive": 2,
+          "pair_sampling": "up to 2 champion-nearest negatives per positive within user"
+        },
+        "env": {
+          "KUAI_PAIRWISE_ALPHAS": "0.003",
+          "KUAI_PAIRWISE_BLOCK_HOURS": 1,
+          "KUAI_PAIRWISE_HISTORY_DAYS": 0,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1,
+          "KUAI_PAIRWISE_NEGATIVES": 2,
+          "KUAI_PAIRWISE_WEIGHT_MODE": "none"
+        }
+      }
+    },
+    {
+      "id": 24,
+      "name": "postpair1_d5",
+      "source": "ranker_rank",
+      "source_key": "ranker",
+      "transform": "rank",
+      "gate": "date_through_apr23",
+      "weight": -1.5,
+      "expected_metrics": {
+        "primary": 0.7193030118942261,
+        "gauc": 0.8160659670829773,
+        "ndcg5": 0.6225401163101196
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_daily_d5_catboost_ranker_full_scores.npz",
+      "output_artifact": "work/postpair1_d5_scores.npz",
+      "report_artifact": "work/postpair1_d5_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_daily_d5_catboost_ranker_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "YetiRankPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "YetiRankPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 24,
+          "KUAI_CATBOOST_ITERATIONS": 180,
+          "KUAI_CATBOOST_DEPTH": 5,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 25,
+      "name": "postd5-yeti12",
+      "source": "ranker_z",
+      "source_key": "ranker",
+      "transform": "z",
+      "gate": "date_through_apr23",
+      "weight": -1.25,
+      "expected_metrics": {
+        "primary": 0.7197402119636536,
+        "gauc": 0.816716730594635,
+        "ndcg5": 0.6227636933326721
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_12h_catboost_ranker_full_scores.npz",
+      "output_artifact": "work/postd5_yeti12_scores.npz",
+      "report_artifact": "work/postd5_yeti12_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_12h_catboost_ranker_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "YetiRankPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "YetiRankPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 12,
+          "KUAI_CATBOOST_ITERATIONS": 120,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 26,
+      "name": "strict-16h-pairlogit-catboost-on-best",
+      "source": "ranker_z",
+      "source_key": "ranker",
+      "transform": "z",
+      "gate": "date_through_apr24",
+      "weight": 1.5,
+      "expected_metrics": {
+        "primary": 0.7200778722763062,
+        "gauc": 0.8171811699867249,
+        "ndcg5": 0.6229746341705322
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_16h_pairlogit_catboost_full_scores.npz",
+      "output_artifact": "work/strict_16h_pairlogit_catboost_on_best_scores.npz",
+      "report_artifact": "work/strict_16h_pairlogit_catboost_on_best_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_16h_pairlogit_catboost_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "PairLogitPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "PairLogitPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 16,
+          "KUAI_CATBOOST_ITERATIONS": 130,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 27,
+      "name": "strict-10h-pairlogit-catboost-fine",
+      "source": "ranker_z",
+      "source_key": "ranker",
+      "transform": "z",
+      "gate": "date_through_apr23",
+      "weight": 1.0,
+      "expected_metrics": {
+        "primary": 0.7202810049057007,
+        "gauc": 0.8174595832824707,
+        "ndcg5": 0.6231024265289307
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_10h_pairlogit_catboost_full_scores.npz",
+      "output_artifact": "work/strict_10h_pairlogit_catboost_fine_scores.npz",
+      "report_artifact": "work/strict_10h_pairlogit_catboost_fine_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_10h_pairlogit_catboost_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "PairLogitPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "PairLogitPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 10,
+          "KUAI_CATBOOST_ITERATIONS": 110,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 28,
+      "name": "strict-20h-pairlogit-catboost-on-best",
+      "source": "ranker_z",
+      "source_key": "ranker",
+      "transform": "z",
+      "gate": "small_and_high_score_margin",
+      "weight": 2.0,
+      "expected_metrics": {
+        "primary": 0.7204160690307617,
+        "gauc": 0.8176764845848083,
+        "ndcg5": 0.6231556534767151
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_20h_pairlogit_catboost_full_scores.npz",
+      "output_artifact": "work/strict_20h_pairlogit_catboost_on_best_scores.npz",
+      "report_artifact": "work/strict_20h_pairlogit_catboost_on_best_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_20h_pairlogit_catboost_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "PairLogitPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "PairLogitPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 20,
+          "KUAI_CATBOOST_ITERATIONS": 140,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 29,
+      "name": "strict-14h-post20h",
+      "source": "ranker_raw",
+      "source_key": "ranker",
+      "transform": "raw",
+      "gate": "slate_size_5",
+      "weight": -0.25,
+      "expected_metrics": {
+        "primary": 0.7204666137695312,
+        "gauc": 0.8177390694618225,
+        "ndcg5": 0.6231940984725952
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/strict_14h_pairlogit_catboost_full_scores.npz",
+      "output_artifact": "work/strict_14h_post20h_scores.npz",
+      "report_artifact": "work/strict_14h_post20h_results.json",
+      "generator": {
+        "kind": "catboost",
+        "script": "scripts/prequential_block_catboost.py",
+        "report_artifact": "work/strict_14h_pairlogit_catboost_full_results.json",
+        "fixed_parameters": {
+          "learning_rate": 0.05,
+          "l2_leaf_reg": 20.0,
+          "random_strength": 1.0,
+          "random_seed": 2026,
+          "thread_count": 6,
+          "allow_writing_files": false,
+          "loss_function": "PairLogitPairwise"
+        },
+        "env": {
+          "KUAI_CATBOOST_MODELS": "ranker",
+          "KUAI_CATBOOST_RANK_LOSS": "PairLogitPairwise",
+          "KUAI_CATBOOST_BLOCK_HOURS": 14,
+          "KUAI_CATBOOST_ITERATIONS": 120,
+          "KUAI_CATBOOST_DEPTH": 6,
+          "KUAI_CATBOOST_SEED": 2026,
+          "KUAI_CATBOOST_THREADS": 6,
+          "KUAI_PAIRWISE_IMMEDIATE": 1,
+          "KUAI_PAIRWISE_STATIC_MODELS": 1
+        }
+      }
+    },
+    {
+      "id": 30,
+      "name": "existing_causal_ranker_diversity_screen",
+      "source": "daily_catboost_classifier_rank",
+      "source_key": "daily_catboost_classifier",
+      "transform": "rank",
+      "gate": "date_from_apr23",
+      "weight": -2.0,
+      "expected_metrics": {
+        "primary": 0.7222748398780823,
+        "gauc": 0.8201316595077515,
+        "ndcg5": 0.6244180202484131
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/diverse_existing_sources.npz",
+      "output_artifact": "work/diverse_existing_gated_scores.npz",
+      "report_artifact": "work/diverse_existing_gated_results.json",
+      "generator": {
+        "kind": "artifact_replay",
+        "component_artifact": "work/strict_daily_catboost_classifier_scores.npz",
+        "component_key": "classifier",
+        "assembly": "copy component array and rename to the locked source_key; the complete assembled cache is published and hashed"
+      }
+    },
+    {
+      "id": 31,
+      "name": "queryrmse_on_classifier_best",
+      "source": "daily_d6_queryrmse_z",
+      "source_key": "daily_d6_queryrmse",
+      "transform": "z",
+      "gate": "date_from_apr25",
+      "weight": 0.25,
+      "expected_metrics": {
+        "primary": 0.7224351167678833,
+        "gauc": 0.8202740550041199,
+        "ndcg5": 0.624596118927002
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/new_queryrmse_source.npz",
+      "output_artifact": "work/queryrmse_gated_on_classifier_best_scores.npz",
+      "report_artifact": "work/queryrmse_gated_on_classifier_best_results.json",
+      "generator": {
+        "kind": "artifact_replay",
+        "component_artifact": "work/strict_daily_d6_queryrmse_catboost_full_scores.npz",
+        "component_key": "ranker",
+        "assembly": "copy component array and rename to the locked source_key; the complete assembled cache is published and hashed"
+      }
+    },
+    {
+      "id": 32,
+      "name": "new_objective_diversity_on_classifier_queryrmse",
+      "source": "yeti_pair_z",
+      "source_key": "yeti_pair",
+      "transform": "z",
+      "gate": "date_through_apr23",
+      "weight": -1.75,
+      "expected_metrics": {
+        "primary": 0.7228881120681763,
+        "gauc": 0.8208467960357666,
+        "ndcg5": 0.6249293684959412
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/new_objective_diversity_sources.npz",
+      "output_artifact": "work/new_objective_diversity_gated_scores.npz",
+      "report_artifact": "work/new_objective_diversity_gated_results.json",
+      "generator": {
+        "kind": "artifact_replay",
+        "component_artifact": "work/strict_daily_d6_yetirankpairwise_catboost_full_scores.npz",
+        "component_key": "ranker",
+        "assembly": "copy component array and rename to the locked source_key; the complete assembled cache is published and hashed"
+      }
+    },
+    {
+      "id": 33,
+      "name": "fine_d5_pair_on_yeti",
+      "source": "d5_pair_raw",
+      "source_key": "d5_pair",
+      "transform": "raw",
+      "gate": "three_four_active_days",
+      "weight": 0.75,
+      "expected_metrics": {
+        "primary": 0.7230373620986938,
+        "gauc": 0.8210638165473938,
+        "ndcg5": 0.6250109672546387
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/d5_pair_only_source.npz",
+      "output_artifact": "work/fine_d5_pair_on_yeti_scores.npz",
+      "report_artifact": "work/fine_d5_pair_on_yeti_results.json",
+      "generator": {
+        "kind": "artifact_replay",
+        "component_artifact": "work/strict_daily_d5_pairlogit_catboost_full_scores.npz",
+        "component_key": "ranker",
+        "assembly": "copy component array and rename to the locked source_key; the complete assembled cache is published and hashed"
+      }
+    },
+    {
+      "id": 34,
+      "name": "new_base_classifier_anti_experts",
+      "source": "d5_base_classifier_raw",
+      "source_key": "d5_base_classifier",
+      "transform": "raw",
+      "gate": "small_and_high_recent_coverage",
+      "weight": 1.0,
+      "expected_metrics": {
+        "primary": 0.7230937480926514,
+        "gauc": 0.8211697936058044,
+        "ndcg5": 0.6250177621841431
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/new_base_classifier_sources.npz",
+      "output_artifact": "work/new_base_classifier_gated_scores.npz",
+      "report_artifact": "work/new_base_classifier_gated_results.json",
+      "generator": {
+        "kind": "artifact_replay",
+        "component_artifact": "work/strict_daily_d5_classifier_base_scores.npz",
+        "component_key": "classifier",
+        "assembly": "copy component array and rename to the locked source_key; the complete assembled cache is published and hashed"
+      }
+    },
+    {
+      "id": 35,
+      "name": "classifier_capacity_and_refresh_screen",
+      "source": "base60_raw",
+      "source_key": "base60",
+      "transform": "raw",
+      "gate": "small_and_two_active_days",
+      "weight": -2.0,
+      "expected_metrics": {
+        "primary": 0.7232389450073242,
+        "gauc": 0.8213528990745544,
+        "ndcg5": 0.6251250505447388
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/refresh_classifier_sources.npz",
+      "output_artifact": "work/refresh_classifier_gated_scores.npz",
+      "report_artifact": "work/refresh_classifier_gated_results.json",
+      "generator": {
+        "kind": "artifact_replay",
+        "component_artifact": "work/strict_daily_d6_classifier_base60_scores.npz",
+        "component_key": "classifier",
+        "assembly": "copy component array and rename to the locked source_key; the complete assembled cache is published and hashed"
+      }
+    },
+    {
+      "id": 36,
+      "name": "refresh_only_parallel_screen",
+      "source": "clf_6h_raw",
+      "source_key": "clf_6h",
+      "transform": "raw",
+      "gate": "current_rank_3_to_8",
+      "weight": 0.25,
+      "expected_metrics": {
+        "primary": 0.7233699560165405,
+        "gauc": 0.8215137124061584,
+        "ndcg5": 0.6252261400222778
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/refresh_only_sources.npz",
+      "output_artifact": "work/refresh_only_gated_scores.npz",
+      "report_artifact": "work/refresh_only_gated_results.json",
+      "generator": {
+        "kind": "artifact_replay",
+        "component_artifact": "work/strict_6h_classifier_base_scores.npz",
+        "component_key": "classifier",
+        "assembly": "copy component array and rename to the locked source_key; the complete assembled cache is published and hashed"
+      }
+    },
+    {
+      "id": 37,
+      "name": "d8_pair_final_residual",
+      "source": "d8_pair_raw",
+      "source_key": "d8_pair",
+      "transform": "raw",
+      "gate": "slate_size_2",
+      "weight": -4.0,
+      "expected_metrics": {
+        "primary": 0.7234153747558594,
+        "gauc": 0.8215715289115906,
+        "ndcg5": 0.6252591609954834
+      },
+      "selection_policy": {
+        "folds": "actual user_id modulo 4",
+        "requirements": [
+          "primary_delta >= 0 in every fold",
+          "gauc_delta >= 0 in every fold",
+          "ndcg5_delta >= 0 in every fold"
+        ],
+        "zero_preference": true
+      },
+      "source_artifact": "work/d8_pair_source.npz",
+      "output_artifact": "work/d8_pair_gated_final_scores.npz",
+      "report_artifact": "work/d8_pair_gated_final_results.json",
+      "generator": {
+        "kind": "artifact_replay",
+        "component_artifact": "work/strict_daily_d8_pairlogit_catboost_full_scores.npz",
+        "component_key": "ranker",
+        "assembly": "copy component array and rename to the locked source_key; the complete assembled cache is published and hashed"
+      }
+    }
+  ]
+}

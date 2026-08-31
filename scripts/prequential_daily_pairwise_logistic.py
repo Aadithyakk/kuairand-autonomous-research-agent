@@ -53,6 +53,7 @@ BLOCK_HOURS = int(os.environ.get("KUAI_PAIRWISE_BLOCK_HOURS", "0"))
 
 sys.path.insert(0, str(SCRIPT_DIR))
 from joint_terminal_gate_search import factorize, rank_ordinal  # noqa: E402
+from prequential_causality import completion_safe_training_mask  # noqa: E402
 
 
 def load_matrix(codes: np.ndarray, counts: np.ndarray):
@@ -137,9 +138,7 @@ def main() -> None:
     users = rows["user_id"].astype(str).to_numpy()
     dates = rows["date"].to_numpy(dtype=np.int64)
     times = rows["time_ms"].to_numpy(dtype=np.int64)
-    availability_times = times + np.maximum(
-        rows["play_time_ms"].to_numpy(dtype=np.int64), 0
-    )
+    play_times = rows["play_time_ms"].to_numpy(dtype=np.int64)
     labels = rows["long_view"].to_numpy(dtype=np.int8)
     with np.load(CHAMPION) as archive:
         champion = np.asarray(archive["selected"], dtype=np.float64)
@@ -162,7 +161,9 @@ def main() -> None:
         for current_unit in unique_units[1:]:
             if BLOCK_HOURS > 0:
                 block_start = int(current_unit) * block_ms
-                train_mask = availability_times < block_start
+                train_mask = completion_safe_training_mask(
+                    times, play_times, block_start
+                )
                 if HISTORY_DAYS > 0:
                     train_mask &= times >= block_start - HISTORY_DAYS * 86_400_000
             else:

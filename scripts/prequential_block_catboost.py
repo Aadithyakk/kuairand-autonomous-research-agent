@@ -41,6 +41,7 @@ MODEL_TYPES = tuple(
 
 sys.path.insert(0, str(SCRIPT_DIR))
 from joint_terminal_gate_search import factorize, rank_ordinal  # noqa: E402
+from prequential_causality import completion_safe_training_mask  # noqa: E402
 from prequential_daily_pairwise_logistic import load_matrix  # noqa: E402
 
 
@@ -60,9 +61,7 @@ def main() -> None:
     users = rows["user_id"].astype(str).to_numpy()
     dates = rows["date"].to_numpy(dtype=np.int64)
     times = rows["time_ms"].to_numpy(dtype=np.int64)
-    availability = times + np.maximum(
-        rows["play_time_ms"].to_numpy(dtype=np.int64), 0
-    )
+    play_times = rows["play_time_ms"].to_numpy(dtype=np.int64)
     labels = rows["long_view"].to_numpy(dtype=np.int8)
     codes, _, counts = factorize(users)
     with np.load(CHAMPION) as archive:
@@ -89,7 +88,9 @@ def main() -> None:
     )
     for current_unit in unique_units[1:]:
         block_start = int(current_unit) * block_ms
-        train_index = np.flatnonzero(availability < block_start)
+        train_index = np.flatnonzero(
+            completion_safe_training_mask(times, play_times, block_start)
+        )
         test_mask = units == current_unit
         if len(train_index) < 1000 or test_mask.sum() == 0:
             continue
