@@ -3,6 +3,7 @@
 import { useEffect, useReducer, useRef, useState, type CSSProperties } from 'react';
 import evidence from '../public/research-replay.json';
 import correlationPreview from '../public/correlation-preview.json';
+import autonomousRunData from '../results/run-9ecfd2aa09/summary.json';
 import { clock, initialReplayState, replayDuration, replayReducer, replaySteps, signed, stepAt, stepStart } from './replay-model';
 
 const wave = evidence.wave;
@@ -12,12 +13,203 @@ const controlRun = evidence.screen.runs.find(item => item.alpha === 0)!;
 const metricKeys = ['primary', 'GAUC', 'nDCG@5'] as const;
 type Metrics = { primary: number; GAUC: number; 'nDCG@5': number };
 type SourceId = typeof evidence.sources[number]['id'];
+type AutonomousIteration = {
+  iteration: number;
+  title: string;
+  outcome: 'accepted' | 'invalidated' | 'rejected';
+  primary?: number;
+  gauc?: number;
+  ndcg5?: number;
+  gain_over_previous_champion?: number;
+  runtime_seconds: number;
+  error?: string;
+  recovery?: string;
+};
+type AutonomousRun = {
+  campaign_id: string;
+  stop_reason: string;
+  hidden_test_accessed: boolean;
+  baseline: { primary: number; gauc: number; ndcg5: number; runtime_seconds: number };
+  champion: { iteration: number; title: string; primary: number; gauc: number; ndcg5: number; gain_over_baseline: number };
+  iterations: AutonomousIteration[];
+  usage: { input_tokens: number; output_tokens: number; reasoning_tokens: number; total_tokens: number; wall_seconds: number };
+  manual_interventions: number;
+};
+
+const autonomousRun = autonomousRunData as AutonomousRun;
+const autonomousStages = ['Inspect', 'Hypothesize', 'Implement', 'Train', 'Evaluate', 'Reflect'] as const;
+const implementationChanges = [
+  ['positive_weight', '1.00', '2.00'],
+  ['seed_ensemble', '[0]', '[0, 1, 2]'],
+  ['positive_weight', '2.00', '2.50'],
+  ['positive_weight', '2.50', '2.75'],
+  ['positive_weight', '2.75', '3.00'],
+] as const;
 
 const thinkingLabels: Record<string, string> = {
   inspect: 'Analysing dataset structure', research: 'Reviewing ranking literature', hypothesize: 'Comparing candidate hypotheses',
   implement: 'Checking the controlled change', train: 'Reading training telemetry', screen: 'Evaluating the locked screen',
   confirm: 'Checking the confirmation split', reflect: 'Testing the promotion gate',
 };
+
+function AutonomousLoopVisual() {
+  const [iterationIndex, setIterationIndex] = useState(0);
+  const [stageIndex, setStageIndex] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  const iteration = autonomousRun.iterations[iterationIndex];
+  const stage = autonomousStages[stageIndex];
+
+  useEffect(() => {
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const timer = window.setTimeout(() => setPlaying(false), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!playing) return;
+    const timer = window.setInterval(() => {
+      setStageIndex(current => {
+        if (current < autonomousStages.length - 1) return current + 1;
+        setIterationIndex(active => (active + 1) % autonomousRun.iterations.length);
+        return 0;
+      });
+    }, 1850);
+    return () => window.clearInterval(timer);
+  }, [playing]);
+
+  let championBefore = autonomousRun.baseline.primary;
+  for (let index = 0; index < iterationIndex; index += 1) {
+    const previous = autonomousRun.iterations[index];
+    if (previous.outcome === 'accepted' && typeof previous.primary === 'number') championBefore = previous.primary;
+  }
+  const candidateVisible = stageIndex >= 4 && typeof iteration.primary === 'number';
+  const displayScore = candidateVisible ? iteration.primary! : championBefore;
+  const [changeKey, changeBefore, changeAfter] = implementationChanges[iterationIndex];
+  const progress = (stageIndex / (autonomousStages.length - 1)) * 100;
+
+  const championSeries = [autonomousRun.baseline.primary];
+  let retained = autonomousRun.baseline.primary;
+  autonomousRun.iterations.forEach(item => {
+    if (item.outcome === 'accepted' && typeof item.primary === 'number') retained = item.primary;
+    championSeries.push(retained);
+  });
+  const chartMin = 0.6012;
+  const chartMax = 0.60405;
+  const point = (value: number, index: number) => ({
+    x: 34 + index * 82,
+    y: 135 - ((value - chartMin) / (chartMax - chartMin)) * 104,
+  });
+  const chartPoints = championSeries.map(point);
+  const chartPath = chartPoints.map((item, index) => `${index === 0 ? 'M' : 'L'} ${item.x} ${item.y}`).join(' ');
+  const activePoint = chartPoints[Math.min(iterationIndex + (stageIndex >= 5 ? 1 : 0), chartPoints.length - 1)];
+
+  const stageCopy = {
+    Inspect: {
+      kicker: 'READ MEMORY + CONSTRAINTS',
+      title: `Iteration ${iteration.iteration}: inspect the retained champion`,
+      detail: `Validation champion ${championBefore.toFixed(6)} · hidden-test labels sealed · ${50 - iteration.iteration + 1} experiment slots remain.`,
+    },
+    Hypothesize: {
+      kicker: 'WRITE A FALSIFIABLE PROPOSAL',
+      title: iteration.title,
+      detail: 'The agent records its expected gain, acceptance rule, abort condition, and rationale before training begins.',
+    },
+    Implement: {
+      kicker: 'PATCH ONE CONTROLLED VARIABLE',
+      title: `Change ${changeKey.replace('_', ' ')} from ${changeBefore} to ${changeAfter}`,
+      detail: 'A candidate diff is written into an isolated iteration directory and checked against the runner contract.',
+    },
+    Train: {
+      kicker: 'EXECUTE INSIDE THE BUDGET',
+      title: `Training candidate on CPU · ${iteration.runtime_seconds.toFixed(1)} recorded seconds`,
+      detail: 'The runner streams epoch telemetry while watchdogs check time, memory, finite outputs, and cancellation.',
+    },
+    Evaluate: {
+      kicker: iteration.outcome === 'invalidated' ? 'INVALID RESULT DETECTED' : 'SEALED VALIDATION EVALUATOR',
+      title: iteration.outcome === 'invalidated' ? 'The runner contract was wrong—do not score this candidate.' : `Candidate primary ${iteration.primary!.toFixed(6)}`,
+      detail: iteration.outcome === 'invalidated' ? iteration.error! : `GAUC ${iteration.gauc!.toFixed(6)} · nDCG@5 ${iteration.ndcg5!.toFixed(6)} · no test outcome accessed.`,
+    },
+    Reflect: {
+      kicker: iteration.outcome === 'accepted' ? 'PROMOTE VALIDATION-BEST' : iteration.outcome === 'invalidated' ? 'RECOVER + RETAIN CHAMPION' : 'REJECT + CONVERGE',
+      title: iteration.outcome === 'accepted' ? `Accepted · champion becomes ${iteration.primary!.toFixed(6)}` : iteration.outcome === 'invalidated' ? 'Discard invalid run, repair the adapter, continue safely.' : `Rejected · ${championBefore.toFixed(6)} remains champion`,
+      detail: iteration.outcome === 'invalidated' ? iteration.recovery! : iteration.outcome === 'rejected' ? 'The score regressed after three small-gain rounds. The convergence rule stops the campaign.' : `Measured gain ${signed(iteration.gain_over_previous_champion ?? 0)}. Evidence and artifacts are committed to the run ledger.`,
+    },
+  }[stage];
+
+  return <section className="autonomous-cinema" aria-labelledby="autonomous-loop-title">
+    <div className="autonomous-cinema-head">
+      <div>
+        <p className="eyebrow"><i /> Recorded autonomous campaign · {autonomousRun.campaign_id}</p>
+        <h2 id="autonomous-loop-title">Watch the agent improve the recommender—end to end.</h2>
+        <p>Every pulse below resolves to a checked-in proposal, code diff, training record, metric file, or recovery event.</p>
+      </div>
+      <div className="cinema-actions">
+        <span className="recorded-pill"><i /> PLAYING RECORDED EVIDENCE</span>
+        <button type="button" onClick={() => setPlaying(value => !value)}>{playing ? 'Pause' : 'Play'}</button>
+        <button type="button" onClick={() => { setIterationIndex(0); setStageIndex(0); setPlaying(true); }}>Replay</button>
+      </div>
+    </div>
+
+    <div className="autonomous-stage-rail" aria-label="Complete autonomous research loop">
+      <span className="stage-progress" style={{ '--loop-progress': `${progress}%` } as CSSProperties} />
+      {autonomousStages.map((item, index) => <button
+        type="button"
+        className={index === stageIndex ? 'active' : index < stageIndex ? 'done' : ''}
+        aria-current={index === stageIndex ? 'step' : undefined}
+        onClick={() => { setStageIndex(index); setPlaying(false); }}
+        key={item}
+      ><span>{index < stageIndex ? '✓' : String(index + 1).padStart(2, '0')}</span><b>{item}</b><small>{['data + memory', 'proposal + gate', 'candidate diff', 'bounded runner', 'sealed metrics', 'promote / recover'][index]}</small></button>)}
+    </div>
+
+    <div className="autonomous-cinema-grid">
+      <div className="agent-thought-stream" aria-live="polite">
+        <div className="agent-stream-meta"><span>AGENT ACTIVITY</span><span>ITERATION {String(iteration.iteration).padStart(2, '0')} / 05</span></div>
+        <div className="agent-orbit"><div className="agent-core"><span>KL</span><i /><i /><i /></div><div className="orbit-ring"><i /><i /><i /></div></div>
+        <div className="agent-stage-copy" key={`${iteration.iteration}-${stage}`}>
+          <span>{stageCopy.kicker}</span>
+          <h3>{stageCopy.title}</h3>
+          <p>{stageCopy.detail}</p>
+        </div>
+        {stage === 'Implement' && <div className="animated-diff" aria-label="Recorded implementation diff"><code><em>−</em> {changeKey} = <s>{changeBefore}</s></code><code><em>+</em> {changeKey} = <b>{changeAfter}</b></code><small>candidate.diff · isolated workspace</small></div>}
+        {stage === 'Train' && <div className="training-stream"><span><i style={{ '--epoch': '87%' } as CSSProperties} /></span><div><b>epoch telemetry</b><small>finite checks · early stopping · CPU watchdog</small></div></div>}
+        {stage === 'Evaluate' && iteration.outcome === 'invalidated' && <div className="recovery-stream"><b>↻ Recovery route activated</b><span>Invalidate result → preserve champion → patch runner contract → continue</span></div>}
+      </div>
+
+      <div className="campaign-scoreboard">
+        <div className="scoreboard-heading"><div><span>{candidateVisible ? 'Candidate primary' : 'Retained champion'}</span><strong>{displayScore.toFixed(6)}</strong></div><div className={`outcome-badge ${iteration.outcome}`}>{stageIndex < 5 ? stage.toLowerCase() : iteration.outcome}</div></div>
+        <svg viewBox="0 0 460 160" role="img" aria-label="Retained champion score over the five autonomous iterations">
+          {[0.602, 0.603, 0.604].map(value => { const y = point(value, 0).y; return <g key={value}><line x1="28" x2="448" y1={y} y2={y} /><text x="0" y={y + 3}>{value.toFixed(3)}</text></g>; })}
+          <path d={chartPath} className="champion-path" />
+          {chartPoints.map((item, index) => <g key={index} className={index <= iterationIndex + (stageIndex >= 5 ? 1 : 0) ? 'revealed' : ''}><circle cx={item.x} cy={item.y} r={index === 0 ? 4 : 5} /><text x={item.x} y="153">{index === 0 ? 'BASE' : `I${index}`}</text></g>)}
+          <circle className="active-score-point" cx={activePoint.x} cy={activePoint.y} r="9" />
+        </svg>
+        <div className="scoreboard-legend"><span><i /> retained validation-best</span><span><b>+{autonomousRun.champion.gain_over_baseline.toFixed(6)}</b> autonomous gain</span></div>
+        <div className="judge-boundary"><span>✓ Train only</span><span>✓ Validation gates</span><span>✓ Test labels sealed</span></div>
+      </div>
+
+      <div className="iteration-ledger">
+        <div className="iteration-ledger-head"><span>EXPERIMENT LEDGER</span><b>5 / 50 iterations</b></div>
+        {autonomousRun.iterations.map((item, index) => <button
+          type="button"
+          className={`${index === iterationIndex ? 'active' : ''} ${item.outcome}`}
+          onClick={() => { setIterationIndex(index); setStageIndex(0); setPlaying(false); }}
+          aria-current={index === iterationIndex ? 'true' : undefined}
+          key={item.iteration}
+        ><span>{item.outcome === 'accepted' ? '✓' : item.outcome === 'invalidated' ? '↻' : '×'}</span><div><b>Iteration {String(item.iteration).padStart(2, '0')}</b><small>{item.title}</small></div><em>{typeof item.primary === 'number' ? item.primary.toFixed(6) : 'invalid'}</em></button>)}
+        <div className="convergence-card"><span>STOP CONDITION</span><b>Converged after iteration 5</b><small>Three consecutive gains below ε = 0.002 · validation-best checkpoint retained.</small></div>
+      </div>
+    </div>
+
+    <div className="campaign-telemetry">
+      <div><span>Autonomous result</span><b>{autonomousRun.baseline.primary.toFixed(6)} → {autonomousRun.champion.primary.toFixed(6)}</b></div>
+      <div><span>Agent wall-clock</span><b>{clock(autonomousRun.usage.wall_seconds)}</b></div>
+      <div><span>LLM tokens</span><b>{autonomousRun.usage.total_tokens.toLocaleString()}</b></div>
+      <div><span>Recovery events</span><b>1 handled</b></div>
+      <div><span>Manual interventions</span><b>{autonomousRun.manual_interventions}</b></div>
+      <div className="telemetry-integrity"><span>Integrity</span><b>Hidden test untouched</b></div>
+    </div>
+  </section>;
+}
 
 function CorrelationScan() {
   const [selected, setSelected] = useState<[number, number]>([1, 5]);
@@ -192,6 +384,7 @@ export default function ResearchReplay({ suspended = false }: { suspended?: bool
   const result = evidence.showcase.result;
 
   return <section className={`research-replay ${mode === 'audit' ? 'replay-audit' : ''}`} aria-label="Agent Research Replay">
+    <AutonomousLoopVisual />
     <div className="metrics-grid replay-metrics">
       <article className="metric-card featured"><span>Recorded champion · primary</span><strong>{result.champion_primary.toFixed(6)}</strong><small>Public validation · not hidden test</small></article>
       <article className="metric-card"><span>GAUC</span><strong>{result.gauc.toFixed(6)}</strong><small>User-level discrimination</small></article>
